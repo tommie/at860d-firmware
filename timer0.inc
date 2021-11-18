@@ -16,9 +16,6 @@
     ifndef module_heater
     error "heater module is a dependency of timer0"
     endif
-    ifndef module_triac
-    error "triac module is a dependency of timer0"
-    endif
 
     ifdef section_udata
 timer_value res 1
@@ -41,8 +38,7 @@ timer0_irq  macro
 
     display_timer_next
     adc_timer_next
-    triac_timer_next    0, heater_set
-    triac_timer_next    1, airpump_set
+    airpump_timer_next timer_value
 
 irq_end:
     endm

@@ -10,9 +10,6 @@
     ifndef module_heater
     error "heater module is a dependency of timer0"
     endif
-    ifndef module_triac
-    error "triac module is a dependency of int"
-    endif
     ifndef module_zerocross
     error "zerocross module is a dependency of int"
     endif
@@ -28,8 +25,7 @@ int_irq     macro
 
     bcf     INTCON, INTF
     zero_cross_int_next
-    triac_int_next  0, heater_set
-    triac_int_next  1, airpump_set
+    airpump_int_next
 
 int_end:
     endm
