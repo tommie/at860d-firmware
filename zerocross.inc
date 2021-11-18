@@ -14,13 +14,52 @@
     ifdef section_udata
 zero_cross_period   res 1
 zero_cross_time     res 1
+zero_cross_acc      res 1
     endif
 
     ifdef section_code
 zero_cross_int_next macro
+    local   set_period
+    local   set_end
+
+    ;; W = timer_value - zero_cross_time
     movf    zero_cross_time, W
     subwf   timer_value, W
-    movwf   zero_cross_period
+
+    ;; if (W > 50) goto set_end
+    addlw   -50
+    btfsc   STATUS, C
+    goto    set_end
+    addlw   50
+
+    ;; if (zero_cross_period == 0) zero_cross_period += W
+    ;; else zero_cross_period += (W - zero_cross_period) / 8
+    movf    zero_cross_period, F
+    btfsc   STATUS, Z
+    goto    set_period
+
+    ;; W = (-(zero_cross_period - W) + 4) / 8
+    subwf   zero_cross_period, W
+    xorlw   0xFF
+    addlw   1 + 4
+    movwf   zero_cross_acc
+    bcf     STATUS, C
+    btfsc   zero_cross_acc, 7
+    bsf     STATUS, C
+    rrf     zero_cross_acc, F
+    bcf     STATUS, C
+    btfsc   zero_cross_acc, 7
+    bsf     STATUS, C
+    rrf     zero_cross_acc, F
+    bcf     STATUS, C
+    btfsc   zero_cross_acc, 7
+    bsf     STATUS, C
+    rrf     zero_cross_acc, F
+    movf    zero_cross_acc, W
+
+set_period:
+    addwf   zero_cross_period, F
+set_end:
 
     movf    timer_value, W
     movwf   zero_cross_time
