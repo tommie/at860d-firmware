@@ -33,11 +33,22 @@ triac_state res 1
 triac_set macro index, ratiof
     local   set_end
 
-    ;; if (zero_cross_period <= 2) goto set_end
+    if ratiof == w16
+    error "Cannot use w16 as input for triac_set"
+    endif
+
+    ;; if (*ratiof == 0) goto set_end (triac_delay[index] = 0xFF)
+    movf    ratiof, F
+    movlw   0xFF
+    btfsc   STATUS, Z
+    goto    set_end
+
+    ;; if (zero_cross_period <= 2) goto set_end (triac_delay[index] = 0xFF)
     movlw   HIGH set_end
     movwf   PCLATH
     movf    zero_cross_period, W
     sublw   2
+    movlw   0xFF
     btfsc   STATUS, C
     goto    set_end
 
@@ -68,11 +79,11 @@ triac_set macro index, ratiof
     clrw
     addlw   2
 
-    ;; triac_delay[index] = zero_cross_period - W
+    ;; triac_delay[index] (...) = zero_cross_period - W
     subwf   zero_cross_period, W
-    movwf   triac_delay + index
 
 set_end:
+    movwf   triac_delay + index
     endm
 
 triac_timer_next macro  index, set_macro
