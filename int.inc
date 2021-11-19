@@ -5,10 +5,10 @@
     endif
 #define module_int
     ifndef module_airpump
-    error "airpump module is a dependency of timer0"
+    error "airpump module is a dependency of int"
     endif
     ifndef module_heater
-    error "heater module is a dependency of timer0"
+    error "heater module is a dependency of int"
     endif
     ifndef module_zerocross
     error "zerocross module is a dependency of int"

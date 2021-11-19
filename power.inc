@@ -1,4 +1,4 @@
-    ;; Power enable I/O module.
+    ;; Power bypass I/O module.
     ;;
     ;; This activates a triac to bypass the main switch, allowing the
 	;; MCU to let the airpump run until the temperature is low enough.
