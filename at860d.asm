@@ -4,6 +4,9 @@
     __config _CONFIG2, _BOR40V & _WRT_OFF
 
 #define TRIACPFC_NUM_CHANNELS 1
+#define TRIACZCC_NUM_CHANNELS 1
+#define TRIACZCC_NUM_FRAC_BITS 5
+#define TRIACZCC_NUM_EXTRA_BITS 3
 
     udata
 
@@ -52,14 +55,18 @@ loop:
     include "modules.inc"
 #undefine section_idle
 
-    movf        adc_knob_value, W
+    movf        adc_temp_value, W
     movwf       w16
     clrf        w16 + 1
     display_set_temp_w16
 
-    triac_set   1, adc_knob_value
+    movlw       120
+    airpump_setw
 
-    movf        triac_delay + 1, W
+    movf        adc_knob_value, W
+    heater_setw
+
+    movf        airpump_value, W
     movwf       w16
     clrf        w16 + 1
     display_set_air_w16

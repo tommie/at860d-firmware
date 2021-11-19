@@ -9,6 +9,7 @@
     include "buzzer.inc"
     include "led.inc"           ; Required by display.
     include "display.inc"       ; Required by timer0.
+    include "triac_zcc.inc"     ; Required by heater.
     include "heater.inc"        ; Required by timer0.
     include "timer0.inc"
     include "int.inc"

@@ -38,7 +38,8 @@ timer0_irq  macro
 
     display_timer_next
     adc_timer_next
-    airpump_timer_next timer_value
+    airpump_timer_next  timer_value
+    heater_timer_next   timer_value
 
 irq_end:
     endm
