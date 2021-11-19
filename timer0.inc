@@ -18,7 +18,7 @@
     endif
 
     ifdef section_udata
-timer_value res 1
+timer_value res 2
     endif
 
     ifdef section_code
@@ -35,6 +35,8 @@ timer0_irq  macro
     addwf   TMR0, F
 
     incf    timer_value, F
+    btfsc   STATUS, Z
+    incf    timer_value + 1, F
 
     display_timer_next
     adc_timer_next
@@ -54,6 +56,9 @@ irq_end:
     banksel 0
 
     bsf     INTCON, T0IE
+
+    clrf    timer_value
+    clrf    timer_value + 1
     endif
 
     ifdef section_irq

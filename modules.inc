@@ -15,7 +15,8 @@
     include "int.inc"
     include "irq.inc"
     include "power.inc"
-    include "switch.inc"
+    include "switch.inc"        ; Required by standby.
+    include "standby.inc"
 
     ;; Last because it may enter a fault loop on init.
     include "wdt.inc"
