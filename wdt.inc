@@ -35,10 +35,12 @@ wdto_loop:
 
     ifdef section_init
     banksel PCON
-    movlw   HIGH wdto
+    movlw   HIGH not_wdto
     movwf   PCLATH
     btfsc   PCON, NOT_POR
     goto    not_wdto
+    movlw   HIGH wdto
+    movwf   PCLATH
     btfss   STATUS, NOT_TO
     goto    wdto
 not_wdto:

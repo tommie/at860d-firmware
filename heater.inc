@@ -47,6 +47,8 @@ heater_idle macro   true_value
     movf        true_value, W
     subwf       heater_value, W
     movwf       acc1
+    movlw       HIGH set_triac
+    movwf       PCLATH
     clrw
     btfss       STATUS, C
     goto        set_triac

@@ -22,6 +22,9 @@ zero_cross_int_next macro
     local   set_period
     local   set_end
 
+    movlw   HIGH set_end
+    movwf   PCLATH
+
     ;; W = timer_value - zero_cross_time
     movf    zero_cross_time, W
     subwf   timer_value, W
@@ -31,6 +34,11 @@ zero_cross_int_next macro
     btfsc   STATUS, C
     goto    set_end
     addlw   50
+
+    movwf   acc1
+    movlw   HIGH set_period
+    movwf   PCLATH
+    movf    acc1, W
 
     ;; if (zero_cross_period == 0) zero_cross_period += W
     ;; else zero_cross_period += (W - zero_cross_period) / 8
