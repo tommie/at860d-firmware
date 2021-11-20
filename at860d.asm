@@ -64,6 +64,8 @@ loop:
     cooldown_skip_if_not_active
     goto        in_cooldown
 
+    movlw       HIGH in_standby
+    movwf       PCLATH
     standby_skip_if_not_active
     goto        in_standby
 
