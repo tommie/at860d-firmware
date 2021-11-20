@@ -59,6 +59,8 @@ loop:
     include "modules.inc"
 #undefine section_idle
 
+    movlw       HIGH in_cooldown
+    movwf       PCLATH
     cooldown_skip_if_not_active
     goto        in_cooldown
 
