@@ -42,14 +42,14 @@ triacpfc_set macro channel, ratiof
     endif
 
     ;; if (*ratiof == 0) goto set_end (triacpfc_delay[channel] = 0xFF)
+    movlw   HIGH set_end
+    movwf   PCLATH
     movf    ratiof, F
     movlw   0xFF
     btfsc   STATUS, Z
     goto    set_end
 
     ;; if (zero_cross_period <= 2) goto set_end (triacpfc_delay[channel] = 0xFF)
-    movlw   HIGH set_end
-    movwf   PCLATH
     movf    zero_cross_period, W
     sublw   2
     movlw   0xFF
@@ -74,19 +74,23 @@ triacpfc_set macro channel, ratiof
     btfsc   STATUS, Z
     incf    w16 + 1, F
 
-    ;; W = w16 / 256 <= 2 ? 2 : w16 / 256
-    ;; This 2 is based on the accuracy of tmr0, firing of zero_cross_int_next fires (and
-    ;; the AC frequency stability).
+    ;; W = w16 / 256 / 2 + 1
+    ;; This 1 is based on the accuracy of tmr0, firing of zero_cross_int_next
+    ;; fires (and the AC frequency stability). This inaccuracy is audible as
+    ;; pulsing on low settings.
+    ;;
+    ;; The division by two is to do 2/4-quadrant. The airpump doesn't react
+    ;; that well to 1/3-quadrant control, being highly non-monotonic.
+    bcf     STATUS, C
+    rrf     w16 + 1, F
     movf    w16 + 1, W
-    addlw   -2
-    btfss   STATUS, C
-    clrw
-    addlw   2
+    addlw   1
 
-    ;; triacpfc_delay[channel] (...) = zero_cross_period - W
+    ;; W = (zero_cross_period - W)
     subwf   zero_cross_period, W
 
 set_end:
+    ;; triacpfc_delay[channel] = W
     movwf   triacpfc_delay + channel
     endm
 
@@ -135,7 +139,8 @@ triacpfc_int_next_ch  macro channel, set_macro
     error "triac_pfc channel out of bounds"
     endif
 
-    clrf        triacpfc_state + (channel / 4)
+    movlw       ~(0x03 << ((channel % 4) * 2))
+    andwf       triacpfc_state + (channel / 4), F
     set_macro   triacpfc_state + (channel / 4), (channel % 4) * 2
     endm
 
