@@ -6,8 +6,18 @@
 #undefine module_heater
     endif
 #define module_heater
+    ifndef module_adc
+    error "adc module is a dependency of heater"
+    endif
+    ifndef module_stdlib
+    error "stdlib module is a dependency of heater"
+    endif
     ifndef module_triac_zcc
     error "triac_zcc module is a dependency of heater"
+    endif
+
+    ifdef section_udata
+heater_value    res 1
     endif
 
     ifdef section_code
@@ -27,6 +37,25 @@ heater_int_next  macro
     endm
 
 heater_setw macro
+    movwf   heater_value
+    endm
+
+heater_idle macro   true_value
+    local       set_triac
+
+    ;; if (heater_value < true_value) W = 0; goto set_triac
+    movf        true_value, W
+    subwf       heater_value, W
+    movwf       acc1
+    clrw
+    btfss       STATUS, C
+    goto        set_triac
+
+    ;; W = (heater_value - true_value) / 4
+    divp2lf     acc1, 2
+    movf        acc1, W
+
+set_triac:
     triaczcc_setw   0
     endm
     endif
@@ -36,4 +65,10 @@ heater_setw macro
     banksel TRISE
     bcf     TRISE, 2
     banksel PORTE
+
+    clrf    heater_value
+    endif
+
+    ifdef section_idle
+    heater_idle adc_temp_value
     endif

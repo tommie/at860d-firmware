@@ -108,4 +108,14 @@ divend:
     movlw   l
     addwf   acc1, W
     endm
+
+    ;; Divide file by 2^l.
+divp2lf macro   file, l
+i   set     0
+    while   i < l
+i   set     i + 1
+    bcf     STATUS, C
+    rrf     file, F
+    endw
+    endm
     endif
