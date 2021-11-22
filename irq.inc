@@ -10,6 +10,7 @@ irq_w_save      res 1
 irq_status_save res 1
 irq_fsr_save    res 1
 irq_pclath_save res 1
+irq_acc1_save   res 1
     endif
 
     ifdef section_code
@@ -22,9 +23,13 @@ irq_enter   macro
     movwf   irq_fsr_save
     movf    PCLATH, W
     movwf   irq_pclath_save
+    movf    acc1, W
+    movwf   irq_acc1_save
     endm
 
 irq_retfie macro
+    movf    irq_acc1_save, W
+    movwf   acc1
     movf    irq_pclath_save, W
     movwf   PCLATH
     movf    irq_fsr_save, W
