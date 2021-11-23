@@ -65,8 +65,9 @@ SELFTEST_ZCPERIOD_DURATION  equ 100
 SELFTEST_ZCPERIOD_MIN       equ 16 - 5
 SELFTEST_ZCPERIOD_MAX       equ 20 + 5
 SELFTEST_TEMPADC_DURATION   equ 100
-SELFTEST_TEMPADC_DEV        equ 1
+SELFTEST_TEMPADC_DEV        equ 2
 SELFTEST_TEMP_AMB_MAX       equ 10
+SELFTEST_TEMP_AIRFLOW       equ 64
 SELFTEST_HEATER_AIRFLOW     equ 128
 SELFTEST_HEATER_TEMP_INC    equ 5
 SELFTEST_AIRPUMP_AIRFLOW    equ 128
@@ -259,7 +260,7 @@ selftest_t_tempadc  macro   timer_value
     btfsc   selftest_state + SELFTEST_S_TEMPADC / 8, SELFTEST_S_TEMPADC % 8
     goto    t_end
 
-    ;; selftest_temp += (adc_temp_value - selftest_temp +- 4) / 8
+    ;; selftest_temp += (adc_temp_value - selftest_temp +- 2) / 4
     movf    selftest_temp, W
     subwf   adc_temp_value, W
     movwf   acc1
@@ -276,24 +277,20 @@ selftest_t_tempadc  macro   timer_value
     btfsc   acc1, 7
     bsf     STATUS, C
     rrf     acc1, W
-    bcf     STATUS, C
-    btfsc   acc1, 7
-    bsf     STATUS, C
-    rrf     acc1, W
     addwf   selftest_temp, F
 
-    ;; if (adc_temp_value + SELFTEST_TEMPADC_DEV < selftest_temp) goto t_not_ok
+    ;; if (adc_temp_value + SELFTEST_TEMPADC_DEV <= selftest_temp) goto t_not_ok
     movlw   HIGH t_not_ok
     movwf   PCLATH
     movf    adc_temp_value, W
-    addlw   SELFTEST_TEMPADC_DEV + 1
+    addlw   SELFTEST_TEMPADC_DEV
     subwf   selftest_temp, W
     btfsc   STATUS, C
     goto    t_not_ok
 
-    ;; if (adc_temp_value > selftest_temp + SELFTEST_TEMPADC_DEV) goto t_not_ok
+    ;; if (adc_temp_value => selftest_temp + SELFTEST_TEMPADC_DEV) goto t_not_ok
     movf    selftest_temp, W
-    addlw   SELFTEST_TEMPADC_DEV + 1
+    addlw   SELFTEST_TEMPADC_DEV
     subwf   adc_temp_value, W
     btfsc   STATUS, C
     goto    t_not_ok
@@ -315,6 +312,9 @@ t_not_ok:
     movwf   selftest_start_time
     movf    timer_value + 1, W
     movwf   selftest_start_time + 1
+
+    movf    adc_temp_value, W
+    movwf   selftest_temp
 
 t_end:
     endm
@@ -341,6 +341,9 @@ selftest_t_temp     macro
     btfss   STATUS, C
     goto    t_ok
 
+    movlw   SELFTEST_TEMP_AIRFLOW
+    airpump_setw
+
     ;; Require a decrease of at least 3 to call it decreasing.
     ;; if (adc_temp_value + 2 > selftest_temp) goto t_end
     movlw   HIGH t_end
@@ -352,6 +355,9 @@ selftest_t_temp     macro
     goto    t_end
 
 t_ok:
+    clrw
+    airpump_setw
+
     movf    adc_temp_value, W
     movwf   selftest_temp
 
@@ -465,12 +471,19 @@ selftest_idle_func:
     selftest_t_buttons
     selftest_t_switches timer_value
     selftest_t_zcperiod timer_value
+
+    if SELFTEST_ACCEPT_STATE & (1 << SELFTEST_S_TEMPADC)
     selftest_t_tempadc  timer_value
     selftest_t_temp
 
     ;; Slow tests.
+    if SELFTEST_ACCEPT_STATE & (1 << SELFTEST_S_HEATER)
     selftest_t_heater
+    if SELFTEST_ACCEPT_STATE & (1 << SELFTEST_S_AIRPUMP)
     selftest_t_airpump
+    endif
+    endif
+    endif
 
     ;; if ((~selftest_state & SELFTEST_ACCEPT_STATE) == 0) selftest_state.passed = true
     movlw   HIGH selftest_not_passed
