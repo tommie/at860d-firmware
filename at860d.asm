@@ -144,7 +144,7 @@ failed_selftest_reset:
     goto        loop
 
 in_cooldown:
-    movlw       32
+    movlw       64
     airpump_setw
 
     clrw
@@ -168,7 +168,11 @@ in_cooldown:
     goto        loop
 
 in_standby:
-    movlw       32
+    movf        adc_temp_value, W
+    sublw       COOLDOWN_MAX_TEMP
+    movlw       64
+    btfsc       STATUS, C
+    clrw
     airpump_setw
 
     clrw
