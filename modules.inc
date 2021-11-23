@@ -17,6 +17,7 @@
     include "power.inc"
     include "switch.inc"        ; Required by standby.
     include "cooldown.inc"
+    include "selftest.inc"
     include "standby.inc"
 
     ;; Last because it may enter a fault loop on init.

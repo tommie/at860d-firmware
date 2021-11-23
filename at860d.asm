@@ -4,6 +4,9 @@
     __config _CONFIG2, _BOR40V & _WRT_OFF
 
 #define COOLDOWN_MAX_TEMP 20
+    ;; In 128 ms ticks.
+#define SELFTEST_TIMEOUT (10000 / 128)
+#define SELFTEST_ACCEPT_STATE SELFTEST_ALL_TESTS
 #define TRIACPFC_NUM_CHANNELS 1
 #define TRIACZCC_NUM_CHANNELS 1
 #define TRIACZCC_NUM_FRAC_BITS 5
@@ -64,6 +67,11 @@ loop:
     cooldown_skip_if_not_active
     goto        in_cooldown
 
+    movlw       HIGH in_selftest
+    movwf       PCLATH
+    selftest_skip_if_passed
+    goto        in_selftest
+
     movlw       HIGH in_standby
     movwf       PCLATH
     standby_skip_if_not_active
@@ -85,6 +93,51 @@ loop:
     movwf       w16
     clrf        w16 + 1
     display_set_air_w16
+
+    movlw       HIGH loop
+    movwf       PCLATH
+    goto        loop
+
+in_selftest:
+    movlw       LSA & LSE & LSF             ; "T"
+    movwf       display_buf + 2
+    movwf       display_buf + 0
+    movlw       LSA & LSC & LSD & LSF & LSG ; "S"
+    movwf       display_buf + 1
+
+    movf        selftest_state, W
+    movwf       w16
+    movf        selftest_state + 1, W
+    andlw       0x03
+    movwf       w16 + 1
+    display_set_air_w16
+
+    selftest_goto_if_failed failed_selftest
+
+    movlw       ~0
+    movwf       display_buf + 6
+
+    movlw       HIGH loop
+    movwf       PCLATH
+    goto        loop
+
+failed_selftest:
+    movlw       LS2A & LS2E & LS2F & LS2G ; "F"
+    movwf       display_buf + 6
+
+    ;; if (!swpower_get()) selftest_reset()
+    movlw       HIGH failed_selftest_reset
+    movwf       PCLATH
+    swpower_get STATUS, C
+    btfss       STATUS, C
+    goto        failed_selftest_reset
+
+    movlw       HIGH loop
+    movwf       PCLATH
+    goto        loop
+
+failed_selftest_reset:
+    selftest_reset
 
     movlw       HIGH loop
     movwf       PCLATH
