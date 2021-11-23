@@ -51,11 +51,11 @@ display_set_digits  macro   base, vf
     ;; Blank leading zeros.
     movlw           HIGH blank_end
     movwf           PCLATH
-    movlw           0x0F
     movf            display_digitbuf + 1, F
     btfss           STATUS, Z
     goto            blank_end
 
+    movlw           0x0F
     movwf           display_digitbuf + 1
 
     movf            display_digitbuf, F
