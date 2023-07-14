@@ -15,7 +15,6 @@
 buttonscan_i        res 1
 buttonscan_current  res 2
 buttonscan_buf      res 2
-buttonscan_prev     res 2
     endif
 
     ifdef section_code
@@ -79,12 +78,6 @@ buttonscan_driver_table:
     dt      ~(1 << RB7)         ; handle, K1, K2
     dt      ~0
 
-buttonscan_get_delta    macro
-    movf    buttonscan_current, W
-    xorwf   buttonscan_prev, W
-    xorwf   buttonscan_prev, F
-    andf    buttonscan_current, W
-    endm
     endif
 
     ifdef section_init
@@ -107,8 +100,6 @@ buttonscan_get_delta    macro
     clrf    buttonscan_buf + 1
     clrf    buttonscan_current
     clrf    buttonscan_current + 1
-    clrf    buttonscan_prev
-    clrf    buttonscan_prev + 1
     endif
 
     ifdef section_idle
