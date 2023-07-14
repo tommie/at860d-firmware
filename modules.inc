@@ -16,6 +16,7 @@
     include "irq.inc"
     include "power.inc"
     include "switch.inc"        ; Required by standby.
+    include "buttonpress.inc"
     include "cooldown.inc"
     include "selftest.inc"
     include "standby.inc"

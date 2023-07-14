@@ -29,6 +29,56 @@ table_jump  macro   tblf
 case0:
     endm
 
+    ;; if ((int) (*file1 - lit) >= 0) goto dest
+bge16lf macro   file1, lit, dest
+    local   mend
+
+    movlw   HIGH dest
+    movwf   PCLATH
+    movf    file1 + 1, W
+    sublw   HIGH lit
+    btfss   STATUS, C
+    goto    dest
+
+    movlw   HIGH mend
+    movwf   PCLATH
+    btfss   STATUS, Z
+    goto    mend
+
+    movlw   HIGH dest
+    movwf   PCLATH
+    movlw   LOW lit
+    subwf   file1, W
+    btfsc   STATUS, C
+    goto    dest
+mend:
+    endm
+
+    ;; if ((int) (*file1 - *file2) >= 0) goto dest
+bge16ff macro   file1, file2, dest
+    local   mend
+
+    movlw   HIGH dest
+    movwf   PCLATH
+    movf    file1 + 1, W
+    subwf   file2 + 1, W
+    btfss   STATUS, C
+    goto    dest
+
+    movlw   HIGH mend
+    movwf   PCLATH
+    btfss   STATUS, Z
+    goto    mend
+
+    movlw   HIGH dest
+    movwf   PCLATH
+    movf    file2, W
+    subwf   file1, W
+    btfsc   STATUS, C
+    goto    dest
+mend:
+    endm
+
     ;; w16 *= file
 mulw16f macro   file
     local   mulloop
