@@ -43,7 +43,7 @@ heater_setw macro
 heater_idle macro   true_value
     local       set_triac
 
-    ;; if (heater_value < true_value) W = 0; goto set_triac
+    ;; if (true_value > heater_value) W = 0; goto set_triac
     movf        true_value, W
     subwf       heater_value, W
     movwf       acc1
