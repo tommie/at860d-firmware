@@ -55,6 +55,7 @@ i   set i + 1
     movwf       PCLATH
     movf        acc1, W
     call        triaczcc_table
+    banksel     triaczcc_delay + channel
     movwf       triaczcc_delay + channel
     endm
 
@@ -64,6 +65,7 @@ triaczcc_int_next  macro
     endif
 
     movlw       1 << TRIACZCC_NUM_EXTRA_BITS
+    banksel     triaczcc_cycle
     addwf       triaczcc_cycle, F
     endm
 
@@ -76,25 +78,32 @@ triaczcc_int_next_ch  macro channel, set_macro
 
     movlw       HIGH next_end
     movwf       PCLATH
+    banksel     triaczcc_state + (channel / 8)
     btfsc       triaczcc_state + (channel / 8), (channel % 8)
     goto        next_end
 
     ;; if (triaczcc_delay == 0) goto next_end
+    banksel     triaczcc_delay + channel
     movf        triaczcc_delay + channel, F
     btfsc       STATUS, Z
     goto        next_end
 
     ;; if (triaczcc_cycle - triaczcc_prev_on[channel] <= triaczcc_delay[channel]) goto next_end
+    banksel     triaczcc_prev_on + channel
     movf        triaczcc_prev_on + channel, W
+    banksel     triaczcc_cycle
     subwf       triaczcc_cycle, W
+    banksel     triaczcc_delay + channel
     subwf       triaczcc_delay + channel, W
     btfsc       STATUS, C
     goto        next_end
 
     ;; triaczcc_prev_on[channel] += triaczcc_delay[channel]
     movf        triaczcc_delay + channel, W
+    banksel     triaczcc_prev_on + channel
     addwf       triaczcc_prev_on + channel, F
 
+    banksel     triaczcc_state + (channel / 8)
     bsf         triaczcc_state + (channel / 8), (channel % 8)
     set_macro   triaczcc_state + (channel / 8), (channel % 8)
 next_end:
@@ -109,20 +118,25 @@ triaczcc_timer_next_ch  macro channel, set_macro, timer_value
 
     movlw       HIGH next_end
     movwf       PCLATH
+    banksel     triaczcc_state + (channel / 8)
     btfss       triaczcc_state + (channel / 8), (channel % 8)
     goto        next_end
 
     ;; if (timer_value - zero_cross_time <= zero_cross_period / 2) goto next_end
+    banksel     zero_cross_period
     movf        zero_cross_period, W
     movwf       acc1
     bcf         STATUS, C
     rrf         acc1, F
+    banksel     zero_cross_time
     movf        zero_cross_time, W
+    banksel     timer_value
     subwf       timer_value, W
     subwf       acc1, W
     btfsc       STATUS, C
     goto        next_end
 
+    banksel     triaczcc_state + (channel / 8)
     bcf         triaczcc_state + (channel / 8), (channel % 8)
     set_macro   triaczcc_state + (channel / 8), (channel % 8)
 next_end:
@@ -153,13 +167,16 @@ triaczcc_init   macro
     clrf    triaczcc_cycle
 i   set     0
     while   i < TRIACZCC_NUM_CHANNELS
+    banksel triaczcc_delay + i
     clrf    triaczcc_delay + i
+    banksel triaczcc_prev_on + i
     clrf    triaczcc_prev_on + i
 i   set     i + 1
     endw
 i   set     0
     while   i < TRIACZCC_NUM_CHANNELS / 8
-    clrf    triaczcc_state + (channel / 8)
+    banksel triaczcc_state + (i / 8)
+    clrf    triaczcc_state + (i / 8)
 i   set     i + 1
     endw
     endm

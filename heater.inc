@@ -22,10 +22,12 @@ heater_value    res 1
 
     ifdef section_code
 heater_output   macro   file, bit
-    btfsc   file, bit
-    bcf     PORTE, 2
+    clrw
+    banksel file
     btfss   file, bit
-    bsf     PORTE, 2
+    movlw   1 << 2
+    banksel PORTE
+    iorwf   PORTE, F
     endm
 
 heater_timer_next macro timer_value
@@ -37,6 +39,7 @@ heater_int_next  macro
     endm
 
 heater_setw macro
+    banksel heater_value
     movwf   heater_value
     endm
 
@@ -44,7 +47,9 @@ heater_idle macro   true_value
     local       set_triac
 
     ;; if (true_value > heater_value) W = 0; goto set_triac
+    banksel     true_value
     movf        true_value, W
+    banksel     heater_value
     subwf       heater_value, W
     movwf       acc1
     movlw       HIGH set_triac
@@ -63,11 +68,12 @@ set_triac:
     endif
 
     ifdef section_init
+    banksel PORTE
     bsf     PORTE, 2
     banksel TRISE
     bcf     TRISE, 2
-    banksel PORTE
 
+    banksel heater_value
     clrf    heater_value
     endif
 

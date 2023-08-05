@@ -34,11 +34,14 @@ cooldown_idle       macro   temp_value
     endif
 
     movlw           0x0F
+    banksel         cooldown_state
     andwf           cooldown_state, F
 
     ;; cooldown_state_4 = temp_value > COOLDOWN_MAX_TEMP
+    banksel         temp_value
     movf            temp_value, W
     sublw           COOLDOWN_MAX_TEMP
+    banksel         cooldown_state
     btfss           STATUS, C
     bsf             cooldown_state, 4
 
@@ -59,15 +62,18 @@ cooldown_idle       macro   temp_value
     endm
 
 cooldown_skip_if_active  macro
+    banksel         cooldown_state
     btfss           cooldown_state, 0
     endm
 
 cooldown_skip_if_not_active  macro
+    banksel         cooldown_state
     btfsc           cooldown_state, 0
     endm
     endif
 
     ifdef section_init
+    banksel         cooldown_state
     clrf            cooldown_state
     endif
 

@@ -5,7 +5,7 @@
     endif
 #define module_stdlib
 
-    ifdef section_udata
+    ifdef section_udata_shr
 w16     res 2
 acc1    res 1
 acc2    res 1
@@ -35,6 +35,7 @@ bge16lf macro   file1, lit, dest
 
     movlw   HIGH dest
     movwf   PCLATH
+    banksel file1 + 1
     movf    file1 + 1, W
     sublw   HIGH lit
     btfss   STATUS, C
@@ -48,6 +49,7 @@ bge16lf macro   file1, lit, dest
     movlw   HIGH dest
     movwf   PCLATH
     movlw   LOW lit
+    banksel file1
     subwf   file1, W
     btfsc   STATUS, C
     goto    dest
@@ -60,7 +62,9 @@ bge16ff macro   file1, file2, dest
 
     movlw   HIGH dest
     movwf   PCLATH
+    banksel file1 + 1
     movf    file1 + 1, W
+    banksel file2 + 1
     subwf   file2 + 1, W
     btfss   STATUS, C
     goto    dest
@@ -72,7 +76,9 @@ bge16ff macro   file1, file2, dest
 
     movlw   HIGH dest
     movwf   PCLATH
+    banksel file2
     movf    file2, W
+    banksel file1
     subwf   file1, W
     btfsc   STATUS, C
     goto    dest
@@ -89,6 +95,7 @@ mulw16f macro   file
 
     movlw   HIGH mulend
     movwf   PCLATH
+    banksel file
     movf    file, F
     btfsc   STATUS, Z
     goto    mulend
@@ -130,11 +137,13 @@ divmod1608fl    macro   file16, l
     if      file16 == acc1
     error   "Cannot use acc1 for divmod16"
     endif
+    banksel file16
     movf    file16, W
     movwf   acc1
+    clrf    file16
+    banksel file16 + 1
     movf    file16 + 1, W
     movwf   acc2
-    clrf    file16
     clrf    file16 + 1
 divloop:
     movlw   l
@@ -148,7 +157,9 @@ divloop:
     btfss   STATUS, C
     goto    divend
 
+    clrf    file16
     incf    file16, F
+    clrf    file16 + 1
     btfsc   STATUS, Z
     incf    file16 + 1, F
     movlw   HIGH divloop
@@ -161,6 +172,7 @@ divend:
 
     ;; Divide file by 2^l.
 divp2lf macro   file, l
+    banksel file
 i   set     0
     while   i < l
 i   set     i + 1

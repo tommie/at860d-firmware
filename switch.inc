@@ -15,30 +15,38 @@
 
 ifdef section_code
 swcal_get       macro   file, bit
-    btfss   PORTA, 2
-    bcf     file, bit
+    clrw
+    banksel PORTA
     btfsc   PORTA, 2
-    bsf     file, bit
+    movlw   1 << bit
+    banksel file
+    iorwf   file, F
     endm
 
 swset_get       macro   file, bit
-    btfss   PORTB, 1
-    bcf     file, bit
+    clrw
+    banksel PORTB
     btfsc   PORTB, 1
-    bsf     file, bit
+    movlw   1 << bit
+    banksel file
+    iorwf   file, F
     endm
 
 swstandby_get   macro   file, bit
+    clrw
+    banksel PORTA
     btfss   PORTA, 4
-    bsf     file, bit
-    btfsc   PORTA, 4
-    bcf     file, bit
+    movlw   1 << bit
+    banksel file
+    iorwf   file, F
     endm
 
 swpower_get macro   file, bit
+    clrw
+    banksel PORTA
     btfss   PORTA, 5
-    bsf     file, bit
-    btfsc   PORTA, 5
-    bcf     file, bit
+    movlw   1 << bit
+    banksel file
+    iorwf   file, F
     endm
 endif

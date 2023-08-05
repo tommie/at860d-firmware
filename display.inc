@@ -18,8 +18,10 @@ display_digitbuf    res 2
 display_timer_next  macro
     ledca_blank
 
+    banksel display_buf
     movlw   display_buf
     movwf   FSR
+    banksel display_i
     movf    display_i, W
     addwf   FSR, F
     movf    INDF, W
@@ -39,18 +41,25 @@ display_timer_next  macro
 display_set_digits  macro   base, vf
     local           blank_end
 
+    banksel         vf
     divmod1608fl    vf, 10
     movwf           acc1
     ledseg_translate acc1
+    banksel         base
     movwf           base
+    banksel         vf
     divmod1608fl    vf, 10
+    banksel         display_digitbuf
     movwf           display_digitbuf
+    banksel         vf
     divmod1608fl    vf, 10
+    banksel         display_digitbuf + 1
     movwf           display_digitbuf + 1
 
     ;; Blank leading zeros.
     movlw           HIGH blank_end
     movwf           PCLATH
+    banksel         display_digitbuf + 1
     movf            display_digitbuf + 1, F
     btfss           STATUS, Z
     goto            blank_end
@@ -58,6 +67,7 @@ display_set_digits  macro   base, vf
     movlw           0x0F
     movwf           display_digitbuf + 1
 
+    banksel         display_digitbuf
     movf            display_digitbuf, F
     btfss           STATUS, Z
     goto            blank_end
@@ -65,9 +75,13 @@ display_set_digits  macro   base, vf
     movwf           display_digitbuf
 blank_end:
 
+    banksel         display_digitbuf
     ledseg_translate display_digitbuf
+    banksel         base + 1
     movwf           base + 1
+    banksel         display_digitbuf + 1
     ledseg_translate display_digitbuf + 1
+    banksel         base + 2
     movwf           base + 2
 
     endm
@@ -83,6 +97,7 @@ display_set_temp_w16        macro
     endm
 
 display_set_temp_unit       macro
+    banksel display_buf + 6
     movwf   display_buf + 6
     endm
 
@@ -106,13 +121,21 @@ display_set_air_w16_func:
     endif
 
     ifdef section_init
+    banksel display_i
     clrf    display_i
     movlw   0xFF
+    banksel display_buf
     movwf   display_buf
+    banksel display_buf + 1
     movwf   display_buf + 1
+    banksel display_buf + 2
     movwf   display_buf + 2
+    banksel display_buf + 3
     movwf   display_buf + 3
+    banksel display_buf + 4
     movwf   display_buf + 4
+    banksel display_buf + 5
     movwf   display_buf + 5
+    banksel display_buf + 6
     movwf   display_buf + 6
     endif

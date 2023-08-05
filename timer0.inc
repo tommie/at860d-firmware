@@ -34,7 +34,9 @@ timer0_irq  macro
     movlw   256 - 156           ; PS=3: 0.0004992 ms, 2003 Hz
     addwf   TMR0, F
 
+    banksel timer_value
     incf    timer_value, F
+    banksel timer_value + 1
     btfsc   STATUS, Z
     incf    timer_value + 1, F
 
@@ -57,7 +59,9 @@ irq_end:
 
     bsf     INTCON, T0IE
 
+    banksel timer_value
     clrf    timer_value
+    banksel timer_value + 1
     clrf    timer_value + 1
     endif
 

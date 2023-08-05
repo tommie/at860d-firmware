@@ -53,7 +53,6 @@ not_wdto:
     banksel WDTCON
     movlw   (10 << WDTPS0)
     movwf   WDTCON
-    banksel 0
     endif
 
     ifdef section_idle

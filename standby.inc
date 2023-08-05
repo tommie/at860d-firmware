@@ -32,7 +32,9 @@ standby_idle    macro   timer_value
     goto            handle_in_cradle
 
     ;; Not in cradle.
+    banksel         standby_time
     clrf            standby_time
+    banksel         standby_state
     bcf             standby_state, 0
     movlw           HIGH idle_end
     movwf           PCLATH
@@ -41,45 +43,55 @@ standby_idle    macro   timer_value
 handle_in_cradle:
     movlw           HIGH time_set
     movwf           PCLATH
+    banksel         standby_time
     movf            standby_time, F
     btfss           STATUS, Z
     goto            time_set
 
     ;; standby_time = timer_value + (timer_value == 0 ? 1 : 0)
+    banksel         timer_value
     movf            timer_value, W
     btfsc           STATUS, Z
     addlw           1
+    banksel         standby_time
     movwf           standby_time
 
 time_set:
     ;; if (timer_value - standby_time > delay) standby_state = 1
-    ifndef      STANDBY_DELAY
+    ifndef          STANDBY_DELAY
     error "STANDBY_DELAY is not defined"
     endif
-    if          STANDBY_DELAY > 255
+    if              STANDBY_DELAY > 255
     error "STANDBY_DELAY larger than a byte"
     endif
-    movf        standby_time, W
-    subwf       timer_value, W
-    sublw       STANDBY_DELAY
-    btfss       STATUS, C
-    bsf         standby_state, 0
+    banksel         standby_time
+    movf            standby_time, W
+    banksel         timer_value
+    subwf           timer_value, W
+    sublw           STANDBY_DELAY
+    banksel         standby_state
+    btfss           STATUS, C
+    bsf             standby_state, 0
 
 idle_end:
     endm
 
 standby_skip_if_active  macro
+    banksel     standby_state
     btfss       standby_state, 0
     endm
 
 standby_skip_if_not_active  macro
+    banksel     standby_state
     btfsc       standby_state, 0
     endm
     endif
 
     ifdef section_init
-    clrf            standby_time
-    clrf            standby_state
+    banksel     standby_time
+    clrf        standby_time
+    banksel     standby_state
+    clrf        standby_state
     endif
 
     ifdef section_idle

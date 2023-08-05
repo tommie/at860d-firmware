@@ -14,10 +14,12 @@
     ifdef section_code
 ledca_blank     macro
     movlw   ~0xFE
+    banksel PORTC
     andwf   PORTC, F
     endm
 
 ledseg_set      macro
+    banksel PORTD
     movwf   PORTD
     endm
 
@@ -25,8 +27,10 @@ ledseg_set      macro
 ledca_setf_irq  macro   file
     movlw   HIGH ledca_table_irq
     movwf   PCLATH
+    banksel file
     movf    file, W
     call    ledca_table_irq
+    banksel PORTC
     iorwf   PORTC, F
     endm
 
@@ -44,6 +48,7 @@ ledca_table_irq:
 ledseg_translate    macro file
     movlw   HIGH ledseg_table
     movwf   PCLATH
+    banksel file
     movf    file, W
     call    ledseg_table
     endm
@@ -90,16 +95,16 @@ ledseg_table:
     ifdef section_init
     ;; Segments
     movlw   ~0xFE
+    banksel PORTC
     andwf   PORTC, F
     banksel TRISC
     andwf   TRISC, F
-    banksel PORTC
 
     ;; Digits (CA)
     clrw
     sublw   1
+    banksel PORTD
     movwf   PORTD
     banksel TRISD
     clrf    TRISD
-    banksel PORTD
     endif
