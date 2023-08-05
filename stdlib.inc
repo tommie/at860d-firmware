@@ -157,9 +157,9 @@ divloop:
     btfss   STATUS, C
     goto    divend
 
-    clrf    file16
+    banksel file16
     incf    file16, F
-    clrf    file16 + 1
+    banksel file16 + 1
     btfsc   STATUS, Z
     incf    file16 + 1, F
     movlw   HIGH divloop
