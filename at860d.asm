@@ -3,8 +3,16 @@
     __config _CONFIG1, _HS_OSC & _WDTE_ON & _PWRTE_OFF & _MCLRE_ON & _CP_OFF & _CPD_OFF & _BOREN_ON & _IESO_OFF & _LVP_OFF & _DEBUG_OFF
     __config _CONFIG2, _BOR40V & _WRT_OFF
 
+BTN_UP          equ 0
+BTN_DOWN        equ 1
+BTN_HEAT_HNDL   equ 2
+BTN_PRESET_1    equ 3
+BTN_PRESET_2    equ 4
+BTN_PRESET_3    equ 5
+BTN_HEAT_PANEL  equ 8
+
 #define BUTTONPRESS_NUM_CHANNELS 6
-#define BUTTONPRESS_REPEAT_MASK 0
+#define BUTTONPRESS_REPEAT_MASK ((1 << BTN_UP) | (1 << BTN_DOWN))
 #define COOLDOWN_MAX_TEMP 20
     ;; In 128 ms ticks.
 #define SELFTEST_TIMEOUT (10000 / 128)
@@ -28,6 +36,12 @@
 #define section_udata_shr
     include "modules.inc"
 #undefine section_udata_shr
+
+    org     0x2100
+
+#define section_eedata
+    include "modules.inc"
+#undefine section_eedata
 
     code
 
@@ -64,6 +78,11 @@ loop:
     include "modules.inc"
 #undefine section_idle
 
+    if          1
+    fp_display
+    endif
+
+    if          0
     movlw       HIGH in_cooldown
     movwf       PCLATH
     cooldown_skip_if_not_active
@@ -84,17 +103,19 @@ loop:
 
     movf        adc_knob_value, W
     heater_setw
+    endif
 
-    movf        adc_temp_value, W
+    if          0
+    movf        heater_value, W
     movwf       w16
     clrf        w16 + 1
     display_set_temp_w16
 
-    ;movf        airpump_value, W
-    movf        triaczcc_delay, W
+    movf        airpump_value, W
     movwf       w16
     clrf        w16 + 1
     display_set_air_w16
+    endif
 
     movlw       HIGH loop
     movwf       PCLATH

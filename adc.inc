@@ -1,7 +1,7 @@
     ;; ADC module.
     ;;
-    ;; RA0 / AN0 - Temperature
-    ;; RA3 / AN3 - Knob
+    ;; RA0 / AN0 - Temperature, 10-bits
+    ;; RA3 / AN3 - Knob, 10-bits
     ;;
     ;; States:
     ;;   0 - ADC is complete. adc_next sets up CHS for next channel.
@@ -18,8 +18,8 @@
     ifdef section_udata
 adc_i           res 1
 adc_state		res 1
-adc_temp_value  res 1
-adc_knob_value  res 1
+adc_temp_value  res 2
+adc_knob_value  res 2
     endif
 
     ifdef section_code
@@ -42,6 +42,11 @@ adc_idle macro
     call    adc_var_table
     movwf   FSR
 
+    banksel ADRESL
+    movf    ADRESL, W
+    movwf   INDF
+
+    incf    FSR, F
     banksel ADRESH
     movf    ADRESH, W
     movwf   INDF
@@ -103,7 +108,7 @@ adc_var_table:
     movlw   (1 << ADON) | (0 << CHS0)
     movwf   ADCON0
     banksel ADCON1
-    movlw   (0 << ADFM) | (0 << VCFG1) | (0 << VCFG0)
+    movlw   (1 << ADFM) | (0 << VCFG1) | (0 << VCFG0)
     movwf   ADCON1
 
     banksel ANSEL

@@ -16,10 +16,12 @@
     include "irq.inc"
     include "power.inc"
     include "switch.inc"        ; Required by standby.
-    include "buttonpress.inc"
+    include "buttonpress.inc"   ; Required by frontpanel.
+    include "eeprom.inc"        ; Required by frontpanel.
     include "cooldown.inc"
     include "selftest.inc"
     include "standby.inc"
+    include "frontpanel.inc"
 
     ;; Last because it may enter a fault loop on init.
     include "wdt.inc"
