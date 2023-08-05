@@ -3,7 +3,7 @@ CC = sdcc
 LD = gplink
 
 ASFLAGS = -p p16f887 -r dec
-LDFLAGS =
+LDFLAGS = -m
 
 .PHONY: all
 all: at860d.hex
