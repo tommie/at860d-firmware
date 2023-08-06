@@ -22,12 +22,14 @@ heater_value    res 1
 
     ifdef section_code
 heater_output   macro   file, bit
-    clrw
+    banksel PORTE
+    movf    PORTE, W
+    andlw   ~(1 << 2)
     banksel file
     btfss   file, bit
-    movlw   1 << 2
+    iorlw   1 << 2
     banksel PORTE
-    iorwf   PORTE, F
+    movwf   PORTE
     endm
 
 heater_timer_next macro timer_value

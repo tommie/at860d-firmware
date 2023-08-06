@@ -9,12 +9,14 @@
 
     ifdef section_code
 buzzer_set      macro   file, bit
-    clrw
-    banksel file
-    btfsc   file, bit
-    movlw   1 << 0
     banksel PORTC
-    iorwf   PORTC, F
+    movf    PORTC, W
+    andlw   ~(1 << 0)
+    banksel file
+    btfss   file, bit
+    iorlw   1 << 0
+    banksel PORTC
+    movwf   PORTC
     endm
     endif
 

@@ -13,12 +13,14 @@
 
     ifdef section_code
 power_set       macro   file, bit
-    clrw
+    banksel PORTE
+    movf    PORTE, W
+    andlw   ~(1 << 0)
     banksel file
     btfss   file, bit
-    movlw   1 << 0
+    iorlw   1 << 0
     banksel PORTE
-    iorwf   PORTE, F
+    movwf   PORTE
     endm
     endif
 
