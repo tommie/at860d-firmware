@@ -41,6 +41,7 @@ BP_HELD         equ 3           ; The timer has passed holding, and is waiting f
 bp_current  res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
 bp_prev     res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
 bp_clicked  res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
+bp_held     res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
 bp_holding  res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
 bp_t        res 2
 bp_ival     res 2
@@ -56,6 +57,16 @@ buttonpress_skip_if_clicked macro   index
 buttonpress_reset_clicked   macro   index
     banksel bp_clicked + (index / 8)
     bcf     bp_clicked + (index / 8), index % 8
+    endm
+
+buttonpress_skip_if_held macro   index
+    banksel bp_held + (index / 8)
+    btfss   bp_held + (index / 8), index % 8
+    endm
+
+buttonpress_reset_held macro   index
+    banksel bp_held + (index / 8)
+    bcf     bp_held + (index / 8), index % 8
     endm
 
 bp_idle     macro
@@ -227,6 +238,8 @@ start_hold:
     movf    bp_current, W
     banksel bp_holding
     movwf   bp_holding
+    banksel bp_held
+    iorwf   bp_held, F
 
     ;; bp_ival = BP_MAX_REPEAT_MS
     movlw   LOW BP_MAX_REPEAT_MS
