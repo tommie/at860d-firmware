@@ -55,12 +55,19 @@ eeprom_write_w      macro
     endm
 
 eeprom_write    macro
+    local   wait_gie
+
     banksel EECON1
     bcf     EECON1, EEPGD
     bsf     EECON1, WREN
     bcf     INTCON, GIE
+    movlw   HIGH wait_gie
+    movwf   PCLATH
+
+wait_gie:
     btfsc   INTCON, GIE
-    goto    $-2
+    goto    wait_gie
+
     movlw   0x55
     movwf   EECON2
     movlw   0xAA
@@ -107,8 +114,6 @@ eeprom_idle macro
     bcf     PIR2, EEIF
     bcf     EECON1, WREN
 
-    movlw   HIGH done
-    movwf   PCLATH
     banksel ee_state
     btfss   ee_state, EE_WR_W16
     goto    done

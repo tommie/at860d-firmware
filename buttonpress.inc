@@ -49,10 +49,12 @@ bp_state    res 1
 
     ifdef section_code
 buttonpress_skip_if_clicked macro   index
+    banksel bp_clicked + (index / 8)
     btfss   bp_clicked + (index / 8), index % 8
     endm
 
 buttonpress_reset_clicked   macro   index
+    banksel bp_clicked + (index / 8)
     bcf     bp_clicked + (index / 8), index % 8
     endm
 
