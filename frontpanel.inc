@@ -130,6 +130,7 @@ done:
 fp_idle macro
     local   up_done
     local   down_done
+    local   air_disabled
     local   air_done
     local   arm_done
     local   timer_done
@@ -175,10 +176,24 @@ down_done:
     goto    air_done
 
     buttonpress_reset_clicked   BTN_HEAT_HNDL
-    movlw   1 << FP_BTN_AIR
-    banksel fp_state
-    xorwf   fp_state, F
     bsf     fp_state, FP_ARM_TMR
+
+    movlw   HIGH air_disabled
+    movwf   PCLATH
+    banksel fp_state
+    btfsc   fp_state, FP_BTN_AIR
+    goto    air_disabled
+
+    bsf     fp_state, FP_BTN_AIR
+    display_set_cursor  3
+
+    movlw   HIGH air_done
+    movwf   PCLATH
+    goto    air_done
+
+air_disabled:
+    bcf     fp_state, FP_BTN_AIR
+    display_clear_cursor
 air_done:
 
     movlw   HIGH arm_done

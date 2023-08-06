@@ -12,6 +12,12 @@
 display_i           res 1
 display_buf         res 7
 display_digitbuf    res 2
+display_cursor      res 1
+display_cursor_tmr  res 1       ; In 256ms units.
+
+DISP_CUR_MASK       EQU 0x0F
+DISP_CUR_EN         EQU 6
+DISP_CUR_ON         EQU 7
     endif
 
     ifdef section_code
@@ -84,6 +90,7 @@ blank_end:
     banksel         base + 2
     movwf           base + 2
 
+    display_cur_update
     endm
 
 display_set_temp    macro   vf
@@ -111,6 +118,70 @@ display_set_air_w16         macro
     call    display_set_air_w16_func
     endm
 
+display_set_cursor  macro   digit
+    movlw   (1 << DISP_CUR_ON) | (1 << DISP_CUR_EN) | digit
+    banksel display_cursor
+    movwf   display_cursor
+    endm
+
+display_clear_cursor    macro
+    banksel display_cursor
+    clrf    display_cursor
+    movlw   ~LSDP
+i   set     0
+    while   i < 6
+    banksel display_buf + i
+    iorwf   display_buf + i, F
+i   set     i + 1
+    endw
+    endm
+
+display_idle    macro
+    local   exit
+
+    movlw   HIGH exit
+    movwf   PCLATH
+    banksel timer_value + 1
+    movf    timer_value + 1, W
+    banksel display_cursor_tmr
+    subwf   display_cursor_tmr, W
+    btfss   STATUS, Z
+    goto    exit
+
+    ;; We let the timer run even if the cursor is off, to keep a
+    ;; steady pace.
+    movlw   DISPLAY_CURSOR_IVAL
+    banksel display_cursor_tmr
+    addwf   display_cursor_tmr, F
+
+    banksel display_cursor
+    btfss   display_cursor, DISP_CUR_EN
+    goto    exit
+
+    movlw   1 << DISP_CUR_ON
+    banksel display_cursor
+    xorwf   display_cursor, F
+
+    display_cur_update
+exit:
+    endm
+
+display_cur_update  macro
+    banksel display_cursor
+    movf    display_cursor, W
+    andlw   DISP_CUR_MASK
+    addlw   display_buf
+    movwf   FSR
+
+    banksel display_cursor
+    movlw   LSDP
+    btfsc   display_cursor, DISP_CUR_ON
+    andwf   INDF, F
+    movlw   ~LSDP
+    btfss   display_cursor, DISP_CUR_ON
+    iorwf   INDF, F
+    endm
+
 display_set_temp_w16_func:
     display_set_temp    w16
     retlw   0
@@ -124,18 +195,18 @@ display_set_air_w16_func:
     banksel display_i
     clrf    display_i
     movlw   0xFF
-    banksel display_buf
-    movwf   display_buf
-    banksel display_buf + 1
-    movwf   display_buf + 1
-    banksel display_buf + 2
-    movwf   display_buf + 2
-    banksel display_buf + 3
-    movwf   display_buf + 3
-    banksel display_buf + 4
-    movwf   display_buf + 4
-    banksel display_buf + 5
-    movwf   display_buf + 5
-    banksel display_buf + 6
-    movwf   display_buf + 6
+i   set     0
+    while   i < 7
+    banksel display_buf + i
+    movwf   display_buf + i
+i   set     i + 1
+    endw
+    banksel display_cursor
+    clrf    display_cursor
+    banksel display_cursor_tmr
+    clrf    display_cursor_tmr
+    endif
+
+    ifdef section_idle
+    display_idle
     endif
