@@ -20,11 +20,13 @@ eeprom_read_lw      macro addr
     movlw   LOW addr
     banksel EEADR
     movwf   EEADR
-    banksel EECON1
-    bcf     EECON1, EEPGD
-    bsf     EECON1, RD
-    banksel EEDAT
-    movf    EEDAT, W
+    eeprom_read
+    endm
+
+eeprom_read_w   macro
+    banksel EEADR
+    movwf   EEADR
+    eeprom_read
     endm
 
 eeprom_read_lw16    macro addr, dest
@@ -34,6 +36,14 @@ eeprom_read_lw16    macro addr, dest
     eeprom_read_lw  addr + 1
     banksel dest + 1
     movlw   dest + 1
+    endm
+
+eeprom_read macro
+    banksel EECON1
+    bcf     EECON1, EEPGD
+    bsf     EECON1, RD
+    banksel EEDAT
+    movf    EEDAT, W
     endm
 
 eeprom_write_lw     macro addr

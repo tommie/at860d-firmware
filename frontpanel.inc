@@ -30,15 +30,14 @@
 
     ifdef section_udata
 fp_state        res 1
+fp_ee_i         res 1
 fp_t            res 2
-fp_ee_t         res 2
 
 FP_TEMP_SET     EQU 0
-FP_BTN_AIR      EQU 1
-FP_TEMP_DIRTY   EQU 2
-FP_AIR_DIRTY    EQU 3
-FP_EE_WRITE     EQU 4
-FP_RUN_TMR      EQU 5
+FP_PRESET_SET   EQU 1
+FP_BTN_AIR      EQU 2
+FP_EE_WRITE     EQU 3
+FP_RUN_TMR      EQU 4
 FP_ARM_TMR      EQU 7
     endif
 
@@ -73,6 +72,9 @@ disp_temp:
     display_set_temp_w16
 
     movlw   LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
+    banksel fp_state
+    btfsc   fp_state, FP_PRESET_SET
+    movlw   LS2A & LS2B & LS2E & LS2F & LS2G    ; "P"
     movwf   display_buf + 6
 
     clrf    w16 + 1
@@ -83,13 +85,35 @@ disp_temp:
     endm
 
 fp_idle_preset  macro   btn, i
+    local   not_held
     local   done
+
+    movlw   HIGH not_held
+    movwf   PCLATH
+    buttonpress_skip_if_held btn
+    goto    not_held
+
+    ;; Write
+    buttonpress_reset_held   btn
+
+    movlw   i
+    banksel fp_ee_i
+    movwf   fp_ee_i
+    banksel fp_state
+    movlw   (1 << FP_EE_WRITE) | (1 << FP_PRESET_SET) | (1 << FP_ARM_TMR)
+    iorwf   fp_state, F
+
+    movlw   HIGH done
+    movwf   PCLATH
+    goto    done
+not_held:
 
     movlw   HIGH done
     movwf   PCLATH
     buttonpress_skip_if_clicked btn
     goto    done
 
+    ;; Read
     buttonpress_reset_clicked   btn
 
     eeprom_read_lw  fp_ee_temp + i
@@ -97,6 +121,9 @@ fp_idle_preset  macro   btn, i
 
     eeprom_read_lw  fp_ee_air + i
     airpump_setw
+
+    bsf     fp_state, FP_TEMP_SET
+    bsf     fp_state, FP_ARM_TMR
 done:
     endm
 
@@ -151,6 +178,7 @@ down_done:
     movlw   1 << FP_BTN_AIR
     banksel fp_state
     xorwf   fp_state, F
+    bsf     fp_state, FP_ARM_TMR
 air_done:
 
     movlw   HIGH arm_done
@@ -190,7 +218,7 @@ arm_done:
     ;; fp_state &= ~(...)
     banksel fp_state
     movf    fp_state, W
-    andlw   ~((1 << FP_TEMP_SET) | (1 << FP_RUN_TMR))
+    andlw   ~((1 << FP_TEMP_SET) | (1 << FP_PRESET_SET) | (1 << FP_RUN_TMR))
     iorlw   (1 << FP_EE_WRITE)
     movwf   fp_state
 timer_done:
@@ -202,16 +230,19 @@ timer_done:
     btfss   fp_state, FP_EE_WRITE
     goto    write_ee_done
 
-    fp_try_write_ee FP_TEMP_DIRTY, heater_value, fp_ee_temp
-    fp_try_write_ee FP_AIR_DIRTY, airpump_value, fp_ee_air
+    fp_try_write_ee heater_value, fp_ee_temp
+    fp_try_write_ee airpump_value, fp_ee_air
 
     movlw   HIGH write_ee_done
     movwf   PCLATH
     eeprom_skip_if_can_write
     goto    write_ee_done
 
+    ;; Writing both values is done.
     banksel fp_state
     bcf     fp_state, FP_EE_WRITE
+    banksel fp_ee_i
+    clrf    fp_ee_i
 write_ee_done:
     endm
 
@@ -225,16 +256,12 @@ fp_change_value_l   macro   delta
     goto            airpump
 
     fp_update_lfm   delta, heater_value, heater_setw
-    banksel         fp_state
-    bsf             fp_state, FP_TEMP_DIRTY
     movlw           HIGH exit
     movwf           PCLATH
     goto            exit
 
 airpump:
     fp_update_lfm   delta, airpump_value, airpump_setw
-    banksel         fp_state
-    bsf             fp_state, FP_AIR_DIRTY
 
 exit:
     endm
@@ -260,29 +287,33 @@ fp_update_lfm   macro   delta, file, setwmacro
 exit:
     endm
 
-fp_try_write_ee macro   bit, file, eeaddr
+fp_try_write_ee macro   file, eeaddr
     local           exit
 
     movlw           HIGH exit
     movwf           PCLATH
-    banksel         fp_state
-    btfss           fp_state, bit
-    goto            exit
-
     eeprom_skip_if_can_write
     goto            exit
 
-    banksel         fp_state
-    bcf             fp_state, bit
-
-    eeprom_read_lw  eeaddr
+    movlw           HIGH exit
+    movwf           PCLATH
+    banksel         fp_ee_i
+    movf            fp_ee_i, W
+    addlw           eeaddr
+    eeprom_read_w
     banksel         file
     subwf           file, W
     btfsc           STATUS, Z
     goto            exit
 
+    banksel         fp_ee_i
+    movf            fp_ee_i, W
+    addlw           eeaddr
+    banksel         EEADR
+    movwf           EEADR
+    banksel         file
     movf            file, W
-    eeprom_write_lw eeaddr
+    eeprom_write_w
 exit:
     endm
     endif
@@ -290,6 +321,8 @@ exit:
     ifdef section_init
     banksel fp_state
     clrf    fp_state
+    banksel fp_ee_i
+    clrf    fp_ee_i
 
     ;; Initialize from EEPROM.
     eeprom_read_lw  fp_ee_temp
