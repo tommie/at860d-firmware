@@ -90,10 +90,10 @@ done_newscan:
 buttonscan_driver_table:
     andlw   0x03
     table_jump  tbl
-    dt      ~(1 << RB5)         ; K3
-    dt      ~(1 << RB6)         ; K4, K5, K6
-    dt      ~(1 << RB7)         ; handle, K1, K2
-    dt      ~0
+    retlw   ~(1 << RB5)         ; K3
+    retlw   ~(1 << RB6)         ; K4, K5, K6
+    retlw   ~(1 << RB7)         ; handle, K1, K2
+    retlw   ~0
 
     endif
 

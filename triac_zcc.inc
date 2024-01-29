@@ -146,10 +146,10 @@ next_end:
 triaczcc_table_m  macro num_frac_bits, num_extra_bits
     andlw   (1 << num_frac_bits) - 1
     table_jump  tbl
-    dt      0
+    retlw   0
 i   set     1
     while   i < (1 << num_frac_bits)
-    dt      ((((1 << num_frac_bits) - 1) << (num_extra_bits + 1)) / i + 1) / 2
+    retlw   ((((1 << num_frac_bits) - 1) << (num_extra_bits + 1)) / i + 1) / 2
 i   set     i + 1
     endw
     endm

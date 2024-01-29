@@ -38,12 +38,16 @@ ledca_table_irq:
     andlw   0x07
     table_jump  tblirq
     ;; LED1:1
-    dt      0x20, 0x40, 0x80
+    retlw   0x20
+    retlw   0x40
+    retlw   0x80
     ;; LED2:1
-    dt      0x04, 0x08, 0x10
+    retlw   0x04
+    retlw   0x08
+    retlw   0x10
     ;; LED3:1
-    dt      0x02
-    dt      0
+    retlw   0x02
+    retlw   0
 
 ledseg_translate    macro file
     movlw   HIGH ledseg_table

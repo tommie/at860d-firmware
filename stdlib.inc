@@ -18,6 +18,7 @@ tblirq  res 1
 table_jump  macro   tblf
     local   case0
 
+    banksel tblf
     movwf   tblf
     addlw   LOW case0
     movlw   HIGH case0

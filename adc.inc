@@ -41,6 +41,7 @@ adc_idle macro
     movf    adc_i, W
     call    adc_var_table
     movwf   FSR
+    ;; TODO: need to set IRP bit
 
     banksel ADRESL
     movf    ADRESL, W
@@ -94,14 +95,14 @@ timer_next_end:
 adc_channel_table:
     andlw   0x01
     table_jump  tbl
-    dt      0 << CHS0
-    dt      3 << CHS0
+    retlw   0 << CHS0
+    retlw   3 << CHS0
 
 adc_var_table:
     andlw   0x01
     table_jump  tbl
-    dt      adc_temp_value
-    dt      adc_knob_value
+    retlw   LOW adc_temp_value
+    retlw   LOW adc_knob_value
     endif
 
     ifdef section_init
