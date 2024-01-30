@@ -9,9 +9,6 @@
     endif
 #define module_frontpanel
 
-    ifndef module_adc
-    error "adc module is a dependency of frontpanel"
-    endif
     ifndef module_buttonpress
     error "buttonpress module is a dependency of frontpanel"
     endif
@@ -23,6 +20,12 @@
     endif
     ifndef module_switch
     error "switch module is a dependency of frontpanel"
+    endif
+    ifndef module_temp
+    error "temp module is a dependency of frontpanel"
+    endif
+    ifndef module_tempcontrol
+    error "tempcontrol module is a dependency of frontpanel"
     endif
     ifndef module_timer0
     error "timer0 module is a dependency of frontpanel"
@@ -50,11 +53,7 @@ fp_ee_air   de  31, 0, 0, 255
 fp_display  macro
     local   disp_temp
 
-    banksel adc_temp_value
-    movf    adc_temp_value + 1, W
-    movwf   w16 + 1
-    movf    adc_temp_value, W
-    movwf   w16
+    mov16ff temp_value, w16
 
     ;; if ((fp_state & 1) == 0) goto disp_temp
     movlw   HIGH disp_temp
@@ -63,10 +62,7 @@ fp_display  macro
     btfss   fp_state, FP_TEMP_SET
     goto    disp_temp
 
-    clrf    w16 + 1
-    banksel heater_value
-    movf    heater_value, W
-    movwf   w16
+    tempc_get16 w16
 
 disp_temp:
     display_set_temp_w16
@@ -245,7 +241,7 @@ timer_done:
     btfss   fp_state, FP_EE_WRITE
     goto    write_ee_done
 
-    fp_try_write_ee heater_value, fp_ee_temp
+    fp_try_write_ee tempc_value, fp_ee_temp
     fp_try_write_ee airpump_value, fp_ee_air
 
     movlw   HIGH write_ee_done
@@ -270,7 +266,7 @@ fp_change_value_l   macro   delta
     btfsc           fp_state, FP_BTN_AIR
     goto            airpump
 
-    fp_update_lfm   delta, heater_value, heater_setw
+    fp_update_lfm   delta, tempc_value, tempc_setw
     movlw           HIGH exit
     movwf           PCLATH
     goto            exit

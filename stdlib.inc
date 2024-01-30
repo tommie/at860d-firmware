@@ -86,7 +86,110 @@ bge16ff macro   file1, file2, dest
 mend:
     endm
 
+    ;; Performs a left-rotate n times on file, setting low bits to carry.
+rl16fl      macro   file, n, carry
+    local   i
+
+    banksel file
+i   set     0
+    while   i < n
+i   set     i + 1
+    if carry
+    bsf     STATUS, C
+    else
+    bcf     STATUS, C
+    endif
+    rlf     file + 1, F
+    rlf     file, F
+    endw
+    endm
+
+    ;; Performs a right-rotate n times on file, setting high bits to carry.
+rr16fl      macro   file, n, carry
+    local   i
+
+    banksel file
+i   set     0
+    while   i < n
+i   set     i + 1
+    if carry
+    bsf     STATUS, C
+    else
+    bcf     STATUS, C
+    endif
+    rrf     file + 1, F
+    rrf     file, F
+    endw
+    endm
+
+clr16f  macro   file
+    banksel file
+    clrf    file + 1
+    clrf    file
+    endm
+
+add16ff macro   file, dest
+    banksel file + 1
+    movf    file + 1, W
+    banksel dest + 1
+    addwf   dest + 1, F
+    banksel file
+    movf    file, W
+    banksel dest
+    addwf   dest, F
+    banksel dest + 1
+    btfsc   STATUS, C
+    incf    dest + 1, F
+    endm
+
+    ;; dest -= file
+sub16ff macro   file, dest
+    banksel file + 1
+    movf    file + 1, W
+    banksel dest + 1
+    subwf   dest + 1, F
+    banksel file
+    movf    file, W
+    banksel dest
+    subwf   dest, F
+    banksel dest + 1
+    btfss   STATUS, C
+    decf    dest + 1, F
+    endm
+
+    ;; w16 = file * lit
+mul16fl macro   file, lit
+    local   i, j
+
+    clrf    w16 + 1
+    clrf    w16
+    banksel file
+
+i   set     0
+j   set     lit
+    while   i < 16
+i   set i + 1
+
+    if j & 1
+    movf    file + 1, W
+    addwf   w16 + 1, F
+    movf    file, W
+    addwf   w16, F
+    btfsc   STATUS, C
+    incf    w16 + 1, F
+    endif
+
+    bcf     STATUS, C
+    rlf     w16, F
+    rlf     w16 + 1, F
+
+j   set     j >> 1
+    endw
+    endm
+
     ;; w16 *= file
+    ;;
+    ;; Clobbers acc1, acc2, acc3.
 mulw16f macro   file
     local   mulloop
     local   mulend
@@ -121,6 +224,17 @@ mulend:
     movwf   w16
     movf    acc2, W
     movwf   w16 + 1
+    endm
+
+mov16ff macro   src, dest
+    banksel src + 1
+    movf    src + 1, W
+    banksel dest + 1
+    movwf   dest + 1
+    banksel src
+    movf    src, W
+    banksel dest
+    movwf   dest
     endm
 
 mov16lw macro   l

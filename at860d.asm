@@ -105,18 +105,6 @@ loop:
     heater_setw
     endif
 
-    if          0
-    movf        heater_value, W
-    movwf       w16
-    clrf        w16 + 1
-    display_set_temp_w16
-
-    movf        airpump_value, W
-    movwf       w16
-    clrf        w16 + 1
-    display_set_air_w16
-    endif
-
     movlw       HIGH loop
     movwf       PCLATH
     goto        loop
