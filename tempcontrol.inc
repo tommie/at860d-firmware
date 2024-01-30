@@ -27,11 +27,11 @@ tempc_acc       res 2           ; 12.4 fixed point.
     ifdef section_code
 tempc_idle  macro
     ;; tempc_err = tempc_value - temp_value
-    banksel tempc_value
+    selbank tempc_value
     movf    tempc_value, W
-    banksel tempc_err
+    selbnkc tempc_err
     movwf   tempc_err
-    banksel tempc_err + 1
+    selbnkc tempc_err + 1
     clrf    tempc_err + 1
     rl16fl  tempc_err, 5, 0
     sub16ff tempc_err, temp_value
@@ -57,7 +57,7 @@ tempc_idle  macro
     ;; tempc_acc is now 8.8 fixed point.
 
     ;; heater_setw(tempc_acc < 0 ? 0 : (tempc_acc >> 8))
-    banksel tempc_acc + 1
+    selbnkc tempc_acc + 1
     movf    tempc_acc + 1, W
     btfsc   tempc_acc + 1, 7
     clrw
@@ -66,23 +66,23 @@ tempc_idle  macro
 
     ;; Sets the set-temperature as temp = W * 2 [*C].
 tempc_setw  macro
-    banksel tempc_value
+    selbank tempc_value
     movwf   tempc_value
     endm
 
     ;; Gets the set-temperature as W = temp / 2 [*C].
 tempc_getw  macro
-    banksel tempc_value
+    selbank tempc_value
     movf    tempc_value, W
     endm
 
     ;; Gets the set-temperature as *C in 8.0 fixed point.
 tempc_get16 macro   dest
-    banksel tempc_value
+    selbank tempc_value
     movf    tempc_value, W
-    banksel dest
+    selbnkc dest
     movwf   dest
-    banksel dest + 1
+    selbnkc dest + 1
     clrf    dest + 1
     rl16fl  dest, 1, 0
     endm

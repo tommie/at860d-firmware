@@ -58,7 +58,7 @@ fp_display  macro
     ;; if ((fp_state & 1) == 0) goto disp_temp
     movlw   HIGH disp_temp
     movwf   PCLATH
-    banksel fp_state
+    selbank fp_state
     btfss   fp_state, FP_TEMP_SET
     goto    disp_temp
 
@@ -68,13 +68,13 @@ disp_temp:
     display_set_temp_w16
 
     movlw   LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
-    banksel fp_state
+    selbnkc fp_state
     btfsc   fp_state, FP_PRESET_SET
     movlw   LS2A & LS2B & LS2E & LS2F & LS2G    ; "P"
     movwf   display_buf + 6
 
     clrf    w16 + 1
-    banksel airpump_value
+    selbnkc airpump_value
     movf    airpump_value, W
     movwf   w16
     display_set_air_w16
@@ -93,9 +93,9 @@ fp_idle_preset  macro   btn, index
     buttonpress_reset_held   btn
 
     movlw   index
-    banksel fp_ee_i
+    selbank fp_ee_i
     movwf   fp_ee_i
-    banksel fp_state
+    selbnkc fp_state
     movlw   (1 << FP_EE_WRITE) | (1 << FP_PRESET_SET) | (1 << FP_ARM_TMR)
     iorwf   fp_state, F
 
@@ -140,7 +140,7 @@ fp_idle macro
     buttonpress_reset_clicked   BTN_UP
     fp_change_value_l   1
 
-    banksel fp_state
+    selbank fp_state
     bsf     fp_state, FP_ARM_TMR
 
     movlw   HIGH up_done
@@ -157,7 +157,7 @@ up_done:
     buttonpress_reset_clicked   BTN_DOWN
     fp_change_value_l   -1
 
-    banksel fp_state
+    selbnkc fp_state
     bsf     fp_state, FP_ARM_TMR
 
     movlw   HIGH down_done
@@ -176,7 +176,7 @@ down_done:
 
     movlw   HIGH air_disabled
     movwf   PCLATH
-    banksel fp_state
+    selbank fp_state
     btfsc   fp_state, FP_BTN_AIR
     goto    air_disabled
 
@@ -194,7 +194,7 @@ air_done:
 
     movlw   HIGH arm_done
     movwf   PCLATH
-    banksel fp_state
+    selbank fp_state
     btfss   fp_state, FP_ARM_TMR
     goto    arm_done
 
@@ -202,7 +202,7 @@ air_done:
     bsf     fp_state, FP_RUN_TMR
 
     ;; fp_t = timer_value + 2000
-    banksel timer_value
+    selbnkc timer_value
     movlw   HIGH 2000
     addwf   timer_value + 1, W
     movwf   fp_t + 1
@@ -227,7 +227,7 @@ arm_done:
     bge16ff fp_t, timer_value, timer_done
 
     ;; fp_state &= ~(...)
-    banksel fp_state
+    selbank fp_state
     movf    fp_state, W
     andlw   ~((1 << FP_TEMP_SET) | (1 << FP_PRESET_SET) | (1 << FP_RUN_TMR))
     iorlw   (1 << FP_EE_WRITE)
@@ -237,7 +237,7 @@ timer_done:
     ;; if (!(fp_state & (1 << FP_EE_WRITE))) goto write_ee_done
     movlw   HIGH write_ee_done
     movwf   PCLATH
-    banksel fp_state
+    selbank fp_state
     btfss   fp_state, FP_EE_WRITE
     goto    write_ee_done
 
@@ -250,9 +250,9 @@ timer_done:
     goto    write_ee_done
 
     ;; Writing both values is done.
-    banksel fp_state
+    selbnkc fp_state
     bcf     fp_state, FP_EE_WRITE
-    banksel fp_ee_i
+    selbnkc fp_ee_i
     clrf    fp_ee_i
 write_ee_done:
     endm
@@ -282,7 +282,7 @@ fp_update_lfm   macro   delta, file, setwmacro
 
     movlw   HIGH exit
     movwf   PCLATH
-    banksel file
+    selbank file
     if      delta < 0
     movlw   -(delta)
     subwf   file, W
@@ -308,21 +308,21 @@ fp_try_write_ee macro   file, eeaddr
 
     movlw           HIGH exit
     movwf           PCLATH
-    banksel         fp_ee_i
+    selbank         fp_ee_i
     movf            fp_ee_i, W
     addlw           eeaddr
     eeprom_read_w
-    banksel         file
+    selbnkc         file
     subwf           file, W
     btfsc           STATUS, Z
     goto            exit
 
-    banksel         fp_ee_i
+    selbnkc         fp_ee_i
     movf            fp_ee_i, W
     addlw           eeaddr
-    banksel         EEADR
+    selbnkc         EEADR
     movwf           EEADR
-    banksel         file
+    selbnkc         file
     movf            file, W
     eeprom_write_w
 exit:
@@ -330,9 +330,9 @@ exit:
     endif
 
     ifdef section_init
-    banksel fp_state
+    selbank fp_state
     clrf    fp_state
-    banksel fp_ee_i
+    selbnkc fp_ee_i
     clrf    fp_ee_i
 
     ;; Initialize from EEPROM.

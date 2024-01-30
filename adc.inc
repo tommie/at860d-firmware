@@ -28,7 +28,7 @@ adc_idle macro
 
     movlw   HIGH next_end
     movwf   PCLATH
-    banksel adc_state
+    selbank adc_state
     btfsc   adc_state, 0
     goto    next_end
 
@@ -37,23 +37,23 @@ adc_idle macro
 
     movlw   HIGH adc_var_table
     movwf   PCLATH
-    banksel adc_i
+    selbnkc adc_i
     movf    adc_i, W
     call    adc_var_table
     movwf   FSR
     ;; TODO: need to set IRP bit
 
-    banksel ADRESL
+    selbnkc ADRESL
     movf    ADRESL, W
     movwf   INDF
 
     incf    FSR, F
-    banksel ADRESH
+    selbnkc ADRESH
     movf    ADRESH, W
     movwf   INDF
 
     ;; ++adc_i
-    banksel adc_i
+    selbnkc adc_i
     incf    adc_i, F
 
     ;; if (adc_i >= 2) adc_i = 0
@@ -71,7 +71,7 @@ adc_idle macro
     andlw   (15 << CHS0)
     xorwf   ADCON0, F
 
-    banksel adc_state
+    selbnkc adc_state
     bsf     adc_state, 0
 
 next_end:
@@ -81,7 +81,7 @@ adc_timer_next macro
     local   timer_next_end
     movlw   HIGH timer_next_end
     movwf   PCLATH
-    banksel adc_state
+    selbank adc_state
     btfss   adc_state, 0
     goto    timer_next_end
 
@@ -108,19 +108,18 @@ adc_var_table:
     ifdef section_init
     movlw   (1 << ADON) | (0 << CHS0)
     movwf   ADCON0
-    banksel ADCON1
+    selbank ADCON1
     movlw   (1 << ADFM) | (0 << VCFG1) | (0 << VCFG0)
     movwf   ADCON1
 
-    banksel ANSEL
+    selbnkc ANSEL
     movlw   (1 << RA0) | (1 << RA3)
     movwf   ANSEL
     clrf    ANSELH
-    banksel 0
 
-    banksel adc_i
+    selbnkc adc_i
     clrf    adc_i
-    banksel adc_state
+    selbnkc adc_state
     clrf    adc_state
     endif
 

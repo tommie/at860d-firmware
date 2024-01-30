@@ -30,13 +30,42 @@ table_jump  macro   tblf
 case0:
     endm
 
+    ;; The bank issued by an earlier selbank, or -1 if unknown.
+bank    set -1
+    ;; Issues a banksel, and updates the bank variable.
+    ;; Ignores bank-agnostic files.
+selbank     macro   file
+    if      (file & 0x7F) < 0x70
+    banksel file
+bank    set file >> 7
+    else
+bank    set -1
+    endif
+    endm
+
+    ;; Only issue "banksel" if the bank differs from the last bank.
+    ;; This must not be used across branching.
+selbnkc     macro   file
+    if bank != file >> 7
+    selbank file
+    endif
+    endm
+
+    ;; Only issue "banksel" if the bank differs from prevfile.
+    ;; This is useful across branches, if you can guarantee the same bank for all origins.
+selbnkd     macro   file, prevfile
+    if      bank < 0 || file >> 7 != prevfile >> 7
+    selbank file
+    endif
+    endm
+
     ;; if ((int) (*file1 - lit) >= 0) goto dest
 bge16lf macro   file1, lit, dest
     local   mend
 
     movlw   HIGH dest
     movwf   PCLATH
-    banksel file1 + 1
+    selbank file1 + 1
     movf    file1 + 1, W
     sublw   HIGH lit
     btfss   STATUS, C
@@ -50,7 +79,7 @@ bge16lf macro   file1, lit, dest
     movlw   HIGH dest
     movwf   PCLATH
     movlw   LOW lit
-    banksel file1
+    selbnkc file1
     subwf   file1, W
     btfsc   STATUS, C
     goto    dest
@@ -63,9 +92,9 @@ bge16ff macro   file1, file2, dest
 
     movlw   HIGH dest
     movwf   PCLATH
-    banksel file1 + 1
+    selbank file1 + 1
     movf    file1 + 1, W
-    banksel file2 + 1
+    selbnkc file2 + 1
     subwf   file2 + 1, W
     btfss   STATUS, C
     goto    dest
@@ -77,9 +106,9 @@ bge16ff macro   file1, file2, dest
 
     movlw   HIGH dest
     movwf   PCLATH
-    banksel file2
+    selbnkc file2
     movf    file2, W
-    banksel file1
+    selbnkc file1
     subwf   file1, W
     btfsc   STATUS, C
     goto    dest
@@ -90,7 +119,8 @@ mend:
 rl16fl      macro   file, n, carry
     local   i
 
-    banksel file
+    selbank file + 1
+
 i   set     0
     while   i < n
 i   set     i + 1
@@ -99,8 +129,10 @@ i   set     i + 1
     else
     bcf     STATUS, C
     endif
-    rlf     file + 1, F
+    selbnkd file, file + 1
     rlf     file, F
+    selbnkc file + 1
+    rlf     file + 1, F
     endw
     endm
 
@@ -108,7 +140,8 @@ i   set     i + 1
 rr16fl      macro   file, n, carry
     local   i
 
-    banksel file
+    selbank file
+
 i   set     0
     while   i < n
 i   set     i + 1
@@ -117,42 +150,45 @@ i   set     i + 1
     else
     bcf     STATUS, C
     endif
+    selbnkd file + 1, file
     rrf     file + 1, F
+    selbnkc file
     rrf     file, F
     endw
     endm
 
 clr16f  macro   file
-    banksel file
+    selbank file + 1
     clrf    file + 1
+    selbnkc file
     clrf    file
     endm
 
 add16ff macro   file, dest
-    banksel file + 1
+    selbank file + 1
     movf    file + 1, W
-    banksel dest + 1
+    selbnkc dest + 1
     addwf   dest + 1, F
-    banksel file
+    selbnkc file
     movf    file, W
-    banksel dest
+    selbnkc dest
     addwf   dest, F
-    banksel dest + 1
+    selbnkc dest + 1
     btfsc   STATUS, C
     incf    dest + 1, F
     endm
 
     ;; dest -= file
 sub16ff macro   file, dest
-    banksel file + 1
+    selbank file + 1
     movf    file + 1, W
-    banksel dest + 1
+    selbnkc dest + 1
     subwf   dest + 1, F
-    banksel file
+    selbnkc file
     movf    file, W
-    banksel dest
+    selbnkc dest
     subwf   dest, F
-    banksel dest + 1
+    selbnkc dest + 1
     btfss   STATUS, C
     decf    dest + 1, F
     endm
@@ -163,7 +199,7 @@ mul16fl macro   file, lit
 
     clrf    w16 + 1
     clrf    w16
-    banksel file
+    selbank file
 
 i   set     0
 j   set     lit
@@ -171,8 +207,10 @@ j   set     lit
 i   set i + 1
 
     if j & 1
+    selbnkd file + 1, file
     movf    file + 1, W
     addwf   w16 + 1, F
+    selbnkc file
     movf    file, W
     addwf   w16, F
     btfsc   STATUS, C
@@ -199,7 +237,7 @@ mulw16f macro   file
 
     movlw   HIGH mulend
     movwf   PCLATH
-    banksel file
+    selbank file
     movf    file, F
     btfsc   STATUS, Z
     goto    mulend
@@ -227,13 +265,13 @@ mulend:
     endm
 
 mov16ff macro   src, dest
-    banksel src + 1
+    selbank src + 1
     movf    src + 1, W
-    banksel dest + 1
+    selbnkc dest + 1
     movwf   dest + 1
-    banksel src
+    selbnkc src
     movf    src, W
-    banksel dest
+    selbnkc dest
     movwf   dest
     endm
 
@@ -252,14 +290,15 @@ divmod1608fl    macro   file16, l
     if      file16 == acc1
     error   "Cannot use acc1 for divmod16"
     endif
-    banksel file16
+    selbank file16
     movf    file16, W
     movwf   acc1
     clrf    file16
-    banksel file16 + 1
+    selbnkc file16 + 1
     movf    file16 + 1, W
     movwf   acc2
     clrf    file16 + 1
+
 divloop:
     movlw   l
     subwf   acc1, F
@@ -272,9 +311,9 @@ divloop:
     btfss   STATUS, C
     goto    divend
 
-    banksel file16
+    selbnkd file16, file16 + 1
     incf    file16, F
-    banksel file16 + 1
+    selbnkc file16 + 1
     btfsc   STATUS, Z
     incf    file16 + 1, F
     movlw   HIGH divloop
@@ -289,7 +328,7 @@ divend:
 divp2lf macro   file, l
     local   i
 
-    banksel file
+    selbank file
 i   set     0
     while   i < l
 i   set     i + 1

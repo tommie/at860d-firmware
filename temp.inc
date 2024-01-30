@@ -44,15 +44,12 @@ temp_idle   macro
     endif
 
     ifdef section_init
-    banksel temp_value
-    clrf    temp_value
-    banksel temp_value + 1
-    clrf    temp_value + 1
+    clr16f  temp_value
     movlw   1 << 4
-    banksel temp_coeff
+    selbnkc temp_coeff
     movwf   temp_coeff
     movlw   20
-    banksel temp_const
+    selbnkc temp_const
     movwf   temp_const
     endif
 
