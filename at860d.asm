@@ -78,10 +78,6 @@ loop:
     include "modules.inc"
 #undefine section_idle
 
-    if          1
-    fp_display
-    endif
-
     if          0
     movlw       HIGH in_cooldown
     movwf       PCLATH
@@ -97,13 +93,9 @@ loop:
     movwf       PCLATH
     standby_skip_if_not_active
     goto        in_standby
-
-    movlw       120
-    airpump_setw
-
-    movf        adc_knob_value, W
-    heater_setw
     endif
+
+    fp_display
 
     movlw       HIGH loop
     movwf       PCLATH
