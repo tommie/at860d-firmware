@@ -53,7 +53,7 @@ fp_ee_air   de  31, 0, 0, 255
 fp_display  macro
     local   disp_temp
 
-    mov16ff temp_value, w16
+    temp_get16  w16
 
     ;; if ((fp_state & 1) == 0) goto disp_temp
     movlw   HIGH disp_temp

@@ -116,6 +116,8 @@ mend:
     endm
 
     ;; Performs a left-rotate n times on file, setting low bits to carry.
+    ;;
+    ;; C is the last rotated-out bit, just like for rlf.
 rl16fl      macro   file, n, carry
     local   i
 
@@ -137,6 +139,8 @@ i   set     i + 1
     endm
 
     ;; Performs a right-rotate n times on file, setting high bits to carry.
+    ;;
+    ;; C is the last rotated-out bit, just like for rrf.
 rr16fl      macro   file, n, carry
     local   i
 
@@ -164,6 +168,7 @@ clr16f  macro   file
     clrf    file
     endm
 
+    ;; dest += file
 add16ff macro   file, dest
     selbank file + 1
     movf    file + 1, W
@@ -176,6 +181,28 @@ add16ff macro   file, dest
     selbnkc dest + 1
     btfsc   STATUS, C
     incf    dest + 1, F
+    endm
+
+    ;; dest += C
+    ;;
+    ;; Useful for rounding after a rrf16 on fixed point values.
+    ;;
+    ;; Clobbers W.
+add16cf macro   dest
+    local   mend
+
+    movlw   HIGH mend
+    movwf   PCLATH
+    selbank dest
+    btfss   STATUS, C
+    goto    mend
+
+    movlw   1
+    addwf   dest, F
+    selbnkc dest + 1
+    btfsc   STATUS, C
+    incf    dest + 1, F
+mend:
     endm
 
     ;; dest -= file
@@ -223,6 +250,51 @@ i   set i + 1
 
 j   set     j >> 1
     endw
+    endm
+
+    ;; file *= W
+mul16wf macro   file
+    local   mulloop
+    local   mulskip
+
+    clrf    acc1
+    clrf    acc2
+
+    movwf   acc3
+
+    selbank file
+
+mulloop:
+    bcf     STATUS, C
+    rrf     acc3, F
+
+    movlw   HIGH mulskip
+    movwf   PCLATH
+    btfss   STATUS, C
+    goto    mulskip
+
+    selbnkd file + 1, file
+    movf    file + 1, W
+    addwf   acc2, F
+    selbnkc file
+    movf    file, W
+    addwf   acc1, F
+    btfsc   STATUS, C
+    incf    acc2, F
+mulskip:
+
+    bcf     STATUS, C
+    rlf     file, F
+    selbnkc file + 1
+    rlf     file + 1, F
+
+    movlw   HIGH mulloop
+    movwf   PCLATH
+    movf    acc3, F
+    btfss   STATUS, Z
+    goto    mulloop
+
+    mov16ff acc1, file
     endm
 
     ;; w16 *= file
@@ -333,6 +405,32 @@ i   set     0
     while   i < l
 i   set     i + 1
     bcf     STATUS, C
+    rrf     file, F
+    endw
+    endm
+
+    ;; Divide signed 16-bit file by 2^l.
+divp2s16lf macro   file, l
+    local   i
+
+    selbank file + 1
+    movlw   0x80
+    andwf   file + 1, W
+    bcf     STATUS, DC
+    btfss   STATUS, Z
+    bsf     STATUS, DC
+
+    selbnkc file
+
+i   set     0
+    while   i < l
+i   set     i + 1
+    bcf     STATUS, C
+    btfsc   STATUS, DC
+    bsf     STATUS, C
+    selbnkd file + 1, file
+    rrf     file + 1, F
+    selbnkc file
     rrf     file, F
     endw
     endm

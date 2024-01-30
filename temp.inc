@@ -12,43 +12,46 @@
     endif
 
     ifdef section_udata
-temp_value  res 2               ; 8.0 fixed point.
-temp_coeff  res 1               ; 4.4 fixed point.
-temp_const  res 1               ; 8.0 fixed point.
+temp_value  res 2               ; 10.6 fixed point.
+temp_coeff  res 1               ; 2.4 fixed point.
+temp_const  res 1               ; 7.1 fixed point.
     endif
 
     ifdef section_code
 temp_idle   macro
-    banksel adc_temp_value + 1
-    movf    adc_temp_value + 1, W
-    movwf   w16 + 1
-    banksel adc_temp_value
-    movf    adc_temp_value, W
-    movwf   w16
-    mulw16f temp_coeff
-    rr16fl  w16, 4, 0
+    ;; temp_value += (adc_temp_value * temp_coeff + temp_const - temp_value) / 2^4
+    ;;
+    ;; adc_temp_value is 10.0 fixed point.
+    mov16ff adc_temp_value, w16
+    selbank temp_coeff
+    movf    temp_coeff, W
+    mul16wf w16
+    rr16fl  w16, 4 - 1, 0       ; To FP15.1
+    add16cf w16
 
-    banksel temp_const
-    movf    temp_const, W
-    addwf   w16, F
-    btfsc   STATUS, C
-    incf    w16 + 1, F
+    add16ff temp_const, w16
+    rl16fl  w16, 6 - 1, 0       ; To FP10.6
 
-    movf    w16 + 1, W
-    banksel temp_value + 1
-    movwf   temp_value + 1
-    movf    w16, W
-    banksel temp_value
-    movwf   temp_value
+    sub16ff     temp_value, w16
+    divp2s16lf  w16, 4
+    add16cf     w16
+
+    add16ff w16, temp_value
+    endm
+
+temp_get16  macro   dest
+    mov16ff temp_value, dest
+    rr16fl  dest, 6, 0
+    add16cf dest
     endm
     endif
 
     ifdef section_init
     clr16f  temp_value
-    movlw   1 << 4
+    movlw   (2 << 4) + 2
     selbnkc temp_coeff
     movwf   temp_coeff
-    movlw   20
+    movlw   (21 << 1) + 1
     selbnkc temp_const
     movwf   temp_const
     endif
