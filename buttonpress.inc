@@ -305,9 +305,10 @@ idle_done:
     banksel bp_prev
     movwf   bp_prev
     endm
-    endif
 
-    ifdef section_init
+bp_init     macro
+    local   i
+
     banksel bp_t
     clrf    bp_t
     banksel bp_t + 1
@@ -330,6 +331,11 @@ i   set     0
     clrf    bp_holding + i
 i   set     i + 1
     endw
+    endm
+    endif
+
+    ifdef section_init
+    bp_init
     endif
 
     ifdef section_idle

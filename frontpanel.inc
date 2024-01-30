@@ -84,7 +84,7 @@ disp_temp:
     display_set_air_w16
     endm
 
-fp_idle_preset  macro   btn, i
+fp_idle_preset  macro   btn, index
     local   not_held
     local   done
 
@@ -96,7 +96,7 @@ fp_idle_preset  macro   btn, i
     ;; Write
     buttonpress_reset_held   btn
 
-    movlw   i
+    movlw   index
     banksel fp_ee_i
     movwf   fp_ee_i
     banksel fp_state
@@ -116,10 +116,10 @@ not_held:
     ;; Read
     buttonpress_reset_clicked   btn
 
-    eeprom_read_lw  fp_ee_temp + i
+    eeprom_read_lw  fp_ee_temp + index
     heater_setw
 
-    eeprom_read_lw  fp_ee_air + i
+    eeprom_read_lw  fp_ee_air + index
     airpump_setw
 
     bsf     fp_state, FP_TEMP_SET

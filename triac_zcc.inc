@@ -36,19 +36,24 @@ triaczcc_state      res (TRIACZCC_NUM_CHANNELS + 7) / 8
     endif
 
     ifdef section_code
+    ifndef TRIACZCC_NUM_FRAC_BITS
+    error "TRIACZCC_NUM_FRAC_BITS is not defined"
+    endif
+
     ;; Sets channel `channel` to `ratiof` power (file with 0-255).
 triaczcc_setw macro channel
+    local       i
     if channel >= TRIACZCC_NUM_CHANNELS
     error "triac_zcc channel out of bounds"
     endif
 
     addlw       (1 << (8 - TRIACZCC_NUM_FRAC_BITS)) - 1
     movwf       acc1
-i   set 0
-    while i < 8 - TRIACZCC_NUM_FRAC_BITS
+i   set         0
+    while       i < 8 - TRIACZCC_NUM_FRAC_BITS
     bcf         STATUS, C
     rrf         acc1, F
-i   set i + 1
+i   set         i + 1
     endw
 
     movlw       HIGH triaczcc_table
@@ -144,6 +149,8 @@ next_end:
 
     ;; See scripts/zcc.py.
 triaczcc_table_m  macro num_frac_bits, num_extra_bits
+    local   i
+
     andlw   (1 << num_frac_bits) - 1
     table_jump  tbl
     retlw   0
@@ -164,6 +171,8 @@ triaczcc_table:
     triaczcc_table_m    TRIACZCC_NUM_FRAC_BITS, TRIACZCC_NUM_EXTRA_BITS
 
 triaczcc_init   macro
+    local   i
+
     clrf    triaczcc_cycle
 i   set     0
     while   i < TRIACZCC_NUM_CHANNELS

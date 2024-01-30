@@ -155,6 +155,8 @@ triacpfc_int_next_ch  macro channel, set_macro
     endm
 
 triacpfc_init   macro
+    local   i
+
     movlw   0xFF
 i   set     0
     while   i < TRIACPFC_NUM_CHANNELS

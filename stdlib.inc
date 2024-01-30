@@ -173,6 +173,8 @@ divend:
 
     ;; Divide file by 2^l.
 divp2lf macro   file, l
+    local   i
+
     banksel file
 i   set     0
     while   i < l

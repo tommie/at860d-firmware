@@ -125,6 +125,8 @@ display_set_cursor  macro   digit
     endm
 
 display_clear_cursor    macro
+    local   i
+
     banksel display_cursor
     clrf    display_cursor
     movlw   ~LSDP
@@ -182,16 +184,9 @@ display_cur_update  macro
     iorwf   INDF, F
     endm
 
-display_set_temp_w16_func:
-    display_set_temp    w16
-    retlw   0
+display_init    macro
+    local   i
 
-display_set_air_w16_func:
-    display_set_air     w16
-    retlw   0
-    endif
-
-    ifdef section_init
     banksel display_i
     clrf    display_i
     movlw   0xFF
@@ -205,6 +200,19 @@ i   set     i + 1
     clrf    display_cursor
     banksel display_cursor_tmr
     clrf    display_cursor_tmr
+    endm
+
+display_set_temp_w16_func:
+    display_set_temp    w16
+    retlw   0
+
+display_set_air_w16_func:
+    display_set_air     w16
+    retlw   0
+    endif
+
+    ifdef section_init
+    display_init
     endif
 
     ifdef section_idle
