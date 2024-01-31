@@ -11,15 +11,19 @@
     error "stdlib module is a dependency of led"
     endif
 
+    ifdef section_udata
+LED_BLANK   EQU 0x0F
+    endif
+
     ifdef section_code
 ledca_blank     macro
     movlw   ~0xFE
-    banksel PORTC
+    selbank PORTC
     andwf   PORTC, F
     endm
 
 ledseg_set      macro
-    banksel PORTD
+    selbank PORTD
     movwf   PORTD
     endm
 
@@ -27,10 +31,10 @@ ledseg_set      macro
 ledca_setf_irq  macro   file
     movlw   HIGH ledca_table_irq
     movwf   PCLATH
-    banksel file
+    selbank file
     movf    file, W
     call    ledca_table_irq
-    banksel PORTC
+    selbnkc PORTC
     iorwf   PORTC, F
     endm
 
@@ -38,21 +42,21 @@ ledca_table_irq:
     andlw   0x07
     table_jump  tblirq
     ;; LED1:1
-    retlw   0x20
-    retlw   0x40
-    retlw   0x80
+    dt      0x20
+    dt      0x40
+    dt      0x80
     ;; LED2:1
-    retlw   0x04
-    retlw   0x08
-    retlw   0x10
+    dt      0x04
+    dt      0x08
+    dt      0x10
     ;; LED3:1
-    retlw   0x02
-    retlw   0
+    dt      0x02
+    dt      0
 
 ledseg_translate    macro file
     movlw   HIGH ledseg_table
     movwf   PCLATH
-    banksel file
+    selbank file
     movf    file, W
     call    ledseg_table
     endm
@@ -93,22 +97,22 @@ ledseg_table:
     dt      LS2A & LS2D & LS2E & LS2F & LS2DP   ;; "*C" on aux LED.
     dt      0xFF
     dt      0xFF
-    dt      0xFF                                ;; Blank
+    dt      0xFF                                ;; LED_BLANK
     endif
 
     ifdef section_init
     ;; Segments
     movlw   ~0xFE
-    banksel PORTC
+    selbank PORTC
     andwf   PORTC, F
-    banksel TRISC
+    selbnkc TRISC
     andwf   TRISC, F
 
     ;; Digits (CA)
     clrw
     sublw   1
-    banksel PORTD
+    selbnkc PORTD
     movwf   PORTD
-    banksel TRISD
+    selbnkc TRISD
     clrf    TRISD
     endif

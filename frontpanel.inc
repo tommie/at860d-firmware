@@ -181,7 +181,7 @@ down_done:
     goto    air_disabled
 
     bsf     fp_state, FP_BTN_AIR
-    display_set_cursor  3
+    display_set_cursor  0
 
     movlw   HIGH air_done
     movwf   PCLATH

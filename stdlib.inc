@@ -59,6 +59,16 @@ selbnkd     macro   file, prevfile
     endif
     endm
 
+    ;; Z := *file == 0
+    ;;
+    ;; Clobbers W.
+zero16f macro   file
+    selbank file
+    movf    file, W
+    selbnkc file + 1
+    iorwf   file + 1, W
+    endm
+
     ;; if ((int) (*file1 - lit) >= 0) goto dest
 bge16lf macro   file1, lit, dest
     local   mend

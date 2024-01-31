@@ -11,7 +11,6 @@
     ifdef section_udata
 display_i           res 1
 display_buf         res 7
-display_digitbuf    res 2
 display_cursor      res 1
 display_cursor_tmr  res 1       ; In 256ms units.
 
@@ -24,10 +23,10 @@ DISP_CUR_ON         EQU 7
 display_timer_next  macro
     ledca_blank
 
-    banksel display_buf
+    selbank display_buf
     movlw   display_buf
     movwf   FSR
-    banksel display_i
+    selbnkc display_i
     movf    display_i, W
     addwf   FSR, F
     movf    INDF, W
@@ -44,57 +43,40 @@ display_timer_next  macro
     clrf    display_i
     endm
 
-display_set_digits  macro   base, vf
+display_set_digits  macro   base, vf, ndigits
     local           blank_end
 
-    banksel         vf
+    selbank         base - 1
+
+i   set             0
+    while           i < ndigits
+    selbnkd         vf, base + i - 1
     divmod1608fl    vf, 10
     movwf           acc1
+
+    if              i > 0
+    ;; if (vf == 0 && acc1 == 0) acc1 = LEDSEG_BLANK
+    zero16f         vf
+    movlw           LED_BLANK
+    btfss           STATUS, Z
+    movf            acc1, W
+    movf            acc1, F
+    btfss           STATUS, Z
+    movf            acc1, W
+    movwf           acc1
+    endif
+
     ledseg_translate acc1
-    banksel         base
-    movwf           base
-    banksel         vf
-    divmod1608fl    vf, 10
-    banksel         display_digitbuf
-    movwf           display_digitbuf
-    banksel         vf
-    divmod1608fl    vf, 10
-    banksel         display_digitbuf + 1
-    movwf           display_digitbuf + 1
-
-    ;; Blank leading zeros.
-    movlw           HIGH blank_end
-    movwf           PCLATH
-    banksel         display_digitbuf + 1
-    movf            display_digitbuf + 1, F
-    btfss           STATUS, Z
-    goto            blank_end
-
-    movlw           0x0F
-    movwf           display_digitbuf + 1
-
-    banksel         display_digitbuf
-    movf            display_digitbuf, F
-    btfss           STATUS, Z
-    goto            blank_end
-
-    movwf           display_digitbuf
-blank_end:
-
-    banksel         display_digitbuf
-    ledseg_translate display_digitbuf
-    banksel         base + 1
-    movwf           base + 1
-    banksel         display_digitbuf + 1
-    ledseg_translate display_digitbuf + 1
-    banksel         base + 2
-    movwf           base + 2
+    selbnkc         base + i
+    movwf           base + i
+i   set             i + 1
+    endw
 
     display_cur_update
     endm
 
 display_set_temp    macro   vf
-    display_set_digits  display_buf + 0, vf
+    display_set_digits  display_buf + 0, vf, 3
     endm
 
 display_set_temp_w16        macro
@@ -104,12 +86,12 @@ display_set_temp_w16        macro
     endm
 
 display_set_temp_unit       macro
-    banksel display_buf + 6
+    selbank display_buf + 6
     movwf   display_buf + 6
     endm
 
 display_set_air     macro   vf
-    display_set_digits  display_buf + 3, vf
+    display_set_digits  display_buf + 3, vf, 3
     endm
 
 display_set_air_w16         macro
@@ -120,19 +102,19 @@ display_set_air_w16         macro
 
 display_set_cursor  macro   digit
     movlw   (1 << DISP_CUR_ON) | (1 << DISP_CUR_EN) | digit
-    banksel display_cursor
+    selbank display_cursor
     movwf   display_cursor
     endm
 
 display_clear_cursor    macro
     local   i
 
-    banksel display_cursor
+    selbank display_cursor
     clrf    display_cursor
     movlw   ~LSDP
 i   set     0
     while   i < 6
-    banksel display_buf + i
+    selbnkc display_buf + i
     iorwf   display_buf + i, F
 i   set     i + 1
     endw
@@ -143,9 +125,9 @@ display_idle    macro
 
     movlw   HIGH exit
     movwf   PCLATH
-    banksel timer_value + 1
+    selbank timer_value + 1
     movf    timer_value + 1, W
-    banksel display_cursor_tmr
+    selbnkc display_cursor_tmr
     subwf   display_cursor_tmr, W
     btfss   STATUS, Z
     goto    exit
@@ -153,15 +135,15 @@ display_idle    macro
     ;; We let the timer run even if the cursor is off, to keep a
     ;; steady pace.
     movlw   DISPLAY_CURSOR_IVAL
-    banksel display_cursor_tmr
+    selbnkc display_cursor_tmr
     addwf   display_cursor_tmr, F
 
-    banksel display_cursor
+    selbnkc display_cursor
     btfss   display_cursor, DISP_CUR_EN
     goto    exit
 
     movlw   1 << DISP_CUR_ON
-    banksel display_cursor
+    selbnkc display_cursor
     xorwf   display_cursor, F
 
     display_cur_update
@@ -169,13 +151,13 @@ exit:
     endm
 
 display_cur_update  macro
-    banksel display_cursor
+    selbank display_cursor
     movf    display_cursor, W
     andlw   DISP_CUR_MASK
     addlw   display_buf
     movwf   FSR
 
-    banksel display_cursor
+    selbnkc display_cursor
     movlw   LSDP
     btfsc   display_cursor, DISP_CUR_ON
     andwf   INDF, F
@@ -187,18 +169,18 @@ display_cur_update  macro
 display_init    macro
     local   i
 
-    banksel display_i
+    selbank display_i
     clrf    display_i
     movlw   0xFF
 i   set     0
     while   i < 7
-    banksel display_buf + i
+    selbnkc display_buf + i
     movwf   display_buf + i
 i   set     i + 1
     endw
-    banksel display_cursor
+    selbnkc display_cursor
     clrf    display_cursor
-    banksel display_cursor_tmr
+    selbnkc display_cursor_tmr
     clrf    display_cursor_tmr
     endm
 
