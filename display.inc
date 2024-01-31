@@ -76,7 +76,7 @@ i   set             i + 1
     endm
 
 display_set_temp    macro   vf
-    display_set_digits  display_buf + 0, vf, 3
+    display_set_digits  display_buf + 3, vf, 3
     endm
 
 display_set_temp_w16        macro
@@ -91,13 +91,26 @@ display_set_temp_unit       macro
     endm
 
 display_set_air     macro   vf
-    display_set_digits  display_buf + 3, vf, 3
+    display_set_digits  display_buf + 0, vf, 3
     endm
 
 display_set_air_w16         macro
     movlw   HIGH display_set_air_w16_func
     movwf   PCLATH
     call    display_set_air_w16_func
+    endm
+
+    ;; Sets all digits, across air and temp (not temp unit).
+    ;;
+    ;; Allows displaying numbers larger than 999.
+display_set_all    macro   vf
+    display_set_digits  display_buf + 0, vf, 6
+    endm
+
+display_set_all_w16        macro
+    movlw   HIGH display_set_all_w16_func
+    movwf   PCLATH
+    call    display_set_all_w16_func
     endm
 
 display_set_cursor  macro   digit
@@ -190,6 +203,10 @@ display_set_temp_w16_func:
 
 display_set_air_w16_func:
     display_set_air     w16
+    retlw   0
+
+display_set_all_w16_func:
+    display_set_all     w16
     retlw   0
     endif
 

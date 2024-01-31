@@ -2,6 +2,9 @@
     ;;
     ;; Digits (CA): RC1-7
     ;; Segments: RD0-7
+    ;;
+    ;; The digit order is LSD Air, LSD Temp, Temp Unit.
+    ;; This allows easily using all six digits to show as one number.
 
     ifdef module_led
 #undefine module_led
@@ -41,14 +44,14 @@ ledca_setf_irq  macro   file
 ledca_table_irq:
     andlw   0x07
     table_jump  tblirq
-    ;; LED1:1
-    dt      0x20
-    dt      0x40
-    dt      0x80
     ;; LED2:1
     dt      0x04
     dt      0x08
     dt      0x10
+    ;; LED1:1
+    dt      0x20
+    dt      0x40
+    dt      0x80
     ;; LED3:1
     dt      0x02
     dt      0
