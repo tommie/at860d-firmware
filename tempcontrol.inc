@@ -56,6 +56,7 @@ tempc_idle  macro
     movf        tempc_value, W
     andlw       (1 << (2 + TRIACZCC_NUM_FRAC_BITS)) - 1
     heater_setw
+mend:
     exitm
     endif
 
