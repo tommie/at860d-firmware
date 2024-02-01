@@ -22,6 +22,7 @@
     include "selftest.inc"
     include "standby.inc"
     include "temp.inc"          ; Required by tempcontrol.
+    include "pid.inc"           ; Required by tempcontrol.
     include "tempcontrol.inc"
     include "frontpanel.inc"
 

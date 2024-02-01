@@ -193,11 +193,91 @@ add16ff macro   file, dest
     incf    dest + 1, F
     endm
 
+    ;; dest16 += file8
+add0816ff macro   file8, dest16
+    selbank file8
+    movf    file8, W
+    selbnkc dest16
+    addwf   dest16, F
+    selbnkc dest16 + 1
+    btfsc   STATUS, C
+    incf    dest16 + 1, F
+    endm
+
+    ;; dest += file
+    ;;
+    ;; Where the files are signed 16-bit values, and the operation is saturated at -MIN and +MAX.
+    ;;
+    ;; Low saturation happened if sign(dest) && sign(file) != sign(dest + file)
+    ;; High saturation happened if !sign(dest) && !sign(file) != sign(dest + file)
+    ;;
+    ;; Clobbers acc1.
+satadds16ff macro   file, dest
+    local   mend
+
+    selbank file + 1
+    movf    file + 1, W
+    andlw   0x80
+    movwf   acc1
+    selbnkc dest + 1
+    movf    dest + 1, W
+    andlw   0x80
+    xorwf   acc1, W
+    btfsc   STATUS, Z
+    bsf     acc1, 0             ; Bit 0: whether signs are equal, so saturation may happen.
+    movf    dest + 1, W
+    andlw   0x80
+    andwf   acc1, W
+    btfsc   STATUS, Z
+    bcf     acc1, 7             ; Bit 7: whether both files are negative.
+
+    add16ff file, dest
+
+    ;; Check if saturation was possible.
+    ;; if (!acc1:0) goto mend
+    movlw   HIGH mend
+    movwf   PCLATH
+    btfss   acc1, 0
+    goto    mend
+
+    ;; Check if saturation happened.
+    ;; if (sign(dest) == acc1:7) goto mend
+    selbnkc dest + 1
+    movf    dest + 1, W
+    xorwf   acc1, W
+    andlw   0x80
+
+    btfsc   STATUS, Z
+    goto    mend
+
+    ;; Saturation happened.
+
+    selbnkc dest
+    clrf    dest
+    btfss   acc1, 7
+    comf    dest, F
+
+    selbnkc dest + 1
+    movlw   0x80
+    movwf   dest + 1
+    btfss   acc1, 7
+    comf    dest + 1, F
+
+mend:
+    endm
+
     ;; dest += C
     ;;
     ;; Useful for rounding after a rrf16 on fixed point values.
+    ;; Awkward name because addcf is a valid instruction name.
     ;;
     ;; Clobbers W.
+add08cf macro   dest
+    selbank dest
+    btfsc   STATUS, C
+    incf    dest, F
+    endm
+
 add16cf macro   dest
     local   mend
 
@@ -230,36 +310,67 @@ sub16ff macro   file, dest
     decf    dest + 1, F
     endm
 
-    ;; w16 = file * lit
+    ;; dest16 -= file8
+sub0816ff macro   file8, dest16
+    selbank file8
+    movf    file8, W
+    selbnkc dest16
+    subwf   dest16, F
+    selbnkc dest16 + 1
+    btfss   STATUS, C
+    decf    dest16 + 1, F
+    endm
+
+    ;; file *= lit
+    ;;
+    ;; Clobbers acc1, acc2.
 mul16fl macro   file, lit
     local   i, j
 
-    clrf    w16 + 1
-    clrf    w16
-    selbank file
+    if      file == acc1
+    error   "Cannot use w16 in mul16fl"
+    endif
+
+    if      lit != 0
+    clrf    acc1
+    clrf    acc2
+
+    selbank file + 1
 
 i   set     0
 j   set     lit
-    while   i < 16
+    if      lit < 0
+j   set     -j
+    endif
+    while   i < 16 && j > 0
 i   set i + 1
 
     if j & 1
-    selbnkd file + 1, file
+    selbnkd file + 1, file + 1
     movf    file + 1, W
-    addwf   w16 + 1, F
+    addwf   acc2, F
     selbnkc file
     movf    file, W
-    addwf   w16, F
+    addwf   acc1, F
     btfsc   STATUS, C
-    incf    w16 + 1, F
+    incf    acc2, F
     endif
 
     bcf     STATUS, C
-    rlf     w16, F
-    rlf     w16 + 1, F
+    selbnkc file
+    rlf     file, F
+    selbnkc file + 1
+    rlf     file + 1, F
 
 j   set     j >> 1
     endw
+    if      lit < 0
+    neg16f  acc1
+    endif
+    mov16ff acc1, file
+    else                        ; lit == 0
+    clr16f  file
+    endif
     endm
 
     ;; file *= W
@@ -346,6 +457,19 @@ mulend:
     movwf   w16 + 1
     endm
 
+    ;; file = -file
+    ;;
+    ;; Clobbers STATUS.
+neg16f  macro   file
+    selbank file
+    comf    file, F
+    incf    file, F
+    selbnkc file + 1
+    btfsc   STATUS, Z
+    decf    file + 1, F
+    comf    file + 1, F
+    endm
+
 mov16ff macro   src, dest
     selbank src + 1
     movf    src + 1, W
@@ -357,11 +481,41 @@ mov16ff macro   src, dest
     movwf   dest
     endm
 
+mov16lf macro   l, file
+    movlw   LOW (l)
+    selbank file
+    movwf   file
+    selbnkc file + 1
+    movlw   HIGH (l)
+    movwf   file + 1
+    endm
+
 mov16lw macro   l
-    movlw   l & 0xFF
-    movwf   w16
-    movlw   l >> 8
-    movwf   w16 + 1
+    mov16lf l, w16
+    endm
+
+mov0816ff   macro   src, dest
+    selbank src
+    movf    src, W
+    selbnkc dest
+    movwf   dest
+    selbnkc dest + 1
+    clrf    dest + 1
+    endm
+
+    ;; Extend signed 8-bit src to 16-bit dest.
+movs0816ff   macro   src8, dest16
+    selbank src8
+    movf    src8, W
+    selbnkc dest16
+    movwf   dest16
+    bcf     STATUS, DC
+    btfsc   dest16, 7
+    bsf     STATUS, DC
+    selbnkc dest16 + 1
+    clrf    dest16 + 1
+    btfsc   STATUS, DC
+    comf    dest16 + 1, F
     endm
 
     ;; W = file16 % l

@@ -39,9 +39,10 @@ temp_idle   macro
     add16ff w16, temp_value
     endm
 
+    ;; Returns the current temperature in FP9.1.
 temp_get16  macro   dest
     mov16ff temp_value, dest
-    rr16fl  dest, 6, 0
+    rr16fl  dest, 6 - 1, 0
     add16cf dest
     endm
     endif

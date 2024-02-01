@@ -65,6 +65,7 @@ fp_display  macro
     tempc_get16 w16
 
 disp_temp:
+    rr16fl  w16, 1, 0       ; To FP9.0
     display_set_temp_w16
 
     movlw   LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
@@ -113,7 +114,7 @@ not_held:
     buttonpress_reset_clicked   btn
 
     eeprom_read_lw  fp_ee_temp + index
-    heater_setw
+    tempc_setw
 
     eeprom_read_lw  fp_ee_air + index
     airpump_setw
@@ -337,7 +338,7 @@ exit:
 
     ;; Initialize from EEPROM.
     eeprom_read_lw  fp_ee_temp
-    heater_setw
+    tempc_setw
     eeprom_read_lw  fp_ee_air
     airpump_setw
     endif
