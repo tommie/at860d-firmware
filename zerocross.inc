@@ -14,7 +14,6 @@
     ifdef section_udata
 zero_cross_period   res 1
 zero_cross_time     res 1
-zero_cross_acc      res 1
     endif
 
     ifdef section_code
@@ -53,21 +52,21 @@ zero_cross_int_next macro
     subwf   zero_cross_period, W
     xorlw   0xFF
     addlw   1 + 4
-    selbnkc zero_cross_acc
-    movwf   zero_cross_acc
+    selbnkc acc1
+    movwf   acc1
     bcf     STATUS, C
-    btfsc   zero_cross_acc, 7
+    btfsc   acc1, 7
     bsf     STATUS, C
-    rrf     zero_cross_acc, F
+    rrf     acc1, F
     bcf     STATUS, C
-    btfsc   zero_cross_acc, 7
+    btfsc   acc1, 7
     bsf     STATUS, C
-    rrf     zero_cross_acc, F
+    rrf     acc1, F
     bcf     STATUS, C
-    btfsc   zero_cross_acc, 7
+    btfsc   acc1, 7
     bsf     STATUS, C
-    rrf     zero_cross_acc, F
-    movf    zero_cross_acc, W
+    rrf     acc1, F
+    movf    acc1, W
 
 set_period:
     selbank zero_cross_period
