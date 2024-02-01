@@ -35,9 +35,9 @@ bank    set -1
     ;; Issues a banksel, and updates the bank variable.
     ;; Ignores bank-agnostic files.
 selbank     macro   file
-    if      (file & 0x7F) < 0x70
+    if      ((file) & 0x7F) < 0x70 ; Files in udata won't be allocated here, and they default to zero, causing this to be safe.
     banksel file
-bank    set file >> 7
+bank    set (file) >> 7
     else
 bank    set -1
     endif
@@ -46,7 +46,7 @@ bank    set -1
     ;; Only issue "banksel" if the bank differs from the last bank.
     ;; This must not be used across branching.
 selbnkc     macro   file
-    if bank != file >> 7
+    if bank != (file) >> 7
     selbank file
     endif
     endm
@@ -54,7 +54,7 @@ selbnkc     macro   file
     ;; Only issue "banksel" if the bank differs from prevfile.
     ;; This is useful across branches, if you can guarantee the same bank for all origins.
 selbnkd     macro   file, prevfile
-    if      bank < 0 || file >> 7 != prevfile >> 7
+    if      bank < 0 || (file) >> 7 != (prevfile) >> 7
     selbank file
     endif
     endm
