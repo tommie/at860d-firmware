@@ -13,6 +13,7 @@ BTN_HEAT_PANEL  equ 8
 
 #define BUTTONPRESS_NUM_CHANNELS 6
 #define BUTTONPRESS_REPEAT_MASK ((1 << BTN_UP) | (1 << BTN_DOWN))
+#define COOLDOWN_AIR 64
 #define COOLDOWN_MAX_TEMP (70 << 1)     ;; 9.1 fixed point.
 #define DISPLAY_CURSOR_IVAL (768 / 256) ;; In 256 ms ticks.
 #define SELFTEST_TIMEOUT (10000 / 128)  ;; In 128 ms ticks.
@@ -76,13 +77,6 @@ loop:
 #define section_idle
     include "modules.inc"
 #undefine section_idle
-
-    ifndef      DISABLE_COOLDOWN
-    movlw       HIGH in_cooldown
-    movwf       PCLATH
-    cooldown_skip_if_not_active
-    goto        in_cooldown
-    endif
 
     ifndef      DISABLE_SELFTEST
     movlw       HIGH in_selftest
@@ -151,33 +145,7 @@ failed_selftest_reset:
     goto        loop
     endif
 
-    ifndef      DISABLE_COOLDOWN
-in_cooldown:
-    movlw       64
-    airpump_setw
-
-    clrw
-    heater_setw
-
-    movlw       LSA & LSD & LSE & LSF               ; "C"
-    movwf       display_buf + 2
-    movlw       LSA & LSB & LSC & LSD & LSE & LSF   ; "O"
-    movwf       display_buf + 1
-    movwf       display_buf + 0
-    movlw       LS2D & LS2E & LS2F                  ; "L"
-    movwf       display_buf + 6
-
-    movlw       ~0
-    movwf       display_buf + 3
-    movwf       display_buf + 4
-    movwf       display_buf + 5
-
-    movlw       HIGH loop
-    movwf       PCLATH
-    goto        loop
-    endif
-
-    ifndef      DISABLE_COOLDOWN
+    ifndef      DISABLE_STANDBY
 in_standby:
     movf        adc_temp_value, W
     sublw       COOLDOWN_MAX_TEMP
@@ -186,6 +154,10 @@ in_standby:
     clrw
     airpump_setw
 
+    clr16f      w16
+    tempc_set16 w16
+
+    ;; A failsafe in case tempcontrol is broken.
     clrw
     heater_setw
 

@@ -48,6 +48,12 @@ FP_ARM_TMR      EQU 7
     ifdef section_code
 fp_display  macro
     local   disp_temp
+    local   done
+
+    ;; Special modes.
+    fp_display_cooldown done
+
+    ;; Normal operating mode.
 
     temp_get16  w16
 
@@ -75,6 +81,7 @@ disp_temp:
     movf    airpump_value, W
     movwf   w16
     display_set_air_w16
+done:
     endm
 
 fp_idle_preset  macro   btn, index
@@ -286,6 +293,35 @@ fp_update_lfm16 macro   delta, file, set16macro
     set16macro  w16
 
 exit:
+    endm
+
+fp_display_cooldown macro   endlabel
+    local       mend
+
+    ifndef      DISABLE_COOLDOWN
+    movlw       HIGH mend
+    movwf       PCLATH
+    cooldown_skip_if_active
+    goto        mend
+
+    temp_get16  w16
+    rr16fl      w16, 1, 0       ; To FP9.0
+    display_set_temp_w16
+    movlw       LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
+    movwf       display_buf + 6
+
+    movlw       LSA & LSD & LSE & LSF               ; "C"
+    movwf       display_buf + 2
+    movlw       LSA & LSB & LSC & LSD & LSE & LSF   ; "O"
+    movwf       display_buf + 1
+    movlw       LSD & LSE & LSF                     ; "L"
+    movwf       display_buf + 0
+
+    movlw       HIGH endlabel
+    movwf       PCLATH
+    goto        endlabel
+    endif
+mend:
     endm
     endif
 

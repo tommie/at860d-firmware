@@ -10,8 +10,11 @@
 #undefine module_cooldown
     endif
 #define module_cooldown
-    ifndef module_adc
-    error "adc module is a dependency of cooldown"
+    ifndef module_airpump
+    error "airpump module is a dependency of standby"
+    endif
+    ifndef module_heater
+    error "heater module is a dependency of cooldown"
     endif
     ifndef module_power
     error "power module is a dependency of cooldown"
@@ -19,30 +22,39 @@
     ifndef module_switch
     error "switch module is a dependency of cooldown"
     endif
+    ifndef module_temp
+    error "temp module is a dependency of cooldown"
+    endif
+    ifndef module_tempcontrol
+    error "tempcontrol module is a dependency of cooldown"
+    endif
 
     ifdef section_udata
 cooldown_state      res 1
     endif
 
     ifdef section_code
-cooldown_idle       macro   temp_value
+cooldown_idle       macro
+    local           active_done
+
+    ifndef          COOLDOWN_AIR
+    error "COOLDOWN_AIR is not defined"
+    endif
     ifndef          COOLDOWN_MAX_TEMP
     error "COOLDOWN_MAX_TEMP is not defined"
     endif
-    if              COOLDOWN_MAX_TEMP > 255
-    error "COOLDOWN_MAX_TEMP larger than a byte"
+    if              COOLDOWN_MAX_TEMP >= (1 << 16)
+    error "COOLDOWN_MAX_TEMP larger than two bytes"
     endif
 
     movlw           0x0F
-    banksel         cooldown_state
+    selbank         cooldown_state
     andwf           cooldown_state, F
 
-    ;; cooldown_state_4 = temp_value > COOLDOWN_MAX_TEMP
-    banksel         temp_value
-    movf            temp_value, W
-    sublw           COOLDOWN_MAX_TEMP
-    banksel         cooldown_state
-    btfss           STATUS, C
+    ;; cooldown_state_4 = temp_get16() > COOLDOWN_MAX_TEMP
+    temp_get16      w16
+    gt16fl          w16, COOLDOWN_MAX_TEMP
+    btfsc           STATUS, C
     bsf             cooldown_state, 4
 
     ;; power_set(cooldown_state_4)
@@ -59,24 +71,41 @@ cooldown_idle       macro   temp_value
 
     ;; Commit new bits to lower nibble.
     swapf           cooldown_state, F
+
+    ;; if (!cooldown_active) goto active_done
+    movlw           HIGH active_done
+    movwf           PCLATH
+    cooldown_skip_if_active
+    goto            active_done
+
+    movlw           COOLDOWN_AIR
+    airpump_setw
+
+    clr16f          w16
+    tempc_set16     w16
+
+    ;; A failsafe in case tempcontrol is broken.
+    clrw
+    heater_setw
+active_done:
     endm
 
 cooldown_skip_if_active  macro
-    banksel         cooldown_state
+    selbank         cooldown_state
     btfss           cooldown_state, 0
     endm
 
 cooldown_skip_if_not_active  macro
-    banksel         cooldown_state
+    selbank         cooldown_state
     btfsc           cooldown_state, 0
     endm
     endif
 
     ifdef section_init
-    banksel         cooldown_state
+    selbank         cooldown_state
     clrf            cooldown_state
     endif
 
     ifdef section_idle
-    cooldown_idle   adc_temp_value
+    cooldown_idle
     endif

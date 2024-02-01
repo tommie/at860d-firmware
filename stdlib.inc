@@ -93,6 +93,41 @@ gts16ff     macro   file1, file2
     bcf     STATUS, C
     endm
 
+    ;; Unsigned 16-bit greater-than.
+    ;;
+    ;; Z := *file == lit
+    ;; C := *file > lit
+    ;;
+    ;; Clobbers acc1, W.
+gt16fl  macro   file, lit
+    selbank file + 1
+    movf    file + 1, W
+    sublw   HIGH (lit)
+    selbnkc file
+    movf    STATUS, W
+    movwf   acc1
+    movf    file, W
+    btfsc   acc1, Z
+    sublw   LOW (lit)
+    movf    STATUS, W
+    xorlw   (1 << C)
+    movwf   STATUS
+    endm
+
+    ;; Unsigned 16-bit greater-than-or-equal.
+    ;;
+    ;; Z := *file == lit
+    ;; C := *file >= lit
+ge16lf  macro   file, lit
+    movlw   HIGH (lit)
+    selbank file + 1
+    subwf   file + 1, W
+    movlw   LOW (lit)
+    selbnkc file
+    btfsc   STATUS, Z
+    subwf   file, W
+    endm
+
     ;; if ((int) (*file1 - lit) >= 0) goto dest
 bge16lf macro   file1, lit, dest
     local   mend
