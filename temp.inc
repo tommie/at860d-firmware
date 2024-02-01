@@ -12,6 +12,9 @@
     endif
 
     ifdef section_udata
+TEMP_CONST_INIT equ (35 << 1) + 0   ; 7.1 fixed point.
+TEMP_COEFF_INIT equ (0 << 4) + 12   ; 2.4 fixed point.
+
 temp_value  res 2               ; 10.6 fixed point.
 temp_coeff  res 1               ; 2.4 fixed point.
 temp_const  res 1               ; 7.1 fixed point.
@@ -49,10 +52,10 @@ temp_get16  macro   dest
 
     ifdef section_init
     clr16f  temp_value
-    movlw   (2 << 4) + 2
+    movlw   TEMP_COEFF_INIT
     selbnkc temp_coeff
     movwf   temp_coeff
-    movlw   (21 << 1) + 1
+    movlw   TEMP_CONST_INIT
     selbnkc temp_const
     movwf   temp_const
     endif

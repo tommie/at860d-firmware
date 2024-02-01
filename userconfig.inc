@@ -29,10 +29,10 @@ uc_dtemp    macro   value
     endm
 
 uc_ee_temp
-    uc_dtemp    20
-    uc_dtemp    30
+    uc_dtemp    TEMP_CONST_INIT
     uc_dtemp    40
     uc_dtemp    50
+    uc_dtemp    60
 uc_ee_air   de  31, 128, 192, 255
     endif
 
