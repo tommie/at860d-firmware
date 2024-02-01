@@ -44,14 +44,14 @@ triacpfc_set macro channel, ratiof
     ;; if (*ratiof == 0) goto set_end (triacpfc_delay[channel] = 0xFF)
     movlw   HIGH set_end
     movwf   PCLATH
-    banksel ratiof
+    selbank ratiof
     movf    ratiof, F
     movlw   0xFF
     btfsc   STATUS, Z
     goto    set_end
 
     ;; if (zero_cross_period <= 2) goto set_end (triacpfc_delay[channel] = 0xFF)
-    banksel zero_cross_period
+    selbnkc zero_cross_period
     movf    zero_cross_period, W
     sublw   2
     movlw   0xFF
@@ -93,7 +93,7 @@ triacpfc_set macro channel, ratiof
 
 set_end:
     ;; triacpfc_delay[channel] = W
-    banksel triacpfc_delay + channel
+    selbank triacpfc_delay + channel
     movwf   triacpfc_delay + channel
     endm
 
@@ -107,29 +107,29 @@ triacpfc_timer_next_ch macro  channel, set_macro, timer_value
 
     movlw       HIGH is_enabled
     movwf       PCLATH
-    banksel     triacpfc_state + (channel / 4)
+    selbank     triacpfc_state + (channel / 4)
     btfsc       triacpfc_state + (channel / 4), (channel % 4) * 2
     goto        is_enabled
 
     ;; if (timer_value - zero_cross_time <= triacpfc_delay[channel]) goto next_end
     movlw       HIGH next_end
     movwf       PCLATH
-    banksel     zero_cross_time
+    selbnkc     zero_cross_time
     movf        zero_cross_time, W
-    banksel     timer_value
+    selbnkc     timer_value
     subwf       timer_value, W
-    banksel     triacpfc_delay + channel
+    selbnkc     triacpfc_delay + channel
     subwf       triacpfc_delay + channel, W
     btfsc       STATUS, C
     goto        next_end
 
-    banksel     triacpfc_state + (channel / 4)
+    selbnkc     triacpfc_state + (channel / 4)
     bsf         triacpfc_state + (channel / 4), (channel % 4) * 2
     set_macro   triacpfc_state + (channel / 4), (channel % 4) * 2
     goto        next_end
 
 is_enabled:
-    banksel     triacpfc_state + (channel / 4)
+    selbank     triacpfc_state + (channel / 4)
     btfsc       triacpfc_state + (channel / 4), (channel % 4) * 2 + 1
     goto        next_end
 
@@ -149,7 +149,7 @@ triacpfc_int_next_ch  macro channel, set_macro
     endif
 
     movlw       ~(0x03 << ((channel % 4) * 2))
-    banksel     triacpfc_state + (channel / 4)
+    selbank     triacpfc_state + (channel / 4)
     andwf       triacpfc_state + (channel / 4), F
     set_macro   triacpfc_state + (channel / 4), (channel % 4) * 2
     endm
@@ -157,16 +157,17 @@ triacpfc_int_next_ch  macro channel, set_macro
 triacpfc_init   macro
     local   i
 
+    selbank triacpfc_delay
     movlw   0xFF
 i   set     0
     while   i < TRIACPFC_NUM_CHANNELS
-    banksel triacpfc_delay + i
+    selbnkc triacpfc_delay + i
     movwf   triacpfc_delay + i
 i   set     i + 1
     endw
 i   set     0
     while   i < TRIACPFC_NUM_CHANNELS / 4
-    banksel triacpfc_state + (i / 4)
+    selbnkc triacpfc_state + (i / 4)
     movwf   triacpfc_state + (i / 4)        ; Start in state 3.
 i   set     i + 1
     endw

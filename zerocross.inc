@@ -26,9 +26,9 @@ zero_cross_int_next macro
     movwf   PCLATH
 
     ;; W = timer_value - zero_cross_time
-    banksel zero_cross_time
+    selbank zero_cross_time
     movf    zero_cross_time, W
-    banksel timer_value
+    selbnkc timer_value
     subwf   timer_value, W
 
     ;; if (W > 50) goto set_end
@@ -44,7 +44,7 @@ zero_cross_int_next macro
 
     ;; if (zero_cross_period == 0) zero_cross_period += W
     ;; else zero_cross_period += (W - zero_cross_period) / 8
-    banksel zero_cross_period
+    selbnkc zero_cross_period
     movf    zero_cross_period, F
     btfsc   STATUS, Z
     goto    set_period
@@ -53,7 +53,7 @@ zero_cross_int_next macro
     subwf   zero_cross_period, W
     xorlw   0xFF
     addlw   1 + 4
-    banksel zero_cross_acc
+    selbnkc zero_cross_acc
     movwf   zero_cross_acc
     bcf     STATUS, C
     btfsc   zero_cross_acc, 7
@@ -70,21 +70,21 @@ zero_cross_int_next macro
     movf    zero_cross_acc, W
 
 set_period:
-    banksel zero_cross_period
+    selbank zero_cross_period
     addwf   zero_cross_period, F
 set_end:
 
-    banksel timer_value
+    selbank timer_value
     movf    timer_value, W
-    banksel zero_cross_time
+    selbnkc zero_cross_time
     movwf   zero_cross_time
     endm
     endif
 
     ifdef section_init
-    banksel zero_cross_period
+    selbank zero_cross_period
     clrf    zero_cross_period
-    banksel zero_cross_time
+    selbnkc zero_cross_time
     clrf    zero_cross_time
     bsf     INTCON, INTEDG
     endif
