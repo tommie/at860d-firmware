@@ -78,17 +78,21 @@ loop:
     include "modules.inc"
 #undefine section_idle
 
-    if          0
+    ifndef      DISABLE_COOLDOWN
     movlw       HIGH in_cooldown
     movwf       PCLATH
     cooldown_skip_if_not_active
     goto        in_cooldown
+    endif
 
+    ifndef      DISABLE_SELFTEST
     movlw       HIGH in_selftest
     movwf       PCLATH
     selftest_skip_if_passed
     goto        in_selftest
+    endif
 
+    ifndef      DISABLE_STANDBY
     movlw       HIGH in_standby
     movwf       PCLATH
     standby_skip_if_not_active
@@ -101,6 +105,7 @@ loop:
     movwf       PCLATH
     goto        loop
 
+    ifndef      DISABLE_SELFTEST
 in_selftest:
     movlw       LSA & LSE & LSF             ; "T"
     movwf       display_buf + 2
@@ -145,7 +150,9 @@ failed_selftest_reset:
     movlw       HIGH loop
     movwf       PCLATH
     goto        loop
+    endif
 
+    ifndef      DISABLE_COOLDOWN
 in_cooldown:
     movlw       64
     airpump_setw
@@ -169,7 +176,9 @@ in_cooldown:
     movlw       HIGH loop
     movwf       PCLATH
     goto        loop
+    endif
 
+    ifndef      DISABLE_COOLDOWN
 in_standby:
     movf        adc_temp_value, W
     sublw       COOLDOWN_MAX_TEMP
@@ -197,5 +206,6 @@ in_standby:
     movlw       HIGH loop
     movwf       PCLATH
     goto        loop
+    endif
 
     end

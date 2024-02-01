@@ -18,13 +18,19 @@
     include "switch.inc"        ; Required by standby.
     include "buttonpress.inc"   ; Required by frontpanel.
     include "eeprom.inc"        ; Required by frontpanel.
-    include "cooldown.inc"
-    include "selftest.inc"
-    include "standby.inc"
     include "temp.inc"          ; Required by tempcontrol.
     include "pid.inc"           ; Required by tempcontrol.
     include "tempcontrol.inc"   ; Required by userconfig.
     include "userconfig.inc"    ; Required by frontpanel.
+    ifndef  DISABLE_COOLDOWN
+    include "cooldown.inc"
+    endif
+    ifndef  DISABLE_SELFTEST
+    include "selftest.inc"
+    endif
+    ifndef  DISABLE_STANDBY
+    include "standby.inc"
+    endif
     include "frontpanel.inc"
 
     ;; Last because it may enter a fault loop on init.
