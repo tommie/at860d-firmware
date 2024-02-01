@@ -18,7 +18,7 @@
     endif
 
     ifdef section_udata
-timer_value res 2
+timer_value res 2               ; Units of 500 µs
     endif
 
     ifdef section_code
@@ -34,9 +34,9 @@ timer0_irq  macro
     movlw   256 - 156           ; PS=3: 0.0004992 ms, 2003 Hz
     addwf   TMR0, F
 
-    banksel timer_value
+    selbank timer_value
     incf    timer_value, F
-    banksel timer_value + 1
+    selbnkc timer_value + 1
     btfsc   STATUS, Z
     incf    timer_value + 1, F
 
@@ -50,18 +50,18 @@ irq_end:
     endif
 
     ifdef section_init
-    banksel OPTION_REG
+    selbank OPTION_REG
     movf    OPTION_REG, W
     andlw   ~((1 << PSA) | (1 << T0CS) | (0x07 << PS0))
     iorlw   3 << PS0
     movwf   OPTION_REG
-    banksel 0
 
+    selbnkc INTCON
     bsf     INTCON, T0IE
 
-    banksel timer_value
+    selbnkc timer_value
     clrf    timer_value
-    banksel timer_value + 1
+    selbnkc timer_value + 1
     clrf    timer_value + 1
     endif
 
