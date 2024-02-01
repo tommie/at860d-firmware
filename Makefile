@@ -23,4 +23,4 @@ at860d.hex: at860d.o
 
 %.o: %.asm *.inc
 	set -o pipefail
-	$(AS) $(ASFLAGS) -c -o $@ $< | grep -Fv 'Symbol index not assigned a value.'
+	$(AS) $(ASFLAGS) -c -o $@ $< | (grep -Fv 'Symbol index not assigned a value.' || :)
