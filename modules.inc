@@ -23,7 +23,8 @@
     include "standby.inc"
     include "temp.inc"          ; Required by tempcontrol.
     include "pid.inc"           ; Required by tempcontrol.
-    include "tempcontrol.inc"
+    include "tempcontrol.inc"   ; Required by userconfig.
+    include "userconfig.inc"    ; Required by frontpanel.
     include "frontpanel.inc"
 
     ;; Last because it may enter a fault loop on init.

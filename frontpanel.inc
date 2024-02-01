@@ -9,14 +9,14 @@
     endif
 #define module_frontpanel
 
+    ifndef module_airpump
+    error "airpump module is a dependency of frontpanel"
+    endif
     ifndef module_buttonpress
     error "buttonpress module is a dependency of frontpanel"
     endif
     ifndef module_display
     error "display module is a dependency of frontpanel"
-    endif
-    ifndef module_eeprom
-    error "eeprom module is a dependency of frontpanel"
     endif
     ifndef module_switch
     error "switch module is a dependency of frontpanel"
@@ -30,23 +30,19 @@
     ifndef module_timer0
     error "timer0 module is a dependency of frontpanel"
     endif
+    ifndef module_userconfig
+    error "userconfig module is a dependency of frontpanel"
+    endif
 
     ifdef section_udata
 fp_state        res 1
-fp_ee_i         res 1
 fp_t            res 2
 
 FP_TEMP_SET     EQU 0
 FP_PRESET_SET   EQU 1
 FP_BTN_AIR      EQU 2
-FP_EE_WRITE     EQU 3
-FP_RUN_TMR      EQU 4
+FP_RUN_TMR      EQU 3
 FP_ARM_TMR      EQU 7
-    endif
-
-    ifdef section_eedata
-fp_ee_temp  de  20 << 1, 0, 30 << 1, 0, 40 << 1, 0, 50 << 1, 0 ; FP9.1
-fp_ee_air   de  31, 128, 192, 255
     endif
 
     ifdef section_code
@@ -91,14 +87,11 @@ fp_idle_preset  macro   btn, index
     goto    not_held
 
     ;; Write
-    buttonpress_reset_held   btn
-
-    movlw   index
-    selbank fp_ee_i
-    movwf   fp_ee_i
-    selbnkc fp_state
-    movlw   (1 << FP_EE_WRITE) | (1 << FP_PRESET_SET) | (1 << FP_ARM_TMR)
-    iorwf   fp_state, F
+    buttonpress_reset_held  btn
+    uc_store                index
+    selbnkc                 fp_state
+    movlw                   (1 << FP_PRESET_SET) | (1 << FP_ARM_TMR)
+    iorwf                   fp_state, F
 
     movlw   HIGH done
     movwf   PCLATH
@@ -112,12 +105,7 @@ not_held:
 
     ;; Read
     buttonpress_reset_clicked   btn
-
-    eeprom_read16_lf    fp_ee_temp + 2*(index), w16
-    tempc_set16         w16
-
-    eeprom_read_lw  fp_ee_air + index
-    airpump_setw
+    uc_load                     index
 
     bsf     fp_state, FP_TEMP_SET
     bsf     fp_state, FP_ARM_TMR
@@ -131,7 +119,6 @@ fp_idle macro
     local   air_done
     local   arm_done
     local   timer_done
-    local   write_ee_done
 
     movlw   HIGH up_done
     movwf   PCLATH
@@ -231,31 +218,11 @@ arm_done:
     selbank fp_state
     movf    fp_state, W
     andlw   ~((1 << FP_TEMP_SET) | (1 << FP_PRESET_SET) | (1 << FP_RUN_TMR))
-    iorlw   (1 << FP_EE_WRITE)
     movwf   fp_state
+
+    ;; Store the current value.
+    uc_store    0
 timer_done:
-
-    ;; if (!(fp_state & (1 << FP_EE_WRITE))) goto write_ee_done
-    movlw   HIGH write_ee_done
-    movwf   PCLATH
-    selbank fp_state
-    btfss   fp_state, FP_EE_WRITE
-    goto    write_ee_done
-
-    fp_try_write_ee16   tempc_value, fp_ee_temp
-    fp_try_write_ee     airpump_value, fp_ee_air
-
-    movlw   HIGH write_ee_done
-    movwf   PCLATH
-    eeprom_skip_if_can_write
-    goto    write_ee_done
-
-    ;; Writing both values is done.
-    selbnkc fp_state
-    bcf     fp_state, FP_EE_WRITE
-    selbnkc fp_ee_i
-    clrf    fp_ee_i
-write_ee_done:
     endm
 
 fp_change_value_l   macro   delta
@@ -320,59 +287,11 @@ fp_update_lfm16 macro   delta, file, set16macro
 
 exit:
     endm
-
-    ;; Starts writing file at eeaddr, if there is no write in progress.
-    ;; Skips writing if the EEPROM is already updated. This is useful
-    ;; 1) to avoid wear, and
-    ;; 2) so that multiple positions can be written by simply calling
-    ;;    this macro in sequence.
-fp_try_write_ee macro   file, eeaddr
-    local           exit
-
-    movlw           HIGH exit
-    movwf           PCLATH
-    eeprom_skip_if_can_write
-    goto            exit
-
-    movlw           HIGH exit
-    movwf           PCLATH
-    selbank         fp_ee_i
-    movf            fp_ee_i, W
-    addlw           eeaddr
-    eeprom_read_w
-    selbnkc         file
-    subwf           file, W
-    btfsc           STATUS, Z
-    goto            exit
-
-    selbnkc         fp_ee_i
-    movf            fp_ee_i, W
-    addlw           eeaddr
-    selbnkc         EEADR
-    movwf           EEADR
-    selbnkc         file
-    movf            file, W
-    eeprom_write_w
-exit:
-    endm
-
-fp_try_write_ee16   macro   file16, eeaddr
-    fp_try_write_ee file16, eeaddr
-    fp_try_write_ee file16 + 1, eeaddr + 1
-    endm
     endif
 
     ifdef section_init
     selbank fp_state
     clrf    fp_state
-    selbnkc fp_ee_i
-    clrf    fp_ee_i
-
-    ;; Initialize from EEPROM.
-    eeprom_read16_lf    fp_ee_temp, w16
-    tempc_set16         w16
-    eeprom_read_lw      fp_ee_air
-    airpump_setw
     endif
 
     ifdef section_idle
