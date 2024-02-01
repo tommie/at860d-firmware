@@ -69,6 +69,19 @@ buttonpress_reset_held macro   index
     bcf     bp_held + (index / 8), index % 8
     endm
 
+    ;; Resets all clicked and held bits.
+buttonpress_reset_all macro
+    selbank bp_clicked
+i   set     0
+    while   i < (BUTTONPRESS_NUM_CHANNELS + 7) / 8
+    selbnkc bp_clicked + i
+    clrf    bp_clicked + i
+    selbnkc bp_held + i
+    clrf    bp_held + i
+i   set     i + 1
+    endw
+    endm
+
 bp_idle     macro
     local   done_set_clicked
     local   no_diff

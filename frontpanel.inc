@@ -52,6 +52,7 @@ fp_display  macro
 
     ;; Special modes.
     fp_display_cooldown done
+    fp_display_standby  done
 
     ;; Normal operating mode.
 
@@ -120,12 +121,36 @@ done:
     endm
 
 fp_idle macro
+    local   inactive_done
     local   up_done
     local   down_done
     local   air_disabled
     local   air_done
     local   arm_done
     local   timer_done
+    local   done
+
+    ;; if (!cooldown_active && !standby_active) goto inactive_done
+    clrf    acc1
+    ifndef  DISABLE_COOLDOWN
+    cooldown_skip_if_not_active
+    bsf     acc1, 0
+    endif
+    ifndef  DISABLE_STANDBY
+    standby_skip_if_active
+    bsf     acc1, 0
+    endif
+    movlw   HIGH inactive_done
+    movwf   PCLATH
+    btfsc   acc1, 0
+    goto    inactive_done
+
+    buttonpress_reset_all
+
+    movlw   HIGH done
+    movwf   PCLATH
+    goto    done
+inactive_done:
 
     movlw   HIGH up_done
     movwf   PCLATH
@@ -230,6 +255,7 @@ arm_done:
     ;; Store the current value.
     uc_store    0
 timer_done:
+done:
     endm
 
 fp_change_value_l   macro   delta
@@ -315,6 +341,35 @@ fp_display_cooldown macro   endlabel
     movlw       LSA & LSB & LSC & LSD & LSE & LSF   ; "O"
     movwf       display_buf + 1
     movlw       LSD & LSE & LSF                     ; "L"
+    movwf       display_buf + 0
+
+    movlw       HIGH endlabel
+    movwf       PCLATH
+    goto        endlabel
+    endif
+mend:
+    endm
+
+fp_display_standby  macro   endlabel
+    local       mend
+
+    ifndef      DISABLE_STANDBY
+    movlw       HIGH mend
+    movwf       PCLATH
+    standby_skip_if_active
+    goto        mend
+
+    temp_get16  w16
+    rr16fl      w16, 1, 0       ; To FP9.0
+    display_set_temp_w16
+    movlw       LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
+    movwf       display_buf + 6
+
+    movlw       LSA & LSC & LSD & LSF & LSG ; "S"
+    movwf       display_buf + 2
+    movlw       LSD & LSE & LSF             ; "L"
+    movwf       display_buf + 1
+    movlw       LSA & LSB & LSE & LSF & LSG ; "P"
     movwf       display_buf + 0
 
     movlw       HIGH endlabel

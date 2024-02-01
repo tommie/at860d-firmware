@@ -18,7 +18,9 @@ BTN_HEAT_PANEL  equ 8
 #define DISPLAY_CURSOR_IVAL (768 / 256) ;; In 256 ms ticks.
 #define SELFTEST_TIMEOUT (10000 / 128)  ;; In 128 ms ticks.
 #define SELFTEST_ACCEPT_STATE SELFTEST_FAST_TESTS
+#define STANDBY_AIR COOLDOWN_AIR
 #define STANDBY_DELAY (20000 / 128)     ;; In 128 ms ticks.
+#define STANDBY_MAX_TEMP COOLDOWN_MAX_TEMP
 #define TRIACPFC_NUM_CHANNELS 1
 #define TRIACZCC_NUM_CHANNELS 1
 #define TRIACZCC_NUM_FRAC_BITS 5
@@ -85,13 +87,6 @@ loop:
     goto        in_selftest
     endif
 
-    ifndef      DISABLE_STANDBY
-    movlw       HIGH in_standby
-    movwf       PCLATH
-    standby_skip_if_not_active
-    goto        in_standby
-    endif
-
     fp_display
 
     movlw       HIGH loop
@@ -139,40 +134,6 @@ failed_selftest:
 
 failed_selftest_reset:
     selftest_reset
-
-    movlw       HIGH loop
-    movwf       PCLATH
-    goto        loop
-    endif
-
-    ifndef      DISABLE_STANDBY
-in_standby:
-    movf        adc_temp_value, W
-    sublw       COOLDOWN_MAX_TEMP
-    movlw       64
-    btfsc       STATUS, C
-    clrw
-    airpump_setw
-
-    clr16f      w16
-    tempc_set16 w16
-
-    ;; A failsafe in case tempcontrol is broken.
-    clrw
-    heater_setw
-
-    movlw       LSA & LSC & LSD & LSF & LSG ; "S"
-    movwf       display_buf + 2
-    movlw       LSD & LSE & LSF             ; "L"
-    movwf       display_buf + 1
-    movlw       LSA & LSB & LSE & LSF & LSG ; "P"
-    movwf       display_buf + 0
-
-    movlw       ~0
-    movwf       display_buf + 3
-    movwf       display_buf + 4
-    movwf       display_buf + 5
-    movwf       display_buf + 6
 
     movlw       HIGH loop
     movwf       PCLATH
