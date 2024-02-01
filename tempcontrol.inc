@@ -30,12 +30,15 @@ tempc_buf       res 2
 
     ifdef section_code
 tempc_idle  macro
-    if          1
-    mov16ff     adc_knob_value, tempc_value
-    rr16fl      tempc_value, 1, 0
+    ifdef TEMPC_DIRECT_CONTROL
+    selbank     tempc_value
+    movf        tempc_value, W
+    andlw       (1 << (2 + TRIACZCC_NUM_FRAC_BITS)) - 1
+    heater_setw
+    exitm
+    endif
 
-    mov16ff     temp_value, tempc_buf
-    ;rr16fl      tempc_buf, 6 - 1, 0 ; To FP9.1.
+    temp_get16  tempc_buf
     ;mov16lf     100 << 1, tempc_buf
 
     pid_lit_update  0, tempc_value, tempc_buf
@@ -50,40 +53,16 @@ tempc_idle  macro
     btfsc   tempc_buf + 1, 7
     clrw
     heater_setw
-
-    else                        ; Direct Control
-
-    selbank     tempc_value
-    movf        tempc_value, W
-    heater_setw
-    endif
-    endm
-
-    ;; Sets the set-temperature as temp = W [*C].
-tempc_setw  macro
-    selbank tempc_value
-    movwf   tempc_value
-    endm
-
-    ;; Gets the set-temperature as W = temp [*C].
-tempc_getw  macro
-    selbank tempc_value
-    movf    tempc_value, W
     endm
 
     ;; Sets the set-temperature as *C in 9.1 fixed point.
 tempc_set16 macro   file
     mov16ff file, tempc_value
     endm
-
-    ;; Gets the set-temperature as *C in 9.1 fixed point.
-tempc_get16 macro   dest
-    mov16ff tempc_value, dest
-    endm
     endif
 
     ifdef section_init
-    mov16lf         20, tempc_value
+    clr16f          tempc_value
     pid_lit_init    0
     endif
 

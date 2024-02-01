@@ -17,32 +17,30 @@ eeprom_read_lw      macro addr
     if      addr < 0x2100 || addr >= 0x2200
     error   "EEPROM address out of range"
     endif
-    movlw   LOW addr
-    banksel EEADR
-    movwf   EEADR
-    eeprom_read
+    movlw   LOW (addr)
+    eeprom_read_w
     endm
 
 eeprom_read_w   macro
-    banksel EEADR
+    selbank EEADR
     movwf   EEADR
     eeprom_read
     endm
 
-eeprom_read_lw16    macro addr, dest
-    eeprom_read_lw  addr
-    banksel dest
-    movlw   dest
-    eeprom_read_lw  addr + 1
-    banksel dest + 1
-    movlw   dest + 1
+eeprom_read16_lf    macro addr, dest
+    eeprom_read_lw  (addr)
+    selbank dest
+    movwf   dest
+    eeprom_read_lw  (addr) + 1
+    selbnkc (dest) + 1
+    movwf   (dest) + 1
     endm
 
 eeprom_read macro
-    banksel EECON1
+    selbank EECON1
     bcf     EECON1, EEPGD
     bsf     EECON1, RD
-    banksel EEDAT
+    selbnkc EEDAT
     movf    EEDAT, W
     endm
 
@@ -50,16 +48,16 @@ eeprom_write_lw     macro addr
     if      addr < 0x2100 || addr >= 0x2200
     error   "EEPROM address out of range"
     endif
-    banksel EEDAT
+    selbank EEDAT
     movwf   EEDAT
     movlw   addr
-    banksel EEADR
+    selbnkc EEADR
     movwf   EEADR
     eeprom_write
     endm
 
 eeprom_write_w      macro
-    banksel EEDAT
+    selbank EEDAT
     movwf   EEDAT
     eeprom_write
     endm
@@ -67,7 +65,7 @@ eeprom_write_w      macro
 eeprom_write    macro
     local   wait_gie
 
-    banksel EECON1
+    selbank EECON1
     bcf     EECON1, EEPGD
     bsf     EECON1, WREN
     bcf     INTCON, GIE
@@ -88,9 +86,9 @@ wait_gie:
 
 eeprom_write_lw16   macro addr
     movf    w16 + 1, W
-    banksel ee_dath
+    selbank ee_dath
     movwf   ee_dath
-    banksel ee_state
+    selbnkc ee_state
     bsf     ee_state, EE_WR_W16
     movf    w16, W
     eeprom_write_lw addr
@@ -99,10 +97,10 @@ eeprom_write_lw16   macro addr
 eeprom_skip_if_can_write    macro
     bcf     STATUS, Z
     movlw   -2
-    banksel EECON1
+    selbank EECON1
     btfss   EECON1, WR
     addlw   1
-    banksel PIR2
+    selbnkc PIR2
     btfss   PIR2, EEIF
     addlw   1
     btfss   STATUS, Z
@@ -113,25 +111,25 @@ eeprom_idle macro
 
     movlw   HIGH done
     movwf   PCLATH
-    banksel EECON1
+    selbank EECON1
     btfsc   EECON1, WR
     goto    done
 
-    banksel PIR2
+    selbnkc PIR2
     btfss   PIR2, EEIF
     goto    done
 
     bcf     PIR2, EEIF
     bcf     EECON1, WREN
 
-    banksel ee_state
+    selbnkc ee_state
     btfss   ee_state, EE_WR_W16
     goto    done
 
     bcf     ee_state, EE_WR_W16
-    banksel EEADR
+    selbnkc EEADR
     incf    EEADR, 1
-    banksel ee_dath
+    selbnkc ee_dath
     movf    ee_dath, W
     eeprom_write_w
 
@@ -140,7 +138,7 @@ done:
     endif
 
     ifdef section_init
-    banksel ee_state
+    selbank ee_state
     clrf    ee_state
     endif
 

@@ -193,6 +193,21 @@ add16ff macro   file, dest
     incf    dest + 1, F
     endm
 
+    ;; dest16 += l
+add16lf macro   l, dest
+    selbank dest + 1
+    if      HIGH (l) != 0
+    movlw   HIGH (l)
+    addwf   dest + 1, F
+    endif
+    movlw   LOW (l)
+    selbnkc dest
+    addwf   dest, F
+    selbnkc dest + 1
+    btfsc   STATUS, C
+    incf    dest + 1, F
+    endm
+
     ;; dest16 += file8
 add0816ff macro   file8, dest16
     selbank file8

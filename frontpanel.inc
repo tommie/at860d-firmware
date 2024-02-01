@@ -45,8 +45,8 @@ FP_ARM_TMR      EQU 7
     endif
 
     ifdef section_eedata
-fp_ee_temp  de  0, 0, 0, 15
-fp_ee_air   de  31, 0, 0, 255
+fp_ee_temp  de  20 << 1, 0, 30 << 1, 0, 40 << 1, 0, 50 << 1, 0 ; FP9.1
+fp_ee_air   de  31, 128, 192, 255
     endif
 
     ifdef section_code
@@ -62,7 +62,7 @@ fp_display  macro
     btfss   fp_state, FP_TEMP_SET
     goto    disp_temp
 
-    tempc_get16 w16
+    mov16ff tempc_value, w16
 
 disp_temp:
     rr16fl  w16, 1, 0       ; To FP9.0
@@ -113,8 +113,8 @@ not_held:
     ;; Read
     buttonpress_reset_clicked   btn
 
-    eeprom_read_lw  fp_ee_temp + index
-    tempc_setw
+    eeprom_read16_lf    fp_ee_temp + 2*(index), w16
+    tempc_set16         w16
 
     eeprom_read_lw  fp_ee_air + index
     airpump_setw
@@ -242,8 +242,8 @@ timer_done:
     btfss   fp_state, FP_EE_WRITE
     goto    write_ee_done
 
-    fp_try_write_ee tempc_value, fp_ee_temp
-    fp_try_write_ee airpump_value, fp_ee_air
+    fp_try_write_ee16   tempc_value, fp_ee_temp
+    fp_try_write_ee     airpump_value, fp_ee_air
 
     movlw   HIGH write_ee_done
     movwf   PCLATH
@@ -267,7 +267,7 @@ fp_change_value_l   macro   delta
     btfsc           fp_state, FP_BTN_AIR
     goto            airpump
 
-    fp_update_lfm   delta, tempc_value, tempc_setw
+    fp_update_lfm16 2*(delta), tempc_value, tempc_set16 ; FP9.1
     movlw           HIGH exit
     movwf           PCLATH
     goto            exit
@@ -278,6 +278,8 @@ airpump:
 exit:
     endm
 
+    ;; Applies a signed delta to file, using set16macro to make the update.
+    ;; Saturates at either end.
 fp_update_lfm   macro   delta, file, setwmacro
     local   exit
 
@@ -299,6 +301,31 @@ fp_update_lfm   macro   delta, file, setwmacro
 exit:
     endm
 
+    ;; Applies a signed delta to file, using set16macro to make the update.
+    ;; Saturates at either end.
+fp_update_lfm16 macro   delta, file, set16macro
+    local       exit
+
+    movlw       HIGH exit
+    movwf       PCLATH
+    mov16ff     file, w16
+    add16lf     delta, w16
+    if          delta < 0
+    btfss       STATUS, C
+    else
+    btfsc       STATUS, C
+    endif
+    goto        exit
+    set16macro  w16
+
+exit:
+    endm
+
+    ;; Starts writing file at eeaddr, if there is no write in progress.
+    ;; Skips writing if the EEPROM is already updated. This is useful
+    ;; 1) to avoid wear, and
+    ;; 2) so that multiple positions can be written by simply calling
+    ;;    this macro in sequence.
 fp_try_write_ee macro   file, eeaddr
     local           exit
 
@@ -328,6 +355,11 @@ fp_try_write_ee macro   file, eeaddr
     eeprom_write_w
 exit:
     endm
+
+fp_try_write_ee16   macro   file16, eeaddr
+    fp_try_write_ee file16, eeaddr
+    fp_try_write_ee file16 + 1, eeaddr + 1
+    endm
     endif
 
     ifdef section_init
@@ -337,9 +369,9 @@ exit:
     clrf    fp_ee_i
 
     ;; Initialize from EEPROM.
-    eeprom_read_lw  fp_ee_temp
-    tempc_setw
-    eeprom_read_lw  fp_ee_air
+    eeprom_read16_lf    fp_ee_temp, w16
+    tempc_set16         w16
+    eeprom_read_lw      fp_ee_air
     airpump_setw
     endif
 
