@@ -69,6 +69,30 @@ zero16f macro   file
     iorwf   file + 1, W
     endm
 
+    ;; Signed 16-bit greater-than.
+    ;;
+    ;; C := (int) *file1 > (int) *file2
+    ;;
+    ;; Clobbers W.
+gts16ff     macro   file1, file2
+    selbank file2
+    movf    file2, W
+    selbnkc file1
+    subwf   file1, W
+
+    selbnkc file2 + 1
+    movf    file2 + 1, W
+    btfss   STATUS, C
+    incf    file2 + 1, W
+    selbnkc file1 + 1
+    subwf   file1 + 1, W
+
+    bsf     STATUS, C
+    andlw   0x80
+    btfss   STATUS, Z
+    bcf     STATUS, C
+    endm
+
     ;; if ((int) (*file1 - lit) >= 0) goto dest
 bge16lf macro   file1, lit, dest
     local   mend

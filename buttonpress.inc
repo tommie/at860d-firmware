@@ -153,8 +153,12 @@ no_diff:
     btfss   bp_state, BP_VALID_T
     goto    idle_done
 
-    ;; if (bp_t - timer_value >= 0) goto idle_done
-    bge16ff bp_t, timer_value, idle_done
+    ;; if (bp_t >= timer_value) goto idle_done
+    movlw   HIGH idle_done
+    movwf   PCLATH
+    gts16ff timer_value, bp_t
+    btfss   STATUS, C
+    goto    idle_done
 
     ;; bp_state &= ~(1 << BP_VALID_T)
     selbnkc bp_state
