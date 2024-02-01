@@ -1,8 +1,7 @@
     ;; Power bypass I/O module.
     ;;
-    ;; This activates a triac to bypass the main switch, allowing the
-	;; MCU to let the airpump run until the temperature is low enough.
-    ;; It's not in the triac module, because the control is just on/off.
+    ;; This activates a triac to bypass the mains switch, allowing the
+    ;; MCU to let the airpump run until the temperature is low enough.
     ;;
     ;; RE0, active low
 
