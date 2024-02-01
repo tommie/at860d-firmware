@@ -299,6 +299,8 @@ i   set     0
     clrf    bp_prev + i
     selbnkc bp_clicked + i
     clrf    bp_clicked + i
+    selbnkc bp_held + i
+    clrf    bp_held + i
     selbnkc bp_holding + i
     clrf    bp_holding + i
 i   set     i + 1
