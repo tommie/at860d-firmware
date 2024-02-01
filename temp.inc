@@ -29,8 +29,8 @@ temp_idle   macro
     rr16fl  w16, 4 - 1, 0       ; To FP15.1
     add16cf w16
 
-    add16ff temp_const, w16
-    rl16fl  w16, 6 - 1, 0       ; To FP10.6
+    add0816ff   temp_const, w16
+    rl16fl      w16, 6 - 1, 0       ; To FP10.6
 
     sub16ff     temp_value, w16
     divp2s16lf  w16, 4
