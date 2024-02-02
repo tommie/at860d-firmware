@@ -86,7 +86,9 @@ fp_idle macro
     local   down_done
     local   air_disabled
     local   air_done
+    local   temp_cursor_done
     local   arm_done
+    local   clear_cursor_done
     local   timer_done
     local   done
 
@@ -176,6 +178,20 @@ air_done:
     movwf   fp_t
     btfsc   STATUS, C
     incf    fp_t + 1, F
+
+    ;; if (fp_state.temp_set) display_set_cursor(3)
+    selbnkc fp_state
+    btfss   fp_state, FP_TEMP_SET
+    goto    arm_done
+
+    movlw   HIGH temp_cursor_done
+    movwf   PCLATH
+    selbnkc fp_state
+    btfsc   fp_state, FP_BTN_AIR
+    goto    temp_cursor_done
+
+    display_set_cursor  3
+temp_cursor_done:
 arm_done:
 
     fp_idle_preset  BTN_PRESET_1, 1
@@ -197,7 +213,16 @@ arm_done:
     andlw   ~((1 << FP_TEMP_SET) | (1 << FP_PRESET_SET) | (1 << FP_RUN_TMR))
     movwf   fp_state
 
-    ;; Store the current value.
+    movlw   HIGH clear_cursor_done
+    movwf   PCLATH
+    selbnkc fp_state
+    btfsc   fp_state, FP_BTN_AIR
+    goto    clear_cursor_done
+
+    display_clear_cursor
+clear_cursor_done:
+
+    ;; Start storing the current value.
     uc_store    0
 timer_done:
 done:
