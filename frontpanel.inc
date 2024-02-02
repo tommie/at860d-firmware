@@ -286,9 +286,10 @@ disp_temp:
     display_set_temp_w16
 
     movlw   LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
-    selbnkc fp_state
+    selbank fp_state
     btfsc   fp_state, FP_PRESET_SET
     movlw   LS2A & LS2B & LS2E & LS2F & LS2G    ; "P"
+    selbnkc display_buf + 6
     movwf   display_buf + 6
 
     clrf    w16 + 1
@@ -314,13 +315,17 @@ fp_idle_cooldown macro   endlabel
     rr16fl      w16, 1, 0       ; To FP9.0
     display_set_temp_w16
     movlw       LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
+    selbnkc     display_buf + 6
     movwf       display_buf + 6
 
     movlw       LSA & LSD & LSE & LSF               ; "C"
+    selbnkc     display_buf + 2
     movwf       display_buf + 2
     movlw       LSA & LSB & LSC & LSD & LSE & LSF   ; "O"
+    selbnkc     display_buf + 1
     movwf       display_buf + 1
     movlw       LSD & LSE & LSF                     ; "L"
+    selbnkc     display_buf + 0
     movwf       display_buf + 0
 
     movlw       HIGH endlabel
@@ -343,13 +348,18 @@ fp_idle_selftest macro   endlabel
     buttonpress_reset_all
 
     movlw       LSA & LSE & LSF             ; "T"
+    selbnkc     display_buf + 5
     movwf       display_buf + 5
+    selbnkc     display_buf + 3
     movwf       display_buf + 3
     movlw       LSA & LSC & LSD & LSF & LSG ; "S"
+    selbnkc     display_buf + 4
     movwf       display_buf + 4
 
+    selbnkc     selftest_state
     movf        selftest_state, W
     movwf       w16
+    selbnkc     selftest_state + 1
     movf        selftest_state + 1, W
     andlw       0x03
     movwf       w16 + 1
@@ -361,6 +371,7 @@ fp_idle_selftest macro   endlabel
     goto        failed
 
     movlw       ~0
+    selbnkc     display_buf + 6
     movwf       display_buf + 6
 
     movlw       HIGH endlabel
@@ -369,6 +380,7 @@ fp_idle_selftest macro   endlabel
 
 failed:
     movlw       LS2A & LS2E & LS2F & LS2G ; "F"
+    selbank     display_buf + 6
     movwf       display_buf + 6
 
     movlw       HIGH endlabel
@@ -393,13 +405,17 @@ fp_idle_standby  macro   endlabel
     rr16fl      w16, 1, 0       ; To FP9.0
     display_set_temp_w16
     movlw       LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
+    selbank     display_buf + 6
     movwf       display_buf + 6
 
     movlw       LSA & LSC & LSD & LSF & LSG ; "S"
+    selbnkc     display_buf + 2
     movwf       display_buf + 2
     movlw       LSD & LSE & LSF             ; "L"
+    selbnkc     display_buf + 1
     movwf       display_buf + 1
     movlw       LSA & LSB & LSE & LSF & LSG ; "P"
+    selbnkc     display_buf + 0
     movwf       display_buf + 0
 
     movlw       HIGH endlabel
