@@ -15,14 +15,7 @@
 
     ifdef section_code
 heater_output   macro   file, bit
-    selbank PORTE
-    movf    PORTE, W
-    andlw   ~(1 << 2)
-    selbnkc file
-    btfss   file, bit
-    iorlw   1 << 2
-    selbnkc PORTE
-    movwf   PORTE
+    movinvbit   file, bit, PORTE, 2
     endm
 
 heater_timer_next macro timer_value

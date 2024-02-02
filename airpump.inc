@@ -15,11 +15,8 @@ airpump_value res 1
     endif
 
     ifdef section_code
-airpump_output macro   file, bit
-    btfsc   file, bit
-    bcf     PORTE, 1
-    btfss   file, bit
-    bsf     PORTE, 1
+airpump_output  macro   file, bit
+    movinvbit           file, bit, PORTE, 1
     endm
 
 airpump_timer_next macro  timer_value

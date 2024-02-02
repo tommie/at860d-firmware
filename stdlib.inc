@@ -69,6 +69,35 @@ zero16f macro   file
     iorwf   file + 1, W
     endm
 
+    ;; Copies a bit from one file to another.
+    ;;
+    ;; The source and destination registers are only accessed once each,
+    ;; making it safe to run on ports with interrupts enabled.
+    ;;
+    ;; Clobbers W, STATUS.
+movbit  macro   srcf, srcb, destf, destb
+    selbank srcf
+    movwf   srcf, W
+    andlw   1 << (srcb)
+    selbank destf
+    btfsc   STATUS, Z
+    bcf     destf, destb
+    btfss   STATUS, Z
+    bsf     destf, destb
+    endm
+
+    ;; Like movbit, but inverts the result.
+movinvbit   macro   srcf, srcb, destf, destb
+    selbank srcf
+    movf    srcf, W
+    andlw   1 << (srcb)
+    selbank destf
+    btfsc   STATUS, Z
+    bsf     destf, destb
+    btfss   STATUS, Z
+    bcf     destf, destb
+    endm
+
     ;; Signed 16-bit greater-than.
     ;;
     ;; C := (int) *file1 > (int) *file2

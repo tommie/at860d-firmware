@@ -8,15 +8,8 @@
 #define module_buzzer
 
     ifdef section_code
-buzzer_set      macro   file, bit
-    selbank PORTC
-    movf    PORTC, W
-    andlw   ~(1 << 0)
-    selbnkc file
-    btfss   file, bit
-    iorlw   1 << 0
-    selbnkc PORTC
-    movwf   PORTC
+buzzer_set  macro   file, bit
+    movbit          file, bit, PORTC, 0
     endm
     endif
 

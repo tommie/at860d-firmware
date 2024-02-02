@@ -11,15 +11,8 @@
 #define module_power
 
     ifdef section_code
-power_set       macro   file, bit
-    selbank PORTE
-    movf    PORTE, W
-    andlw   ~(1 << 0)
-    selbnkc file
-    btfss   file, bit
-    iorlw   1 << 0
-    selbnkc PORTE
-    movwf   PORTE
+power_set   macro   file, bit
+    movinvbit       file, bit, PORTE, 0
     endm
     endif
 
