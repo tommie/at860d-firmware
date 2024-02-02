@@ -19,11 +19,12 @@
     endif
 
     ifdef section_udata
-TEMPC_P         equ 64
-TEMPC_I         equ 8
-TEMPC_D         equ 16
+TEMPC_P         equ 16
+TEMPC_I         equ 0
+TEMPC_D         equ 0
 TEMPC_DT        equ 1           ; Time interval, in some unit.
-TEMPC_FRAC      equ 0           ; The log2-divisor, interpreted as the number of fractional bits in parameters.
+TEMPC_FRAC      equ 0           ; The log2-divisor; determines how many full-range samples can be accumulated before saturation.
+TEMPC_MAX_ERR   equ 20 << 1     ; 9.1 fixed point.
 
     ;; tempc_state bits
 TEMPC_ACTIVE    equ 0
@@ -33,7 +34,7 @@ tempc_buf       res 2
 tempc_next_t    res 1           ; In units of 256*timer_value.
 tempc_state     res 1
 
-    pid_lit_udata   0, 2, TEMPC_P, TEMPC_I, TEMPC_D, TEMPC_DT, TEMPC_FRAC
+    pid_lit_udata   0, 2, TEMPC_P, TEMPC_I, TEMPC_D, TEMPC_DT, TEMPC_FRAC, TEMPC_MAX_ERR
     endif
 
     ifdef section_code
@@ -75,14 +76,12 @@ mend:
     pid_lit_update  0, tempc_value, tempc_buf
 
     pid_get16   0, tempc_buf
-    divp2s16lf  tempc_buf, 15 - (1 + TRIACZCC_NUM_FRAC_BITS) ; Truncated, not rounded, to avoid rounding up to one more bit.
 
-    ;; heater_setw(tempc_buf < 0 ? 0 : tempc_buf)
-    selbnkc tempc_buf
-    movf    tempc_buf, W
-    selbnkc tempc_buf + 1
-    btfsc   tempc_buf + 1, 7
-    clrw
+    ;; heater_setw(clamp(tempc_buf, 0, 63))
+    divp2s16lf  tempc_buf, 3
+    clamps16f0l tempc_buf, (1 << (1 + TRIACZCC_NUM_FRAC_BITS)) - 1
+    selbnkc     tempc_buf
+    movf        tempc_buf, W
     heater_setw
 mend:
     endm

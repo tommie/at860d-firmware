@@ -22,7 +22,7 @@ temp_const  res 1               ; 7.1 fixed point.
 
     ifdef section_code
 temp_idle   macro
-    ;; temp_value += (adc_temp_value * temp_coeff + temp_const - temp_value) / 2^4
+    ;; temp_value += (adc_temp_value * temp_coeff + temp_const - temp_value) / 2^1
     ;;
     ;; adc_temp_value is 10.0 fixed point.
     mov16ff adc_temp_value, w16
@@ -36,7 +36,7 @@ temp_idle   macro
     rl16fl      w16, 6 - 1, 0       ; To FP10.6
 
     sub16ff     temp_value, w16
-    divp2s16lf  w16, 4
+    divp2s16lf  w16, 1
     add16cf     w16
 
     add16ff w16, temp_value

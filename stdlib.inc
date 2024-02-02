@@ -725,4 +725,64 @@ i   set     i + 1
     rrf     file, F
     endw
     endm
+
+    ;; Clamp signed *file16 within [0, lit_max].
+clamps16f0l macro   file16, lit_max
+    local   is_neg
+    local   mend
+
+    movlw   HIGH is_neg
+    movwf   PCLATH
+    selbank file16 + 1
+    btfsc   file16 + 1, 7
+    goto    is_neg
+
+    movlw   HIGH mend
+    movwf   PCLATH
+    gt16fl  file16, lit_max
+    btfss   STATUS, C
+    goto    mend
+
+    mov16lf lit_max, file16
+    goto    mend
+
+is_neg:
+    clr16f  file16
+
+mend:
+    endm
+
+    ;; Clamp signed *file16 within [-lit_abs_max, lit_abs_max].
+clamps16fl  macro   file16, lit_abs_max
+    local   is_neg
+    local   mend
+
+    movlw   HIGH is_neg
+    movwf   PCLATH
+    selbank file16 + 1
+    btfsc   file16 + 1, 7
+    goto    is_neg
+
+    movlw   HIGH mend
+    movwf   PCLATH
+    gt16fl  file16, lit_abs_max
+    btfss   STATUS, C
+    goto    mend
+
+    mov16lf lit_abs_max, file16
+    goto    mend
+
+is_neg:
+    neg16f  file16
+
+    movlw   HIGH mend
+    movwf   PCLATH
+    gt16fl  file16, lit_abs_max
+    btfss   STATUS, C
+    goto    mend
+
+    mov16lf -lit_abs_max, file16
+
+mend:
+    endm
     endif
