@@ -3,7 +3,7 @@
 AS = gpasm --mpasm-compatible
 CC = sdcc
 LD = gplink
-SHELL = bash  # For pipefail
+GPVC = gpvc
 
 ASFLAGS = -p p16f887 -r dec
 LDFLAGS = -m
@@ -18,9 +18,16 @@ clean:
 
 at860d.hex: at860d.o
 
-%.hex %.lst: %.o
+%.cod: %.hex
+%.lst: %.hex
+%.hex: %.o
 	$(LD) $(LDFLAGS) -o $@ $^
+	@$(GPVC) $(basename $@).cod | awk -Wnon-decimal-data '/using ROM 0+ / { print "Program:", 1+("0x" $$5); } /using ROM 0021.. / { print "EEDATA:", 1+("0x" $$5)-("0x" $$3); }'
 
 %.o: %.asm *.inc
-	set -o pipefail
-	$(AS) $(ASFLAGS) -c -o $@ $< | (grep -Fv 'Symbol index not assigned a value.' || :)
+	@echo $(AS) $(ASFLAGS) -c -o $@ $<
+	@$(AS) $(ASFLAGS) -c -o $@ $< >"$(dir $@)/.$(notdir $@).log" ;\
+		status=$$? ;\
+		grep -Fv 'Symbol index not assigned a value.' "$(dir $@)/.$(notdir $@).log" || : ;\
+		rm "$(dir $@)/.$(notdir $@).log" ;\
+		exit $$status
