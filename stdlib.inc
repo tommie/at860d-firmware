@@ -98,6 +98,30 @@ movinvbit   macro   srcf, srcb, destf, destb
     bcf     destf, destb
     endm
 
+    ;; Z := file1 == file2
+    ;;
+    ;; Clobbers W, STATUS.
+eq16ff  macro   file1, file2
+    bsf     STATUS, DC
+    selbank file2
+    movf    file2, W
+    selbnkc file1
+    xorwf   file1, W
+    btfss   STATUS, Z
+    bcf     STATUS, DC
+
+    selbnkc file2 + 1
+    movf    file2 + 1, W
+    selbnkc file1 + 1
+    xorwf   file1 + 1, W
+    btfss   STATUS, Z
+    bcf     STATUS, DC
+
+    bcf     STATUS, Z
+    btfsc   STATUS, DC
+    bsf     STATUS, Z
+    endm
+
     ;; Signed 16-bit greater-than.
     ;;
     ;; C := (int) *file1 > (int) *file2

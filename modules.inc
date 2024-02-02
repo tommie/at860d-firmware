@@ -17,6 +17,7 @@
     include "power.inc"
     include "switch.inc"        ; Required by standby.
     include "buttonpress.inc"   ; Required by frontpanel.
+    include "knob.inc"          ; Required by frontpanel.
     include "eeprom.inc"        ; Required by frontpanel.
     include "temp.inc"          ; Required by tempcontrol.
     include "pid.inc"           ; Required by tempcontrol.

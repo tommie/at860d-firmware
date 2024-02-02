@@ -35,14 +35,18 @@
     endif
 
     ifdef section_udata
+FP_KNOB_TEMP    equ 0
+FP_KNOB_AIR     equ 1
+
+    ;; fp_state bits
+FP_TEMP_SET     equ 0
+FP_PRESET_SET   equ 1
+FP_BTN_AIR      equ 2
+FP_RUN_TMR      equ 3
+FP_ARM_TMR      equ 7
+
 fp_state        res 1
 fp_t            res 2
-
-FP_TEMP_SET     EQU 0
-FP_PRESET_SET   EQU 1
-FP_BTN_AIR      EQU 2
-FP_RUN_TMR      EQU 3
-FP_ARM_TMR      EQU 7
     endif
 
     ifdef section_code
@@ -103,6 +107,9 @@ fp_idle macro
 
     fp_display
 
+    knob_idle   FP_KNOB_TEMP, 2, 10, TEMPCONTROL_MIN_TEMP, TEMPCONTROL_MAX_TEMP, tempc_value, fp_tempc_set16
+    knob_idle   FP_KNOB_AIR, 1, 8, 0, 255, airpump_value, fp_airpump_setw
+
     movlw   HIGH up_done
     movwf   PCLATH
     buttonpress_skip_if_clicked BTN_UP
@@ -113,9 +120,6 @@ fp_idle macro
 
     selbank fp_state
     bsf     fp_state, FP_ARM_TMR
-
-    movlw   HIGH up_done
-    movwf   PCLATH
     btfss   fp_state, FP_BTN_AIR
     bsf     fp_state, FP_TEMP_SET
 up_done:
@@ -130,9 +134,6 @@ up_done:
 
     selbnkc fp_state
     bsf     fp_state, FP_ARM_TMR
-
-    movlw   HIGH down_done
-    movwf   PCLATH
     btfss   fp_state, FP_BTN_AIR
     bsf     fp_state, FP_TEMP_SET
 down_done:
@@ -147,11 +148,13 @@ down_done:
 
     movlw   HIGH air_disabled
     movwf   PCLATH
+    movlw   1 << FP_BTN_AIR
     selbank fp_state
-    btfsc   fp_state, FP_BTN_AIR
+    xorwf   fp_state, F
+    btfss   fp_state, FP_BTN_AIR
     goto    air_disabled
 
-    bsf     fp_state, FP_BTN_AIR
+    knob_activate       FP_KNOB_AIR
     display_set_cursor  0
 
     movlw   HIGH air_done
@@ -159,7 +162,7 @@ down_done:
     goto    air_done
 
 air_disabled:
-    bcf     fp_state, FP_BTN_AIR
+    knob_activate   FP_KNOB_TEMP
     display_clear_cursor
 air_done:
 
@@ -194,6 +197,7 @@ air_done:
     btfsc   fp_state, FP_BTN_AIR
     goto    temp_cursor_done
 
+    knob_activate       FP_KNOB_TEMP
     display_set_cursor  3
 temp_cursor_done:
 arm_done:
@@ -223,6 +227,7 @@ arm_done:
     btfsc   fp_state, FP_BTN_AIR
     goto    clear_cursor_done
 
+    knob_activate   FP_KNOB_TEMP
     display_clear_cursor
 clear_cursor_done:
 
@@ -241,20 +246,20 @@ fp_change_value_l   macro   delta
     btfsc           fp_state, FP_BTN_AIR
     goto            airpump
 
-    fp_update_lfm16 2*(delta), tempc_value, tempc_set16 ; FP9.1
+    fp_update_lfm16 2*(delta), tempc_value, tempc_set16, FP_KNOB_TEMP ; FP9.1
     movlw           HIGH exit
     movwf           PCLATH
     goto            exit
 
 airpump:
-    fp_update_lfm   delta, airpump_value, airpump_setw
+    fp_update_lfm   delta, airpump_value, airpump_setw, FP_KNOB_AIR
 
 exit:
     endm
 
     ;; Applies a signed delta to file, using set16macro to make the update.
     ;; Saturates at either end.
-fp_update_lfm   macro   delta, file, setwmacro
+fp_update_lfm   macro   delta, file, setwmacro, knob
     local   exit
 
     movlw   HIGH exit
@@ -270,14 +275,16 @@ fp_update_lfm   macro   delta, file, setwmacro
     btfsc   STATUS, C
     endif
     goto    exit
+
     setwmacro
+    knob_deactivate knob
 
 exit:
     endm
 
     ;; Applies a signed delta to file, using set16macro to make the update.
     ;; Saturates at either end.
-fp_update_lfm16 macro   delta, file, set16macro
+fp_update_lfm16 macro   delta, file, set16macro, knob
     local       exit
 
     movlw       HIGH exit
@@ -290,9 +297,24 @@ fp_update_lfm16 macro   delta, file, set16macro
     btfsc       STATUS, C
     endif
     goto        exit
+
     set16macro  w16
+    knob_deactivate knob
 
 exit:
+    endm
+
+fp_airpump_setw macro
+    airpump_setw
+    selbank     fp_state
+    bsf         fp_state, FP_ARM_TMR
+    endm
+
+fp_tempc_set16  macro   src
+    tempc_set16 src
+    selbank     fp_state
+    bsf         fp_state, FP_ARM_TMR
+    bsf         fp_state, FP_TEMP_SET
     endm
 
 fp_display  macro
@@ -477,8 +499,9 @@ mend:
     endif
 
     ifdef section_init
-    selbank fp_state
-    clrf    fp_state
+    selbank         fp_state
+    clrf            fp_state
+    knob_activate   FP_KNOB_TEMP
     endif
 
     ifdef section_idle
