@@ -82,6 +82,10 @@ done:
     endm
 
 fp_idle macro
+    ifndef  FRONTPANEL_SET_DELAY
+    error   "FRONTPANEL_SET_DELAY is not defined"
+    endif
+
     local   up_done
     local   down_done
     local   air_disabled
@@ -168,12 +172,12 @@ air_done:
     bcf     fp_state, FP_ARM_TMR
     bsf     fp_state, FP_RUN_TMR
 
-    ;; fp_t = timer_value + 2000
+    ;; fp_t = timer_value + FRONTPANEL_SET_DELAY
     selbnkc timer_value
-    movlw   HIGH 2000
+    movlw   HIGH FRONTPANEL_SET_DELAY
     addwf   timer_value + 1, W
     movwf   fp_t + 1
-    movlw   LOW 2000
+    movlw   LOW FRONTPANEL_SET_DELAY
     addwf   timer_value, W
     movwf   fp_t
     btfsc   STATUS, C
