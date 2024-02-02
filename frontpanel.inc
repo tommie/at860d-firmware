@@ -137,12 +137,12 @@ fp_idle macro
     bsf     acc1, 0
     endif
     ifndef  DISABLE_STANDBY
-    standby_skip_if_active
+    standby_skip_if_not_active
     bsf     acc1, 0
     endif
     movlw   HIGH inactive_done
     movwf   PCLATH
-    btfsc   acc1, 0
+    btfss   acc1, 0
     goto    inactive_done
 
     buttonpress_reset_all
