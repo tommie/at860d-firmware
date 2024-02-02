@@ -65,9 +65,11 @@ cooldown_idle       macro
     movlw           1 << 5
     xorwf           cooldown_state, F
 
-    ;; cooldown_state_4 = cooldown_state_4 && cooldown_state_5
+    ;; cooldown_state_4 = (cooldown_state_4 && cooldown_state_5) || cooldown_state_0
     btfss           cooldown_state, 5
     bcf             cooldown_state, 4
+    btfsc           cooldown_state, 0
+    bsf             cooldown_state, 4
 
     ;; Commit new bits to lower nibble.
     swapf           cooldown_state, F
