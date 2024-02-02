@@ -14,9 +14,8 @@
     ;; NOT_POR is used to signal that we have already handled the
     ;; WDTO. If MCLR is asserted, we'll be able to tell.
 wdto:
-    ; banksel PCON
+    selbnkc PCON
     bsf     PCON, NOT_POR
-    banksel 0
 
     movlw   LS2B & LS2C & LS2DP
     ledseg_set
@@ -34,7 +33,7 @@ wdto_loop:
     endif
 
     ifdef section_init
-    banksel PCON
+    selbank PCON
     movlw   HIGH not_wdto
     movwf   PCLATH
     btfsc   PCON, NOT_POR
@@ -47,10 +46,9 @@ not_wdto:
 
     ;; See comment in wdto.
     bcf     PCON, NOT_POR
-    banksel 0
 
     ;; 1.06s WDT
-    banksel WDTCON
+    selbnkc WDTCON
     movlw   (10 << WDTPS0)
     movwf   WDTCON
     endif

@@ -31,7 +31,7 @@ airpump_int_next  macro
     endm
 
 airpump_setw macro
-    banksel             airpump_value
+    selbank             airpump_value
     movwf               airpump_value
     triacpfc_set        0, airpump_value
     endm
@@ -39,9 +39,9 @@ airpump_setw macro
 
     ifdef section_init
     bsf     PORTE, 1
-    banksel TRISE
+    selbank TRISE
     bcf     TRISE, 1
-    banksel PORTE
-    banksel airpump_value
+    selbnkc PORTE
+    selbnkc airpump_value
     clrf    airpump_value
     endif

@@ -15,13 +15,13 @@
 
     ifdef section_code
 heater_output   macro   file, bit
-    banksel PORTE
+    selbank PORTE
     movf    PORTE, W
     andlw   ~(1 << 2)
-    banksel file
+    selbnkc file
     btfss   file, bit
     iorlw   1 << 2
-    banksel PORTE
+    selbnkc PORTE
     movwf   PORTE
     endm
 
@@ -39,8 +39,8 @@ heater_setw macro
     endif
 
     ifdef section_init
-    banksel PORTE
+    selbank PORTE
     bsf     PORTE, 2
-    banksel TRISE
+    selbnkc TRISE
     bcf     TRISE, 2
     endif

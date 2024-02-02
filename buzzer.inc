@@ -9,20 +9,20 @@
 
     ifdef section_code
 buzzer_set      macro   file, bit
-    banksel PORTC
+    selbank PORTC
     movf    PORTC, W
     andlw   ~(1 << 0)
-    banksel file
+    selbnkc file
     btfss   file, bit
     iorlw   1 << 0
-    banksel PORTC
+    selbnkc PORTC
     movwf   PORTC
     endm
     endif
 
     ifdef section_init
-    banksel PORTC
+    selbank PORTC
     bcf     PORTC, 0
-    banksel TRISC
+    selbnkc TRISC
     bcf     TRISC, 0
     endif
