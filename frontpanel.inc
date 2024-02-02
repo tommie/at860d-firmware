@@ -293,23 +293,44 @@ exit:
 
 fp_display  macro
     local   disp_temp
+    local   disp_temp_unit
     local   done
 
-    temp_get16  w16
+    mov16ff tempc_value, w16
 
-    ;; if ((fp_state & 1) == 0) goto disp_temp
+    ;; if (fp_state.temp_set) goto disp_temp
     movlw   HIGH disp_temp
     movwf   PCLATH
     selbank fp_state
-    btfss   fp_state, FP_TEMP_SET
+    btfsc   fp_state, FP_TEMP_SET
     goto    disp_temp
 
-    mov16ff tempc_value, w16
+    temp_get16  w16
+
+    ;; if (w16 == TEMP_CONST_INIT) display_buf = "Low"
+    ge16lf  w16, TEMP_CONST_INIT
+    btfss   STATUS, Z
+    goto    disp_temp
+
+    movlw   LSD & LSE & LSF       ; "L"
+    selbnkc display_buf + 5
+    movwf   display_buf + 5
+    movlw   LSC & LSD & LSE & LSG ; "o"
+    selbnkc display_buf + 4
+    movwf   display_buf + 4
+    movlw   LSC & LSD & LSE       ; "w"
+    selbnkc display_buf + 3
+    movwf   display_buf + 3
+
+    movlw   HIGH disp_temp_unit
+    movwf   PCLATH
+    goto    disp_temp_unit
 
 disp_temp:
     rr16fl  w16, 1, 0       ; To FP9.0
     display_set_temp_w16
 
+disp_temp_unit:
     movlw   LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
     selbank fp_state
     btfsc   fp_state, FP_PRESET_SET
