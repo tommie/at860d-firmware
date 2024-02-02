@@ -21,6 +21,8 @@ BTN_HEAT_PANEL  equ 8
 #define STANDBY_AIR COOLDOWN_AIR
 #define STANDBY_DELAY (20000 / 128)     ;; In 128 ms ticks.
 #define STANDBY_MAX_TEMP COOLDOWN_MAX_TEMP
+#define TEMPCONTROL_MIN_TEMP (35 << 1)  ;; 9.1 fixed point.
+#define TEMPCONTROL_MAX_TEMP (500 << 1) ;; 9.1 fixed point.
 #define TRIACPFC_NUM_CHANNELS 1
 #define TRIACZCC_NUM_CHANNELS 1
 #define TRIACZCC_NUM_FRAC_BITS 5

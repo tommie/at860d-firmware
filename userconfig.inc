@@ -29,7 +29,7 @@ uc_dtemp    macro   value
     endm
 
 uc_ee_temp
-    uc_dtemp    (TEMP_CONST_INIT >> 1)
+    uc_dtemp    TEMPCONTROL_MIN_TEMP >> 1
     uc_dtemp    40
     uc_dtemp    50
     uc_dtemp    60

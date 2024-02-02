@@ -96,14 +96,42 @@ tempc_set_active    macro   b
     endif
     endm
 
+    ifndef  TEMPCONTROL_MAX_TEMP
+    error   "TEMPCONTROL_MAX_TEMP not defined"
+    endif
+
     ;; Sets the set-temperature as *C in 9.1 fixed point.
 tempc_set16 macro   file
+    local   mend
+
+    ;; if (file > TEMPCONTROL_MAX_TEMP) goto mend
+    movlw   HIGH mend
+    movwf   PCLATH
+    ge16lf  file, (TEMPCONTROL_MAX_TEMP) + 1
+    btfsc   STATUS, C
+    goto    mend
+
+    ;; if (file < TEMPCONTROL_MIN_TEMP) goto mend
+    movlw   HIGH mend
+    movwf   PCLATH
+    ge16lf  file, TEMPCONTROL_MIN_TEMP
+    btfss   STATUS, C
+    goto    mend
+
     mov16ff file, tempc_value
+mend:
     endm
     endif
 
     ifdef section_init
-    clr16f          tempc_value
+    ifndef  TEMPCONTROL_MIN_TEMP
+    error   "TEMPCONTROL_MIN_TEMP not defined"
+    endif
+    if      TEMPCONTROL_MIN_TEMP < TEMP_CONST_INIT
+    error   "TEMPCONTROL_MIN_TEMP must be at least TEMP_CONST_INIT"
+    endif
+
+    mov16lf         TEMPCONTROL_MIN_TEMP, tempc_value
     selbnkc         tempc_next_t
     clrf            tempc_next_t
     incf            tempc_next_t, F
