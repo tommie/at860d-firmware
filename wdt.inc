@@ -4,12 +4,15 @@
 #undefine module_wdt
     endif
 #define module_wdt
+    ifndef module_heater
+    error "heater module is a dependency of wdt"
+    endif
     ifndef module_led
     error "led module is a dependency of wdt"
     endif
 
     ifdef section_code
-    ;; Show the WDT timeout as "*1" and sleep until reset.
+    ;; Show the WDT timeout as "t" and sleep until reset.
     ;;
     ;; NOT_POR is used to signal that we have already handled the
     ;; WDTO. If MCLR is asserted, we'll be able to tell.
@@ -17,7 +20,10 @@ wdto:
     selbnkc PCON
     bsf     PCON, NOT_POR
 
-    movlw   LS2B & LS2C & LS2DP
+    clrw
+    heater_setw
+
+    movlw   LS2D & LS2E & LS2F & LS2G
     ledseg_set
     movlw   6
     movwf   acc1
