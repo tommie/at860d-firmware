@@ -46,45 +46,6 @@ FP_ARM_TMR      EQU 7
     endif
 
     ifdef section_code
-fp_display  macro
-    local   disp_temp
-    local   done
-
-    ;; Special modes.
-    fp_display_cooldown done
-    fp_display_standby  done
-
-    ;; Normal operating mode.
-
-    temp_get16  w16
-
-    ;; if ((fp_state & 1) == 0) goto disp_temp
-    movlw   HIGH disp_temp
-    movwf   PCLATH
-    selbank fp_state
-    btfss   fp_state, FP_TEMP_SET
-    goto    disp_temp
-
-    mov16ff tempc_value, w16
-
-disp_temp:
-    rr16fl  w16, 1, 0       ; To FP9.0
-    display_set_temp_w16
-
-    movlw   LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
-    selbnkc fp_state
-    btfsc   fp_state, FP_PRESET_SET
-    movlw   LS2A & LS2B & LS2E & LS2F & LS2G    ; "P"
-    movwf   display_buf + 6
-
-    clrf    w16 + 1
-    selbnkc airpump_value
-    movf    airpump_value, W
-    movwf   w16
-    display_set_air_w16
-done:
-    endm
-
 fp_idle_preset  macro   btn, index
     local   not_held
     local   done
@@ -121,7 +82,6 @@ done:
     endm
 
 fp_idle macro
-    local   inactive_done
     local   up_done
     local   down_done
     local   air_disabled
@@ -130,27 +90,12 @@ fp_idle macro
     local   timer_done
     local   done
 
-    ;; if (!cooldown_active && !standby_active) goto inactive_done
-    clrf    acc1
-    ifndef  DISABLE_COOLDOWN
-    cooldown_skip_if_not_active
-    bsf     acc1, 0
-    endif
-    ifndef  DISABLE_STANDBY
-    standby_skip_if_not_active
-    bsf     acc1, 0
-    endif
-    movlw   HIGH inactive_done
-    movwf   PCLATH
-    btfss   acc1, 0
-    goto    inactive_done
+    ;; Modes of operation. In priority order.
+    fp_idle_cooldown done
+    fp_idle_selftest done
+    fp_idle_standby  done
 
-    buttonpress_reset_all
-
-    movlw   HIGH done
-    movwf   PCLATH
-    goto    done
-inactive_done:
+    fp_display
 
     movlw   HIGH up_done
     movwf   PCLATH
@@ -321,7 +266,40 @@ fp_update_lfm16 macro   delta, file, set16macro
 exit:
     endm
 
-fp_display_cooldown macro   endlabel
+fp_display  macro
+    local   disp_temp
+    local   done
+
+    temp_get16  w16
+
+    ;; if ((fp_state & 1) == 0) goto disp_temp
+    movlw   HIGH disp_temp
+    movwf   PCLATH
+    selbank fp_state
+    btfss   fp_state, FP_TEMP_SET
+    goto    disp_temp
+
+    mov16ff tempc_value, w16
+
+disp_temp:
+    rr16fl  w16, 1, 0       ; To FP9.0
+    display_set_temp_w16
+
+    movlw   LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
+    selbnkc fp_state
+    btfsc   fp_state, FP_PRESET_SET
+    movlw   LS2A & LS2B & LS2E & LS2F & LS2G    ; "P"
+    movwf   display_buf + 6
+
+    clrf    w16 + 1
+    selbnkc airpump_value
+    movf    airpump_value, W
+    movwf   w16
+    display_set_air_w16
+done:
+    endm
+
+fp_idle_cooldown macro   endlabel
     local       mend
 
     ifndef      DISABLE_COOLDOWN
@@ -329,6 +307,8 @@ fp_display_cooldown macro   endlabel
     movwf       PCLATH
     cooldown_skip_if_active
     goto        mend
+
+    buttonpress_reset_all
 
     temp_get16  w16
     rr16fl      w16, 1, 0       ; To FP9.0
@@ -350,7 +330,55 @@ fp_display_cooldown macro   endlabel
 mend:
     endm
 
-fp_display_standby  macro   endlabel
+fp_idle_selftest macro   endlabel
+    local       failed
+    local       mend
+
+    ifndef      DISABLE_SELFTEST
+    movlw       HIGH mend
+    movwf       PCLATH
+    selftest_skip_if_not_passed
+    goto        mend
+
+    buttonpress_reset_all
+
+    movlw       LSA & LSE & LSF             ; "T"
+    movwf       display_buf + 5
+    movwf       display_buf + 3
+    movlw       LSA & LSC & LSD & LSF & LSG ; "S"
+    movwf       display_buf + 4
+
+    movf        selftest_state, W
+    movwf       w16
+    movf        selftest_state + 1, W
+    andlw       0x03
+    movwf       w16 + 1
+    display_set_air_w16
+
+    movlw       HIGH failed
+    movwf       PCLATH
+    selftest_skip_if_not_failed
+    goto        failed
+
+    movlw       ~0
+    movwf       display_buf + 6
+
+    movlw       HIGH endlabel
+    movwf       PCLATH
+    goto        endlabel
+
+failed:
+    movlw       LS2A & LS2E & LS2F & LS2G ; "F"
+    movwf       display_buf + 6
+
+    movlw       HIGH endlabel
+    movwf       PCLATH
+    goto        endlabel
+    endif
+mend:
+    endm
+
+fp_idle_standby  macro   endlabel
     local       mend
 
     ifndef      DISABLE_STANDBY
@@ -358,6 +386,8 @@ fp_display_standby  macro   endlabel
     movwf       PCLATH
     standby_skip_if_active
     goto        mend
+
+    buttonpress_reset_all
 
     temp_get16  w16
     rr16fl      w16, 1, 0       ; To FP9.0

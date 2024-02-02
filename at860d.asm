@@ -26,6 +26,10 @@ BTN_HEAT_PANEL  equ 8
 #define TRIACZCC_NUM_FRAC_BITS 5
 #define TRIACZCC_NUM_EXTRA_BITS 3
 
+;#define TEMPC_DIRECT_CONTROL
+;#define DISABLE_COOLDOWN
+;#define DISABLE_SELFTEST
+;#define DISABLE_STANDBY
 
     udata
 
@@ -84,64 +88,8 @@ loop:
     include "modules.inc"
 #undefine section_idle
 
-    ifndef      DISABLE_SELFTEST
-    movlw       HIGH in_selftest
-    movwf       PCLATH
-    selftest_skip_if_passed
-    goto        in_selftest
-    endif
-
-    fp_display
-
     movlw       HIGH loop
     movwf       PCLATH
     goto        loop
-
-    ifndef      DISABLE_SELFTEST
-in_selftest:
-    movlw       LSA & LSE & LSF             ; "T"
-    movwf       display_buf + 2
-    movwf       display_buf + 0
-    movlw       LSA & LSC & LSD & LSF & LSG ; "S"
-    movwf       display_buf + 1
-
-    movf        selftest_state, W
-    movwf       w16
-    movf        selftest_state + 1, W
-    andlw       0x03
-    movwf       w16 + 1
-    display_set_air_w16
-
-    selftest_goto_if_failed failed_selftest
-
-    movlw       ~0
-    movwf       display_buf + 6
-
-    movlw       HIGH loop
-    movwf       PCLATH
-    goto        loop
-
-failed_selftest:
-    movlw       LS2A & LS2E & LS2F & LS2G ; "F"
-    movwf       display_buf + 6
-
-    ;; if (!swpower_get()) selftest_reset()
-    movlw       HIGH failed_selftest_reset
-    movwf       PCLATH
-    swpower_get STATUS, C
-    btfss       STATUS, C
-    goto        failed_selftest_reset
-
-    movlw       HIGH loop
-    movwf       PCLATH
-    goto        loop
-
-failed_selftest_reset:
-    selftest_reset
-
-    movlw       HIGH loop
-    movwf       PCLATH
-    goto        loop
-    endif
 
     end
