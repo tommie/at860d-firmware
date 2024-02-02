@@ -114,8 +114,11 @@ display_set_all_w16        macro
     endm
 
 display_set_cursor  macro   digit
-    movlw   (1 << DISP_CUR_ON) | (1 << DISP_CUR_EN) | digit
     selbank display_cursor
+    movlw   (1 << DISP_CUR_EN) | digit
+    ;; Avoid irregular flickering if the cursor is already on.
+    btfsc   display_cursor, DISP_CUR_ON
+    iorlw   1 << DISP_CUR_ON
     movwf   display_cursor
     endm
 
