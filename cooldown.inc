@@ -81,10 +81,8 @@ cooldown_idle       macro
     movlw           COOLDOWN_AIR
     airpump_setw
 
-    clr16f          w16
-    tempc_set16     w16
+    tempc_set_active    0
 
-    ;; A failsafe in case tempcontrol is broken.
     clrw
     heater_setw
 active_done:

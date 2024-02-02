@@ -73,6 +73,10 @@ start:
     include "modules.inc"
 #undefine section_init
 
+    ifdef               DISABLE_SELFTEST
+    tempc_set_active    1
+    endif
+
     irq_enable
 
 loop:

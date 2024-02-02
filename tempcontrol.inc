@@ -25,9 +25,13 @@ TEMPC_D         equ 16
 TEMPC_DT        equ 1           ; Time interval, in some unit.
 TEMPC_FRAC      equ 0           ; The log2-divisor, interpreted as the number of fractional bits in parameters.
 
+    ;; tempc_state bits
+TEMPC_ACTIVE    equ 0
+
 tempc_value     res 2           ; 9.1 fixed point.
 tempc_buf       res 2
 tempc_next_t    res 1           ; In units of 256*timer_value.
+tempc_state     res 1
 
     pid_lit_udata   0, 2, TEMPC_P, TEMPC_I, TEMPC_D, TEMPC_DT, TEMPC_FRAC
     endif
@@ -36,9 +40,16 @@ tempc_next_t    res 1           ; In units of 256*timer_value.
 tempc_idle  macro
     local   mend
 
+    ;; if (!tempc_state.active) goto mend
+    movlw   HIGH mend
+    movwf   PCLATH
+    selbank tempc_state
+    btfss   tempc_state, TEMPC_ACTIVE
+    goto    mend
+
     ;; TODO: change to inequality. Not strictly needed, since it's a slow timer.
     ;; if (timer_value/256 != tempc_next_t) goto mend
-    selbank timer_value + 1
+    selbnkc timer_value + 1
     movf    timer_value + 1, W
     selbnkc tempc_next_t
     subwf   tempc_next_t, W
@@ -76,6 +87,15 @@ mend:
 mend:
     endm
 
+tempc_set_active    macro   b
+    selbank tempc_state
+    if b
+    bsf     tempc_state, TEMPC_ACTIVE
+    else
+    bcf     tempc_state, TEMPC_ACTIVE
+    endif
+    endm
+
     ;; Sets the set-temperature as *C in 9.1 fixed point.
 tempc_set16 macro   file
     mov16ff file, tempc_value
@@ -87,6 +107,8 @@ tempc_set16 macro   file
     selbnkc         tempc_next_t
     clrf            tempc_next_t
     incf            tempc_next_t, F
+    selbnkc         tempc_state
+    clrf            tempc_state
     pid_lit_init    0
     endif
 

@@ -21,7 +21,7 @@
     include "temp.inc"          ; Required by tempcontrol.
     include "pid.inc"           ; Required by tempcontrol.
     include "tempcontrol.inc"   ; Required by userconfig.
-    include "userconfig.inc"    ; Required by frontpanel.
+    include "userconfig.inc"    ; Required by standby.
     ifndef  DISABLE_COOLDOWN
     include "cooldown.inc"
     endif

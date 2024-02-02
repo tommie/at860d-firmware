@@ -133,8 +133,7 @@ idle_end:
     clrw
     airpump_setw
 
-    clr16f      w16
-    tempc_set16 w16
+    tempc_set_active    0
 
     ;; A failsafe in case tempcontrol is broken.
     clrw
@@ -152,8 +151,9 @@ not_active:
     btfss           standby_state, STANDBY_WAS_ACTIVE
     goto            mend
 
-    bcf             standby_state, STANDBY_WAS_ACTIVE
-    uc_load         0
+    bcf                 standby_state, STANDBY_WAS_ACTIVE
+    tempc_set_active    1
+    uc_load             0
 
 mend:
     endm
