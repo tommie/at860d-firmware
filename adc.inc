@@ -16,14 +16,18 @@
     endif
 
     ifdef section_udata
-adc_i           res 1
-adc_state		res 1
+ADC_MULTISAMPLE_LOG equ 4       ; The log_2(number of multisamples) in [0, 4]
+
+adc_i           res 1           ; Lower nibble is for multisampling.
+adc_state       res 1
 adc_temp_value  res 2
 adc_knob_value  res 2
+adc_acc         res 2           ; Buffer for multisampling.
     endif
 
     ifdef section_code
 adc_idle macro
+    local   multisample_done
     local   next_end
 
     movlw   HIGH next_end
@@ -35,29 +39,73 @@ adc_idle macro
     btfsc   ADCON0, GO
     goto    next_end
 
-    movlw   HIGH adc_var_table
-    movwf   PCLATH
-    selbnkc adc_i
-    movf    adc_i, W
-    call    adc_var_table
-    movwf   FSR
-    ;; TODO: need to set IRP bit
-
+    ;; adc_acc += ADRES
     selbnkc ADRESL
     movf    ADRESL, W
-    movwf   INDF
+    selbnkc adc_acc
+    addwf   adc_acc, F
+    selbnkc adc_acc + 1
+    btfsc   STATUS, C
+    incf    adc_acc + 1, F
 
-    incf    FSR, F
     selbnkc ADRESH
     movf    ADRESH, W
-    movwf   INDF
+    selbnkc adc_acc + 1
+    addwf   adc_acc + 1, F
 
     ;; ++adc_i
     selbnkc adc_i
     incf    adc_i, F
 
-    ;; if (adc_i >= 2) adc_i = 0
-    movlw   2
+    ;; If the multisample counter is smaller than a nibble, forward wrap-around.
+    if      ADC_MULTISAMPLE_LOG > 4
+    error   "ADC_MULTISAMPLE_LOG greater than 4 is not supported"
+    endif
+    if      ADC_MULTISAMPLE_LOG < 4
+    movlw   0x10
+    selbnkc adc_i
+    btfsc   adc_i, ADC_MULTISAMPLE_LOG
+    addwf   adc_i, F
+    movlw   ~((1 << ((4 - ADC_MULTISAMPLE_LOG) - 1)) << ADC_MULTISAMPLE_LOG)
+    andwf   adc_i, F
+    endif
+
+    ;; if ((adc_i & 0x0F) != 0) goto multisample_done
+    movlw   HIGH multisample_done
+    movwf   PCLATH
+    movlw   0x0F
+    selbnkc adc_i
+    andwf   adc_i, W
+    btfss   STATUS, Z
+    goto    multisample_done
+
+    ;; adc_acc >>= ADC_MULTISAMPLE_LOG
+    rr16fl  adc_acc, ADC_MULTISAMPLE_LOG, 0
+
+    ;; *adc_var_table[adc_i] = adc_acc
+    movlw   HIGH adc_var_table
+    movwf   PCLATH
+    selbnkc adc_i
+    swapf   adc_i, W            ; Upper nibble
+    addlw   -1                  ; Previous channel
+    call    adc_var_table
+    movwf   FSR
+    ;; TODO: need to set IRP bit
+
+    selbnkc adc_acc
+    movf    adc_acc, W
+    movwf   INDF
+    selbnkc adc_acc + 1
+    movf    adc_acc + 1, W
+    incf    FSR, F
+    movwf   INDF
+
+    ;; adc_acc = 0
+    clr16f  adc_acc
+multisample_done:
+
+    ;; if (adc_i >= 2 << 4) adc_i = 0
+    movlw   2 << 4
     subwf   adc_i, W
     btfsc   STATUS, C
     clrf    adc_i
@@ -65,7 +113,7 @@ adc_idle macro
     ;; Set up the next channel.
     movlw   HIGH adc_channel_table
     movwf   PCLATH
-    movf    adc_i, W
+    swapf   adc_i, W            ; Upper nibble
     call    adc_channel_table
     xorwf   ADCON0, W
     andlw   (15 << CHS0)
@@ -93,16 +141,16 @@ timer_next_end:
     endm
 
 adc_channel_table:
-    andlw   0x01
+    andlw       0x01
     table_jump  tbl
-    retlw   0 << CHS0
-    retlw   3 << CHS0
+    dt          0 << CHS0
+    dt          3 << CHS0
 
 adc_var_table:
-    andlw   0x01
+    andlw       0x01
     table_jump  tbl
-    retlw   LOW adc_temp_value
-    retlw   LOW adc_knob_value
+    dt          LOW adc_temp_value
+    dt          LOW adc_knob_value
     endif
 
     ifdef section_init
@@ -121,6 +169,9 @@ adc_var_table:
     clrf    adc_i
     selbnkc adc_state
     clrf    adc_state
+    clr16f  adc_temp_value
+    clr16f  adc_knob_value
+    clr16f  adc_acc
     endif
 
     ifdef section_idle
