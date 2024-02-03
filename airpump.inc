@@ -28,8 +28,11 @@ airpump_int_next  macro
     endm
 
 airpump_setw macro
+    zero_cross_is_not_good
     selbank             airpump_value
+    btfss               STATUS, Z
     movwf               airpump_value
+
     triacpfc_set        0, airpump_value
     endm
     endif
@@ -39,7 +42,6 @@ airpump_setw macro
     bsf     PORTE, 1
     selbnkc TRISE
     bcf     TRISE, 1
-    selbnkc PORTE
     selbnkc airpump_value
     clrf    airpump_value
     endif

@@ -78,6 +78,12 @@ set_end:
     selbnkc zero_cross_time
     movwf   zero_cross_time
     endm
+
+    ;; Sets Z to whether zero_cross_period is invalid.
+zero_cross_is_not_good  macro
+    selbank zero_cross_period
+    movf    zero_cross_period, F
+    endm
     endif
 
     ifdef section_init

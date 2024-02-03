@@ -5,6 +5,9 @@
     endif
 #define module_tempcontrol
 
+    ifndef module_airpump
+    error "airpump module is a dependency of tempcontrol"
+    endif
     ifndef module_heater
     error "heater module is a dependency of tempcontrol"
     endif
@@ -77,11 +80,19 @@ mend:
 
     pid_get16   0, tempc_buf
 
-    ;; heater_setw(clamp(tempc_buf, 0, 63))
+    ;; tempc_buf = clamp(tempc_buf / 2^3, 0, 63)
     divp2s16lf  tempc_buf, 3
     clamps16f0l tempc_buf, (1 << (1 + TRIACZCC_NUM_FRAC_BITS)) - 1
+
+    ;; heater_setw(airpump_value ? tempc_buf : 0)
     selbnkc     tempc_buf
     movf        tempc_buf, W
+
+    selbnkc     airpump_value
+    movf        airpump_value, F
+    btfsc       STATUS, Z
+    clrw
+
     heater_setw
 mend:
     endm

@@ -33,7 +33,7 @@ uc_ee_temp
     uc_dtemp    40
     uc_dtemp    50
     uc_dtemp    60
-uc_ee_air   de  31, 128, 192, 255
+uc_ee_air   de  32, 128, 192, 255
     endif
 
     ifdef section_code
