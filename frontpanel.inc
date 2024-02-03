@@ -291,11 +291,7 @@ fp_update_lfm16 macro   delta, file, set16macro, knob
     movwf       PCLATH
     mov16ff     file, w16
     add16lf     delta, w16
-    if          delta < 0
-    btfss       STATUS, C
-    else
-    btfsc       STATUS, C
-    endif
+    btfsc       w16 + 1, 7
     goto        exit
 
     set16macro  w16
