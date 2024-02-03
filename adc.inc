@@ -90,7 +90,7 @@ adc_idle macro
     addlw   -1                  ; Previous channel
     call    adc_var_table
     movwf   FSR
-    ;; TODO: need to set IRP bit
+    bcf     STATUS, IRP         ; TODO: need to set IRP bit correctly
 
     selbnkc adc_acc
     movf    adc_acc, W
