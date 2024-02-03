@@ -753,6 +753,8 @@ mend:
     endm
 
     ;; Clamp signed *file16 within [-lit_abs_max, lit_abs_max].
+    ;;
+    ;; Clobbers w16, W, STATUS, PCLATH.
 clamps16fl  macro   file16, lit_abs_max
     local   is_neg
     local   mend
@@ -765,7 +767,7 @@ clamps16fl  macro   file16, lit_abs_max
 
     movlw   HIGH mend
     movwf   PCLATH
-    gt16fl  file16, lit_abs_max
+    ge16lf  file16, lit_abs_max
     btfss   STATUS, C
     goto    mend
 
@@ -773,15 +775,16 @@ clamps16fl  macro   file16, lit_abs_max
     goto    mend
 
 is_neg:
-    neg16f  file16
+    mov16ff file16, w16
+    neg16f  w16
 
     movlw   HIGH mend
     movwf   PCLATH
-    gt16fl  file16, lit_abs_max
+    ge16lf  w16, lit_abs_max
     btfss   STATUS, C
     goto    mend
 
-    mov16lf -lit_abs_max, file16
+    mov16lf -(lit_abs_max), file16
 
 mend:
     endm
