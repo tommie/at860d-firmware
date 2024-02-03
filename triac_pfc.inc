@@ -166,7 +166,7 @@ i   set     0
 i   set     i + 1
     endw
 i   set     0
-    while   i < TRIACPFC_NUM_CHANNELS / 4
+    while   i < (TRIACPFC_NUM_CHANNELS + 3) / 4
     selbnkc triacpfc_state + (i / 4)
     movwf   triacpfc_state + (i / 4)        ; Start in state 3.
 i   set     i + 1
