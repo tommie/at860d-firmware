@@ -35,8 +35,9 @@ airpump_setw macro
     endif
 
     ifdef section_init
+    selbank PORTE
     bsf     PORTE, 1
-    selbank TRISE
+    selbnkc TRISE
     bcf     TRISE, 1
     selbnkc PORTE
     selbnkc airpump_value
