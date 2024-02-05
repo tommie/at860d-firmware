@@ -28,17 +28,18 @@ TEMPC_D         equ 0
 TEMPC_DT        equ 1           ; Time interval, in some unit.
 TEMPC_FRAC      equ 0           ; The log2-divisor; determines how many full-range samples can be accumulated before saturation.
 TEMPC_MAX_ERR   equ 20 << 1     ; 9.1 fixed point.
+TEMPC_INTERVAL  equ 10          ; Time interval, in 1ms units.
 
     ;; tempc_state bits
 TEMPC_ACTIVE    equ 0
 
 tempc_value     res 2           ; 9.1 fixed point.
 tempc_buf       res 2
-tempc_next_t    res 1           ; In units of 256*timer_value.
+tempc_next_t    res 2           ; In 1ms units.
 tempc_state     res 1
 
     pid_lit_udata   0, 2, TEMPC_P, TEMPC_I, TEMPC_D, TEMPC_DT, TEMPC_FRAC, TEMPC_MAX_ERR
-    endif
+    endif ; section_udata
 
     ifdef section_code
 tempc_idle  macro
@@ -51,21 +52,6 @@ tempc_idle  macro
     btfss   tempc_state, TEMPC_ACTIVE
     goto    mend
 
-    ;; TODO: change to inequality. Not strictly needed, since it's a slow timer.
-    ;; if (timer_value/256 != tempc_next_t) goto mend
-    selbnkc timer_value + 1
-    movf    timer_value + 1, W
-    selbnkc tempc_next_t
-    subwf   tempc_next_t, W
-    movlw   HIGH mend
-    movwf   PCLATH
-    btfss   STATUS, Z
-    goto    mend
-
-    ;; tempc_next_t++
-    selbnkc tempc_next_t
-    incf    tempc_next_t, F
-
     ifdef TEMPC_DIRECT_CONTROL
     selbnkc     tempc_value
     movf        tempc_value, W
@@ -74,6 +60,16 @@ tempc_idle  macro
 mend:
     exitm
     endif
+
+    ;; if (tempc_next_t - timer_value > 0) goto mend
+    movlw   HIGH mend
+    movwf   PCLATH
+    gts16ff tempc_next_t, timer_value
+    btfsc   STATUS, C
+    goto    mend
+
+    ;; tempc_next_t += TEMPC_INTERVAL
+    add16lf TEMPC_INTERVAL, tempc_next_t
 
     temp_get16      tempc_buf
     pid_lit_update  0, tempc_value, tempc_buf
@@ -131,7 +127,7 @@ tempc_set16 macro   file
     mov16ff file, tempc_value
 mend:
     endm
-    endif
+    endif ; section_code
 
     ifdef section_init
     ifndef  TEMPCONTROL_MIN_TEMP
@@ -142,13 +138,11 @@ mend:
     endif
 
     mov16lf         TEMPCONTROL_MIN_TEMP, tempc_value
-    selbnkc         tempc_next_t
-    clrf            tempc_next_t
-    incf            tempc_next_t, F
+    mov16lf         1, tempc_next_t
     selbnkc         tempc_state
     clrf            tempc_state
     pid_lit_init    0
-    endif
+    endif ; section_init
 
     ifdef section_idle
     tempc_idle
