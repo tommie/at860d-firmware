@@ -11,16 +11,19 @@
     ;; If dest is FPa.b and lit is FPc.d, the output
     ;; is an FP(a + c).(d - frac).
 ufpmul16lf  macro   lit, dest, frac
-    _fpmul16lf      lit, dest, frac, 0
+    fpmul16lf_      lit, dest, frac, 0
     endm
 
 sfpmul16lf  macro   lit, dest, frac
-    _fpmul16lf      lit, dest, frac, 1
+    fpmul16lf_      lit, dest, frac, 1
     endm
 
-_fpmul16lf  macro   lit, dest, frac, signed
-    if          file == acc1 || file == acc2 || file == acc3
-    error       "Cannot use acc1-3 in mul16fl"
+fpmul16lf_  macro   lit, dest, frac, signed
+    local       i
+    local       l
+
+    if          dest == acc1 || dest == acc2 || dest == acc3
+    error       "Cannot use acc1-3 in *fpmul16lf"
     endif
     clr16f      acc1
 
@@ -74,6 +77,62 @@ l   set         l >> 1
     endif
 
     mov16ff     acc1, dest
+    endm
+
+    ;; dest *= W
+ufpmul0816wf    macro   dest, frac
+    local       i
+
+    if          dest == acc1 || dest == acc2 || dest == acc3
+    error       "Cannot use acc1-3 in ufpmul160816wf"
+    endif
+    clr16f      acc1
+
+    movwf       acc3
+
+    if          frac > 8
+    error       "Assertion failed: frac <= 8"
+    endif
+
+    ;; First step: multiply with the first frac bits of src, but keep reducing precision.
+i   set                 0
+    while               i < frac
+i   set                 i + 1
+    ufpmul0816wf_add_   dest, 1
+    endw
+
+    ;; Second step: multiply with the last bits of src, as a normal integer.
+    while               i < 8
+i   set                 i + 1
+    ufpmul0816wf_add_   dest, 0
+    endw
+
+    ;; Third step: round away the last bit.
+    rr16fl      acc1, 1, 0
+    add16cf     acc1
+
+    mov16ff     acc1, dest
+    endm
+
+    ;; Internal macro.
+ufpmul0816wf_add_   macro   dest, isfrac
+    local       add_done
+
+    if          isfrac
+    rr16fl      acc1, 1, 0
+    else
+    rl16fl      dest, 1, 0
+    endif
+
+    pagesel     add_done
+    btfss       acc3, 0
+    goto        add_done
+
+    add16ff     dest, acc1
+add_done:
+
+    bcf         STATUS, C
+    rrf         acc3, F
     endm
 
     endif   ; section_code
