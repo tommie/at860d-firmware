@@ -76,10 +76,10 @@ pid_lit_update  macro   index, setfile, realfile
     satadds16ff w16, pid_out#v(index)
 
     ;; z2 = z1
-    mov16ff pid_z1_#v(index), pid_z2_#v(index)
+    mov16ff     pid_z1_#v(index), pid_z2_#v(index)
 
     ;; z1 = z0
-    mov16ff pid_z0_#v(index), pid_z1_#v(index)
+    mov16ff     pid_z0_#v(index), pid_z1_#v(index)
 
     ;; z0 = *setfile - *realfile
     mov16ff     setfile, pid_z0_#v(index)
