@@ -66,7 +66,7 @@ adc_idle macro
     selbnkc adc_i
     btfsc   adc_i, ADC_MULTISAMPLE_LOG
     addwf   adc_i, F
-    movlw   ~((1 << ((4 - ADC_MULTISAMPLE_LOG) - 1)) << ADC_MULTISAMPLE_LOG)
+    movlw   ~(((1 << (4 - ADC_MULTISAMPLE_LOG)) - 1) << ADC_MULTISAMPLE_LOG)
     andwf   adc_i, F
     endif
 
@@ -127,6 +127,7 @@ next_end:
 
 adc_timer_next macro
     local   timer_next_end
+
     movlw   HIGH timer_next_end
     movwf   PCLATH
     selbank adc_state
