@@ -107,8 +107,8 @@ fp_idle macro
 
     fp_display
 
-    knob_idle   FP_KNOB_TEMP, 2, 10, TEMPCONTROL_MIN_TEMP, TEMPCONTROL_MAX_TEMP, tempc_value, fp_tempc_set16
-    knob_idle   FP_KNOB_AIR, 1, 8, 0, 255, airpump_value, fp_airpump_setw
+    knob_idle   FP_KNOB_TEMP, 2, TEMPCONTROL_MIN_TEMP, TEMPCONTROL_MAX_TEMP, tempc_value, fp_tempc_set16
+    knob_idle   FP_KNOB_AIR, 1, 0, 255, airpump_value, fp_airpump_setw
 
     movlw   HIGH up_done
     movwf   PCLATH

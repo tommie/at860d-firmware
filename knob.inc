@@ -16,6 +16,13 @@
     ;;
     ;; Using a rotary encoder would have been so much more sensible, since
     ;; presets can change the values without the potentiometer being tied to it.
+    ;;
+    ;; # Precision
+    ;;
+    ;; The installed potentiometer is not of very high quality: it's not smooth
+    ;; down to 2^-10. As an example: 415, 423, 448, 449. That's a 25 LSb gap,
+    ;; or 2%, and the 423 is a tiny spot, so more like 33 LSb, or 3%. This means
+    ;; it is barely accurate to 5 bits. Over 500 *C, that is increments of 15 *C!
 
     ifdef module_knob
 #undefine module_knob
@@ -32,6 +39,7 @@ KNOB_DISABLED   equ 0xFF
 KNOB_ACTIVE equ 0
 KNOB_NEG    equ 1
 KNOB_POS    equ 2
+KNOB_EQ     equ 3
 
 knob_index  res 1
 knob_state  res 1
@@ -87,9 +95,8 @@ knob_skip_if_current_channel    macro   index
     ;; Code to be run on idle for knob channel `index`.
     ;; `index` must be less than 0xFF, but is otherwise uninterpreted.
     ;; `size` is 1 for 8-bit values and 2 for 16-bit values.
-    ;; `range_bits` is the rounded up `log_2(lit_max)`.
     ;; `setmacro` sets the value in W for 8-bit and takes a source file in 16-bit mode.
-knob_idle   macro   index, size, range_bits, lit_min, lit_max, file, setmacro
+knob_idle   macro   index, size, lit_min, lit_max, file, setmacro
     local   bits
     local   is_pos
     local   is_active
@@ -98,11 +105,8 @@ knob_idle   macro   index, size, range_bits, lit_min, lit_max, file, setmacro
     if      (size) < 1 || (size) > 2
     error   "size must be in [1, 2]"
     endif
-    if (lit_min) >= (lit_max)
+    if      (lit_min) >= (lit_max)
     error   "lit_min must be less than lit_max"
-    endif
-    if (lit_max) >= (1 << (range_bits))
-    error   "range_bits must be able to represent lit_max-lit_min"
     endif
 
     ;; if (knob_index != index) goto mend
@@ -111,28 +115,38 @@ knob_idle   macro   index, size, range_bits, lit_min, lit_max, file, setmacro
     knob_skip_if_current_channel    index
     goto    mend
 
-    ;; w16 = adc_knob_value * (lit_max + 1 - lit_min) / 1024 + lit_min
-    mov16ff adc_knob_value, w16
-bits    set 6
-    if range_bits > 6
-bits    set range_bits
-    rr16fl  w16, range_bits - 6, 0
-    add16cf w16
-    endif
-    mul16fl w16, (lit_max) - (lit_min)
-    rr16fl  w16, 16 - bits, 0
-    add16cf w16
-    add16lf lit_min, w16
+    ;; w16 = round(adc_knob_value / 2^(10-5))
+    ;;
+    ;; We need to do rounding due to the poor potentiometer accuracy.
+    ;; This means we can reach 1.0, making the interval fully closed.
+    mov16ff     adc_knob_value, w16
+    rr16fl      w16, 10 - 5, 0  ; To FP1.5, see file header.
+    add16cf     w16
+
+    ;; w16 = w16 * (lit_max + 1 - lit_min) / 2^5 + lit_min
+    ufpmul16lf  (lit_max) - (lit_min), w16, 5
+    add16lf     lit_min, w16
+
+    ;; knob_state.eq = file == w16
+    selbnkc knob_state
+    bcf     knob_state, KNOB_EQ
+    if      size == 1
+    movf    w16, W
+    subwf   file, W
+    else
+    eq16ff  w16, file
+    endif   ; size == 1
+    btfsc   STATUS, Z
+    bsf     knob_state, KNOB_EQ
 
     ;; if (knob_state.active) goto is_active
-    movlw   HIGH is_active
-    movwf   PCLATH
+    pagesel is_active
     selbnkc knob_state
     btfsc   knob_state, KNOB_ACTIVE
     goto    is_active
 
-    ;; knob_state.neg = file < w16 || file == w16
-    ;; knob_state.pos = file >= w16 || file == w16
+    ;; knob_state.neg ||= file < w16
+    ;; knob_state.pos ||= file >= w16
     if      size == 1
     sub0816ff file, w16
     else
@@ -144,47 +158,39 @@ bits    set range_bits
     btfss   w16 + 1, 7
     bsf     knob_state, KNOB_POS
 
-    ;; Needed because NEG above isn't true for equality, which is a problem
-    ;; at the lower bound.
-    zero16f w16
-    btfsc   STATUS, Z
-    bsf     knob_state, KNOB_NEG
-
-    ;; if (!knob_state.neg || !knob_state.pos) goto mend
-    movlw   HIGH mend
-    movwf   PCLATH
-    movf    knob_state, W
-    andlw   (1 << KNOB_NEG) | (1 << KNOB_POS)
-    sublw   (1 << KNOB_NEG) | (1 << KNOB_POS)
-    btfss   STATUS, Z
-    goto    mend
-
+    ;; knob_state.active = knob_state.eq || (knob_state.neg && knob_state.pos)
+    btfsc   knob_state, KNOB_EQ
     bsf     knob_state, KNOB_ACTIVE
 
+    movf    knob_state, W
+    andlw   (1 << KNOB_NEG) | (1 << KNOB_POS)
+    xorlw   (1 << KNOB_NEG) | (1 << KNOB_POS)
+    btfsc   STATUS, Z
+    bsf     knob_state, KNOB_ACTIVE
+
+    ;; if (!knob_state.active) goto mend
+    pagesel mend
+    btfss   knob_state, KNOB_ACTIVE
+    goto    mend
+
     ;; Undoes the subtraction used for the comparison.
-    if      size == 1
+    if          size == 1
     add0816ff   file, w16
     else
     add16ff     file, w16
     endif
 
 is_active:
-    ;; if (w16 != *file) setmacro(w16)
-    movlw       HIGH mend
-    movwf       PCLATH
-    if          size == 1
-    movf        w16, W
-    subwf       file, W
-    btfsc       STATUS, Z
+    ;; if (!knob_state.eq) setmacro(w16)
+    pagesel     mend
+    selbnkc     knob_state
+    btfsc       knob_state, KNOB_EQ
     goto        mend
 
+    if          size == 1
     movf        w16, W
     setmacro
     else
-    eq16ff      w16, file
-    btfsc       STATUS, Z
-    goto        mend
-
     setmacro    w16
     endif
 

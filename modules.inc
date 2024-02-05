@@ -1,5 +1,6 @@
     ;; First because many modules depend on it.
     include "stdlib.inc"
+    include "fixedp.inc"
 
     include "adc.inc"
     include "zerocross.inc"     ; Required by triac_pfc.
