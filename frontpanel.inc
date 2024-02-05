@@ -78,6 +78,7 @@ not_held:
 
     ;; Read
     buttonpress_reset_clicked   btn
+    knob_deactivate_all
     uc_load                     index
 
     bsf     fp_state, FP_TEMP_SET
