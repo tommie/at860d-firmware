@@ -455,7 +455,7 @@ mul16fl macro   file, lit
     local   i, j
 
     if      file == acc1
-    error   "Cannot use w16 in mul16fl"
+    error   "Cannot use acc1 in mul16fl"
     endif
 
     if      lit != 0
@@ -724,6 +724,45 @@ i   set     i + 1
     selbnkc file
     rrf     file, F
     endw
+    endm
+
+    ;; Count the number of leading zeros in W.
+    ;;
+    ;; Returns the count in W.
+    ;;
+    ;; Clobbers STATUS, acc1.
+lzw macro
+    local   mloop
+
+    movwf   acc1
+    movlw   HIGH mloop
+    movwf   PCLATH
+    clrw
+
+mloop:
+    addlw   1
+    bsf     STATUS, C
+    rlf     acc1, F
+    btfss   STATUS, C
+    goto    mloop
+    addlw   -1
+    endm
+
+    ;; Count the number of leading zeros in w16.
+    ;;
+    ;; Returns the count in W.
+    ;;
+    ;; Clobbers STATUS, acc1, w16.
+lzw16   macro
+    movf    w16 + 1, W
+    lzw
+    movwf   w16 + 1
+    movlw   8
+    subwf   w16 + 1, W
+    btfss   STATUS, Z
+    movf    w16, W
+    lzw
+    addwf   w16 + 1, W
     endm
 
     ;; Clamp signed *file16 within [0, lit_max].
