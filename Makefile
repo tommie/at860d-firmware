@@ -14,7 +14,7 @@ all: at860d.hex
 .PHONY: clean
 clean:
 	rm -f *.hex *.lst *.cod
-	rm -f *.o
+	rm -f *.map *.o
 
 at860d.hex: at860d.o
 
