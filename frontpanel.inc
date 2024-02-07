@@ -350,7 +350,7 @@ fp_display  macro
     goto    disp_temp_unit
 
 disp_temp:
-    rr16fl  w16, 1, 0       ; To FP9.0
+    rr16fl  w16, 1, 0           ; To FP9.0
     display_set_temp_w16
 
 disp_temp_unit:

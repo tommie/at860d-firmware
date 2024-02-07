@@ -52,14 +52,15 @@ tempc_idle  macro
     btfss   tempc_state, TEMPC_ACTIVE
     goto    mend
 
-    ifdef TEMPC_DIRECT_CONTROL
-    selbnkc     tempc_value
-    movf        tempc_value, W
-    andlw       (1 << (2 + TRIACZCC_NUM_FRAC_BITS)) - 1
+    ifdef       TEMPC_DIRECT_CONTROL
+    mov16ff     tempc_value, w16
+    rr16fl      w16, 1, 0       ; To FP9.0
+    selbnkc     w16
+    movf        w16, W
     heater_setw
 mend:
     exitm
-    endif
+    endif       ; TEMPC_DIRECT_CONTROL
 
     ;; if (tempc_next_t - timer_value > 0) goto mend
     movlw   HIGH mend
@@ -133,9 +134,11 @@ mend:
     ifndef  TEMPCONTROL_MIN_TEMP
     error   "TEMPCONTROL_MIN_TEMP not defined"
     endif
+    ifndef  TEMPC_DIRECT_CONTROL
     if      TEMPCONTROL_MIN_TEMP < TEMP_CONST_INIT
     error   "TEMPCONTROL_MIN_TEMP must be at least TEMP_CONST_INIT"
     endif
+    endif   ; TEMPC_DIRECT_CONTROL
 
     mov16lf         TEMPCONTROL_MIN_TEMP, tempc_value
     mov16lf         1, tempc_next_t

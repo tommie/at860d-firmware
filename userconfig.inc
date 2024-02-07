@@ -29,11 +29,18 @@ uc_dtemp    macro   value
     endm
 
 uc_ee_temp
+    ifndef      TEMPC_DIRECT_CONTROL
     uc_dtemp    TEMPCONTROL_MIN_TEMP >> 1
-    uc_dtemp    40
     uc_dtemp    50
+    uc_dtemp    200
     uc_dtemp    60
-uc_ee_air   de  32, 128, 192, 255
+    else
+    uc_dtemp    0
+    uc_dtemp    0
+    uc_dtemp    0
+    uc_dtemp    0
+    endif       ; TEMPC_DIRECT_CONTROL
+uc_ee_air   de  32, 128, 255, 255
     endif
 
     ifdef section_code
