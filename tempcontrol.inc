@@ -57,6 +57,13 @@ tempc_idle  macro
     rr16fl      w16, 1, 0       ; To FP9.0
     selbnkc     w16
     movf        w16, W
+
+    ;; heater_setw(airpump_value ? tempc_value/2 & 0xFF : 0)
+    selbnkc     airpump_value
+    movf        airpump_value, F
+    btfsc       STATUS, Z
+    clrw
+
     heater_setw
 mend:
     exitm
