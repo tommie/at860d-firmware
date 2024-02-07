@@ -135,7 +135,7 @@ is_enabled:
 
     ;; This disables after one timer tick (1 ms).
     ;; MOC3023 dv/dt is 10 V/µs at 25 *C. For 240 V, 24 µs is enough.
-    ;; (BT139X is even faster than MOC2023.)
+    ;; (BT139X is even faster than MOC3023.)
     set_macro   triacpfc_state + (channel / 4), (channel % 4) * 2 + 1
     bsf         triacpfc_state + (channel / 4), (channel % 4) * 2 + 1
     goto        next_end
