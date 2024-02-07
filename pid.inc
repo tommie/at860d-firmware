@@ -57,16 +57,6 @@ pid_lit_init    macro   index
     ;; The `index` refers to a `pid_lit_udata` index.
 pid_lit_update  macro   index, setfile, realfile
     if      pid_n#v(index) == 2
-    ;; out += k3 * z2
-    mov16ff     pid_z2_#v(index), w16
-    sfpmul16lf  pid_k3_#v(index), w16, pid_rd#v(index)
-    satadds16ff w16, pid_out#v(index)
-
-    ;; out += k2 * z1
-    mov16ff     pid_z1_#v(index), w16
-    sfpmul16lf  pid_k2_#v(index), w16, pid_rd#v(index)
-    satadds16ff w16, pid_out#v(index)
-
     ;; z2 = z1
     mov16ff     pid_z1_#v(index), pid_z2_#v(index)
 
@@ -77,6 +67,16 @@ pid_lit_update  macro   index, setfile, realfile
     mov16ff     setfile, pid_z0_#v(index)
     sub16ff     realfile, pid_z0_#v(index)
     clamps16fl  pid_z0_#v(index), pid_max_err#v(index)
+
+    ;; out += k3 * z2
+    mov16ff     pid_z2_#v(index), w16
+    sfpmul16lf  pid_k3_#v(index), w16, pid_rd#v(index)
+    satadds16ff w16, pid_out#v(index)
+
+    ;; out += k2 * z1
+    mov16ff     pid_z1_#v(index), w16
+    sfpmul16lf  pid_k2_#v(index), w16, pid_rd#v(index)
+    satadds16ff w16, pid_out#v(index)
 
     ;; out += k1 * z0
     mov16ff     pid_z0_#v(index), w16
