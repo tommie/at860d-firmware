@@ -47,7 +47,11 @@ triaczcc_setw macro channel
     error "triac_zcc channel out of bounds"
     endif
 
+    ;; Round up, but clamp at 255.
     addlw       (1 << (8 - TRIACZCC_NUM_FRAC_BITS)) - 1
+    btfsc       STATUS, C
+    movlw       0xFF
+
     movwf       acc1
 i   set         0
     while       i < 8 - TRIACZCC_NUM_FRAC_BITS
