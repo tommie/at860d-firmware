@@ -109,9 +109,9 @@ uc_try_write_ee macro   file, eeaddr, stride
     movwf           PCLATH
     selbank         uc_index
     movf            uc_index, W
-i   set 1
-    while   i < stride
-i   set i+1
+i   set             1
+    while           i < stride
+i   set             i+1
     addwf           uc_index, W
     endw
     addlw           eeaddr
@@ -123,9 +123,9 @@ i   set i+1
 
     selbnkc         uc_index
     movf            uc_index, W
-i   set 1
-    while   i < stride
-i   set i+1
+i   set             1
+    while           i < stride
+i   set             i+1
     addwf           uc_index, W
     endw
     addlw           eeaddr
