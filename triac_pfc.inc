@@ -63,7 +63,10 @@ triacpfc_set macro channel, ratiof
     movf    zero_cross_period, W
     movwf   w16
     clrf    w16 + 1
-    mulw16f ratiof
+    selbnkc ratiof
+    movf    ratiof, W
+    mul16wf w16
+    selbnkc zero_cross_period
     movf    zero_cross_period, W
     addwf   w16, F
     btfsc   STATUS, Z
@@ -76,17 +79,9 @@ triacpfc_set macro channel, ratiof
     btfsc   STATUS, Z
     incf    w16 + 1, F
 
-    ;; W = w16 / 256 / 2 + 1
-    ;; This 1 is based on the accuracy of tmr0, firing of zero_cross_int_next
-    ;; fires (and the AC frequency stability). This inaccuracy is audible as
-    ;; pulsing on low settings.
-    ;;
-    ;; The division by two is to do 2/4-quadrant. The airpump doesn't react
-    ;; that well to 1/3-quadrant control, being highly non-monotonic.
-    bcf     STATUS, C
-    rrf     w16 + 1, F
+    ;; W = w16 / 256 + 1
     movf    w16 + 1, W
-    addlw   1
+    addlw   1      ; This 1 is to avoid firing right after the period.
 
     ;; W = (zero_cross_period - W)
     subwf   zero_cross_period, W

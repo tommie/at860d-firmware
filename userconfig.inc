@@ -40,7 +40,7 @@ uc_ee_temp
     uc_dtemp    0
     uc_dtemp    0
     endif       ; TEMPC_DIRECT_CONTROL
-uc_ee_air   de  32, 128, 255, 255
+uc_ee_air   de  32, (AIRPUMP_MAX_RATIO) / 2, AIRPUMP_MAX_RATIO, AIRPUMP_MAX_RATIO
     endif
 
     ifdef section_code

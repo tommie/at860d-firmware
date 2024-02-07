@@ -545,45 +545,6 @@ mulskip:
     mov16ff acc1, file
     endm
 
-    ;; w16 *= file
-    ;;
-    ;; Clobbers acc1, acc2, acc3.
-mulw16f macro   file
-    local   mulloop
-    local   mulend
-
-    clrf    acc1
-    clrf    acc2
-
-    movlw   HIGH mulend
-    movwf   PCLATH
-    selbank file
-    movf    file, F
-    btfsc   STATUS, Z
-    goto    mulend
-
-    movf    file, W
-    movwf   acc3
-
-    movlw   HIGH mulloop
-    movwf   PCLATH
-
-mulloop:
-    movf    w16, W
-    addwf   acc1, F
-    btfsc   STATUS, C
-    incf    acc2, F
-
-    decfsz  acc3, F
-    goto    mulloop
-
-mulend:
-    movf    acc1, W
-    movwf   w16
-    movf    acc2, W
-    movwf   w16 + 1
-    endm
-
     ;; file = -file
     ;;
     ;; Clobbers STATUS.

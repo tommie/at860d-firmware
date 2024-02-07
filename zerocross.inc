@@ -2,7 +2,7 @@
     ;;
     ;; RB0, active low
     ;;
-    ;; timer_value goes up to ~128 ms. zero_cross_period only works down to 7.8 Hz
+    ;; zero_cross_time goes up to ~128 ms. zero_cross_period only works down to 7.8 Hz
     ;;
     ;; Note this has a cyclic dependency on timer0. It should be a reverse dependency.
 
@@ -24,17 +24,17 @@ zero_cross_int_next macro
     movlw   HIGH set_end
     movwf   PCLATH
 
-    ;; W = timer_value - zero_cross_time
+    ;; W = timer1_value - zero_cross_time
     selbank zero_cross_time
     movf    zero_cross_time, W
-    selbnkc timer_value
-    subwf   timer_value, W
+    selbnkc timer1_value
+    subwf   timer1_value, W
 
-    ;; if (W > 50) goto set_end
-    addlw   -50
+    ;; if (W > 100) goto set_end
+    addlw   -100
     btfsc   STATUS, C
     goto    set_end
-    addlw   50
+    addlw   100
 
     movwf   acc1
     movlw   HIGH set_period
@@ -73,8 +73,8 @@ set_period:
     addwf   zero_cross_period, F
 set_end:
 
-    selbank timer_value
-    movf    timer_value, W
+    selbank timer1_value
+    movf    timer1_value, W
     selbnkc zero_cross_time
     movwf   zero_cross_time
     endm

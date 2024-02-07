@@ -3,16 +3,17 @@
     include "fixedp.inc"
 
     include "adc.inc"
-    include "zerocross.inc"     ; Required by triac_pfc.
-    include "triac_pfc.inc"     ; Required by airpump.
-    include "airpump.inc"
     include "buttonscan.inc"
     include "buzzer.inc"
     include "led.inc"           ; Required by display.
     include "display.inc"       ; Required by timer0.
-    include "triac_zcc.inc"     ; Required by heater.
-    include "heater.inc"        ; Required by timer0.
     include "timer0.inc"
+    include "zerocross.inc"     ; Required by triac_pfc.
+    include "triac_pfc.inc"     ; Required by airpump.
+    include "airpump.inc"
+    include "triac_zcc.inc"     ; Required by heater.
+    include "heater.inc"        ; Required by timer1.
+    include "timer1.inc"        ; Required by int.
     include "int.inc"
     include "irq.inc"
     include "power.inc"

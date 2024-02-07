@@ -12,6 +12,7 @@
 
     ifdef section_udata
 airpump_value res 1
+airpump_ratio res 1
     endif
 
     ifdef section_code
@@ -29,11 +30,33 @@ airpump_int_next  macro
 
 airpump_setw macro
     zero_cross_is_not_good
-    selbank             airpump_value
-    btfss               STATUS, Z
-    movwf               airpump_value
+    btfsc   STATUS, Z
+    clrw
 
-    triacpfc_set        0, airpump_value
+    ;; if (W > MAX_RATIO) W = MAX_RATIO
+    ifndef  AIRPUMP_MAX_RATIO
+    error   "AIRPUMP_MAX_RATIO is not defined"
+    endif
+    addlw   -(AIRPUMP_MAX_RATIO)
+    btfsc   STATUS, C
+    clrw
+    addlw   AIRPUMP_MAX_RATIO
+
+    selbank airpump_value
+    movwf   airpump_value
+
+    ;; if (!W) W += OFFSET
+    ifndef  AIRPUMP_OFFSET
+    error   "AIRPUMP_OFFSET is not defined"
+    endif
+    andlw   0xFF
+    btfss   STATUS, Z
+    addlw   AIRPUMP_OFFSET
+
+    selbnkc airpump_ratio
+    movwf   airpump_ratio
+
+    triacpfc_set    0, airpump_ratio
     endm
     endif
 
@@ -44,4 +67,6 @@ airpump_setw macro
     bcf     TRISE, 1
     selbnkc airpump_value
     clrf    airpump_value
+    selbnkc airpump_ratio
+    clrf    airpump_ratio
     endif

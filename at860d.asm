@@ -16,6 +16,8 @@ BTN_HEAT_PANEL  equ 8
 ;#define DISABLE_SELFTEST
 ;#define DISABLE_STANDBY
 
+#define AIRPUMP_OFFSET 15                        ;; 0.8 fixed point.
+#define AIRPUMP_MAX_RATIO (140 - AIRPUMP_OFFSET) ;; 0.8 fixed point.
 #define BUTTONPRESS_NUM_CHANNELS 6
 #define BUTTONPRESS_REPEAT_MASK ((1 << BTN_UP) | (1 << BTN_DOWN))
 #define COOLDOWN_AIR 64
