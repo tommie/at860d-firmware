@@ -125,7 +125,7 @@ idle_end:
     selbank         standby_state
     bsf             standby_state, STANDBY_WAS_ACTIVE
 
-    ;; airpump_setw(temp_get16() > STANDBY_MAX_TEMP ? 64 : 0)
+    ;; airpump_setw(temp_get16() > STANDBY_MAX_TEMP ? STANDBY_AIR : 0)
     temp_get16      w16
     gt16fl          w16, STANDBY_MAX_TEMP
     movlw           STANDBY_AIR
