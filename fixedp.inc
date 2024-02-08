@@ -19,8 +19,10 @@ sfpmul16lf  macro   lit, dest, frac
     endm
 
 fpmul16lf_  macro   lit, dest, frac, signed
-    local       i
     local       l
+    local       i
+    local       j
+    local       i25
 
     if          dest == acc1 || dest == acc2 || dest == acc3
     error       "Cannot use acc1-3 in *fpmul16lf"
@@ -32,11 +34,11 @@ fpmul16lf_  macro   lit, dest, frac, signed
     endif
 
     ;; First step: multiply with the first frac bits of src, but keep reducing precision.
-i   set         0
 l   set         lit
     if          lit < 0
 l   set         -(lit)
     endif
+i   set         0
     while       i < frac && l != 0
 i   set         i + 1
     if          signed
@@ -53,21 +55,25 @@ l   set         l >> 1
     endw
 
     ;; Second step: multiply with the last bits of src, as a normal integer.
-    while       i < 16 && l != 0
-i   set         i + 1
+j   set         i
+    while       j < 16 && l != 0
+j   set         j + 1
     rl16fl      dest, 1, 0
 
     if          l & 1
     add16ff     dest, acc1
     endif
+
 l   set         l >> 1
     endw
 
-    ;; Third step: round away the last bit.
+    ;; Third step: round away the last bit. Because we stopped the
+	;; first step when l==0, we may need to remove more bits.
+i25 set         i
     if          signed
-    divp2s16lf  acc1, 1
+    divp2s16lf  acc1, 1 + (frac) - i25
     else
-    rr16fl      acc1, 1, 0
+    rr16fl      acc1, 1 + (frac) - i25, 0
     endif
     add16cf     acc1
 
