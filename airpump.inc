@@ -13,7 +13,7 @@
     ifdef section_udata
 airpump_value res 1
 airpump_ratio res 1
-    endif
+    endif ; section_udata
 
     ifdef section_code
 airpump_output  macro   file, bit
@@ -28,19 +28,7 @@ airpump_int_next  macro
     triacpfc_int_next_ch    0, airpump_output
     endm
 
-airpump_setw macro
-    ;; if (W > MAX_RATIO) W = MAX_RATIO
-    ifndef  AIRPUMP_MAX_RATIO
-    error   "AIRPUMP_MAX_RATIO is not defined"
-    endif
-    addlw   -(AIRPUMP_MAX_RATIO)
-    btfsc   STATUS, C
-    clrw
-    addlw   AIRPUMP_MAX_RATIO
-
-    selbank airpump_value
-    movwf   airpump_value
-
+airpump_commitw macro
     ;; if (W) W += OFFSET
     ifndef  AIRPUMP_OFFSET
     error   "AIRPUMP_OFFSET is not defined"
@@ -59,7 +47,51 @@ airpump_setw macro
 
     triacpfc_set    0, airpump_ratio
     endm
+
+airpump_setw macro
+    ;; if (W > MAX_RATIO) W = MAX_RATIO
+    ifndef  AIRPUMP_MAX_RATIO
+    error   "AIRPUMP_MAX_RATIO is not defined"
     endif
+    addlw   -(AIRPUMP_MAX_RATIO)
+    btfsc   STATUS, C
+    clrw
+    addlw   AIRPUMP_MAX_RATIO
+
+    selbank airpump_value
+    movwf   airpump_value
+
+    airpump_commitw
+    endm
+
+airpump_idle    macro
+    local   mend
+
+    ;; if (!airpump_value) goto mend
+    pagesel mend
+    selbank airpump_value
+    movf    airpump_value, F
+    btfsc   STATUS, Z
+    goto    mend
+
+    ;; if (airpump_ratio) goto mend
+    selbnkc airpump_ratio
+    movf    airpump_ratio, F
+    btfss   STATUS, Z
+    goto    mend
+
+    ;; if (zero_cross_is_good()) airpump_setw
+    zero_cross_is_not_good
+    btfsc   STATUS, Z
+    goto    mend
+
+    selbnkc airpump_value
+    movf    airpump_value, W
+    airpump_commitw
+
+mend:
+    endm
+    endif ; section_code
 
     ifdef section_init
     selbank PORTE
@@ -70,4 +102,8 @@ airpump_setw macro
     clrf    airpump_value
     selbnkc airpump_ratio
     clrf    airpump_ratio
-    endif
+    endif ; section_init
+
+    ifdef section_idle
+    airpump_idle
+    endif ; section_idle
