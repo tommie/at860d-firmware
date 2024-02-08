@@ -21,12 +21,12 @@
     endif
 
     ifdef section_udata
-BP_DEBOUNCE_MS      equ 100
+BP_DEBOUNCE_MS      equ 50
 BP_MAX_CLICK_MS     equ 500
-BP_MIN_HOLD_MS      equ 800
-BP_MAX_REPEAT_MS    equ 500
-BP_MIN_REPEAT_MS    equ 250
-BP_REPEAT_STEP_MS   equ 25
+BP_MIN_HOLD_MS      equ 3000
+BP_MAX_REPEAT_MS    equ 300
+BP_MIN_REPEAT_MS    equ 50
+BP_REPEAT_STEP_MS   equ 50
 
     ;; bp_state bits:
 BP_VALID_T      equ 0           ; The bp_t value is valid.
@@ -43,8 +43,8 @@ bp_prev     res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
 bp_clicked  res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
 bp_held     res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
 bp_holding  res (BUTTONPRESS_NUM_CHANNELS + 7) / 8
-bp_t        res 2
-bp_ival     res 2
+bp_t        res 2               ; In units of 500 µs.
+bp_ival     res 2               ; In units of 500 µs.
 bp_state    res 1
     endif
 
@@ -101,8 +101,7 @@ bp_idle     macro
     movwf   bp_current
 
     ;; if (bp_current == bp_prev) goto no_diff
-    movlw   HIGH no_diff
-    movwf   PCLATH
+    pagesel no_diff
     movf    bp_current, W
     selbnkc bp_prev
     xorwf   bp_prev, W
@@ -110,8 +109,7 @@ bp_idle     macro
     goto    no_diff
 
     ;; if ((bp_state & (1 << BP_DEBOUNCED)) && !(bp_state & (1 << BP_NOT_CLICK))) bp_clicked = bp_prev & ~bp_current
-    movlw   HIGH done_set_clicked
-    movwf   PCLATH
+    pagesel done_set_clicked
     selbnkc bp_state
     movf    bp_state, W
     andlw   (1 << BP_DEBOUNCED) | (1 << BP_NOT_CLICK)
@@ -136,14 +134,7 @@ done_set_clicked:
 
     ;; bp_t = timer_value + BP_DEBOUNCE_MS
     mov16ff timer_value, bp_t
-    movlw   LOW BP_DEBOUNCE_MS
-    selbnkc bp_t
-    addwf   bp_t, F
-    selbnkc bp_t + 1
-    btfsc   STATUS, C
-    incf    bp_t + 1, F
-    movlw   HIGH BP_DEBOUNCE_MS
-    addwf   bp_t + 1, F
+    add16lf (BP_DEBOUNCE_MS) * 2, bp_t
 
     ;; bp_state = (1 << BP_VALID_T)
     movlw   0
@@ -154,21 +145,18 @@ done_set_clicked:
     selbnkc bp_state
     movwf   bp_state
 
-    movlw   HIGH idle_done
-    movwf   PCLATH
+    pagesel idle_done
     goto    idle_done
 
 no_diff:
     ;; if (!(bp_state & (1 << BP_VALID_T))) goto idle_done
-    movlw   HIGH idle_done
-    movwf   PCLATH
+    pagesel idle_done
     selbank bp_state
     btfss   bp_state, BP_VALID_T
     goto    idle_done
 
     ;; if (bp_t >= timer_value) goto idle_done
-    movlw   HIGH idle_done
-    movwf   PCLATH
+    pagesel idle_done
     gts16ff timer_value, bp_t
     btfss   STATUS, C
     goto    idle_done
@@ -178,42 +166,31 @@ no_diff:
     bcf     bp_state, BP_VALID_T
 
     ;; if (bp_state & (1 << BP_HELD)) goto repeat_click
-    movlw   HIGH repeat_click
-    movwf   PCLATH
+    pagesel repeat_click
     selbnkc bp_state
     btfsc   bp_state, BP_HELD
     goto    repeat_click
 
     ;; if (bp_state & (1 << BP_NOT_CLICK)) goto start_hold
-    movlw   HIGH start_hold
-    movwf   PCLATH
+    pagesel start_hold
     selbnkc bp_state
     btfsc   bp_state, BP_NOT_CLICK
     goto    start_hold
 
     ;; if (bp_state & (1 << BP_DEBOUNCED)) goto not_clicked
-    movlw   HIGH not_clicked
-    movwf   PCLATH
+    pagesel not_clicked
     btfsc   bp_state, BP_DEBOUNCED
     goto    not_clicked
 
     ;; bp_t += BP_MAX_CLICK_MS - BP_DEBOUNCE_MS
-    movlw   LOW (BP_MAX_CLICK_MS - BP_DEBOUNCE_MS)
-    selbnkc bp_t
-    addwf   bp_t, F
-    selbnkc bp_t + 1
-    btfsc   STATUS, C
-    incf    bp_t + 1, F
-    movlw   HIGH (BP_MAX_CLICK_MS - BP_DEBOUNCE_MS)
-    addwf   bp_t + 1, F
+    add16lf (BP_MAX_CLICK_MS - BP_DEBOUNCE_MS) * 2, bp_t
 
     ;; bp_state |= (1 << BP_DEBOUNCED) | BP_VALID_T
     movlw   (1 << BP_DEBOUNCED) | (1 << BP_VALID_T)
     selbnkc bp_state
     iorwf   bp_state, F
 
-    movlw   HIGH idle_done
-    movwf   PCLATH
+    pagesel idle_done
     goto    idle_done
 
 not_clicked:
@@ -221,15 +198,22 @@ not_clicked:
     selbank bp_state
     bsf     bp_state, BP_NOT_CLICK
 
+    ;; if (bp_current & REPEAT_MASK) goto start_hold
+    pagesel start_hold
+    selbnkc bp_current
+    movf    bp_current, W
+    andlw   BUTTONPRESS_REPEAT_MASK
+    btfss   STATUS, Z
+    goto    start_hold
+
     ;; bp_t += BP_MIN_HOLD_MS - BP_MAX_CLICK_MS
-    add16lf BP_MIN_HOLD_MS - BP_MAX_CLICK_MS, bp_t
+    add16lf (BP_MIN_HOLD_MS - BP_MAX_CLICK_MS) * 2, bp_t
 
     ;; bp_state |= 1 << BP_VALID_T
     selbnkc bp_state
     bsf     bp_state, BP_VALID_T
 
-    movlw   HIGH idle_done
-    movwf   PCLATH
+    pagesel idle_done
     goto    idle_done
 
 start_hold:
@@ -245,7 +229,7 @@ start_hold:
     iorwf   bp_held, F
 
     ;; bp_ival = BP_MAX_REPEAT_MS
-    mov16lf BP_MAX_REPEAT_MS, bp_ival
+    mov16lf (BP_MAX_REPEAT_MS) * 2, bp_ival
 
     ;; fallthrough
 
@@ -265,23 +249,15 @@ repeat_click:
     bsf     bp_state, BP_VALID_T
 
     ;; bp_ival -= BP_REPEAT_STEP_MS
-    movlw   LOW BP_REPEAT_STEP_MS
-    selbnkc bp_ival
-    subwf   bp_ival, F
-    selbnkc bp_ival + 1
-    btfss   STATUS, C
-    decf    bp_ival + 1, F
-    movlw   HIGH BP_REPEAT_STEP_MS
-    subwf   bp_ival + 1, F
+    add16lf -(BP_REPEAT_STEP_MS) * 2, bp_ival
 
     ;; if (bp_ival < BP_MIN_REPEAT_MS) bp_ival = BP_MIN_REPEAT_MS
-    bge16lf bp_ival, BP_MIN_REPEAT_MS, done_cap_ival
+    bge16lf bp_ival, (BP_MIN_REPEAT_MS) * 2, done_cap_ival
 
-    mov16lf BP_MIN_REPEAT_MS, bp_ival
+    mov16lf (BP_MIN_REPEAT_MS) * 2, bp_ival
 done_cap_ival:
 
-    movlw   HIGH idle_done
-    movwf   PCLATH
+    pagesel idle_done
     goto    idle_done
 
 idle_done:
@@ -294,14 +270,8 @@ idle_done:
 bp_init     macro
     local   i
 
-    selbank bp_t
-    clrf    bp_t
-    selbnkc bp_t + 1
-    clrf    bp_t + 1
-    selbnkc bp_ival
-    clrf    bp_ival
-    selbnkc bp_ival + 1
-    clrf    bp_ival + 1
+    clr16f  bp_t
+    clr16f  bp_ival
     selbnkc bp_state
     clrf    bp_state
 i   set     0
