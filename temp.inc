@@ -12,23 +12,23 @@
     endif
 
     ifdef section_udata
-TEMP_CONST_INIT equ (35 << 1) + 0   ; 7.1 fixed point.
-TEMP_COEFF_INIT equ (0 << 5) + 25   ; 1.5 fixed point.
+TEMP_CONST_INIT equ 0 << 1       ; 7.1 fixed point.
+TEMP_COEFF_INIT equ (1 << 5) + 0 ; 1.5 fixed point.
 
-temp_value      res 2               ; 10.6 fixed point.
-temp_coeff      res 1               ; 1.5 fixed point.
-temp_const      res 1               ; 7.1 fixed point.
+temp_value      res 2            ; 9.1 fixed point.
+temp_coeff      res 1            ; 5.1 fixed point.
+temp_const      res 1            ; 7.1 fixed point.
     endif ; section_udata
 
     ifdef section_code
 temp_idle   macro
     ;; temp_value += adc_temp_value * temp_coeff + temp_const
     ;;
-    ;; adc_temp_value is 10.0 fixed point.
+    ;; adc_temp_value is FP10.0.
     mov16ff         adc_temp_value, w16
     selbank         temp_coeff
     movf            temp_coeff, W
-    ufpmul0816wf    w16, 5 - 1      ; To FP9.1
+    ufpmul0816wf    w16, 5 - 1  ; To FP9.1
     add0816ff       temp_const, w16
 
     mov16ff         w16, temp_value
