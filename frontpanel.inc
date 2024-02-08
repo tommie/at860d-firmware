@@ -236,7 +236,9 @@ arm_done:
 clear_cursor_done:
 
     ;; Start storing the current value.
+    ifndef  TEMPC_DIRECT_CONTROL
     uc_store    0
+    endif
 timer_done:
 done:
     endm
