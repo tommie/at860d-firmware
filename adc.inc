@@ -30,12 +30,12 @@ adc_idle macro
     local   multisample_done
     local   next_end
 
-    movlw   HIGH next_end
-    movwf   PCLATH
+    pagesel next_end
     selbank adc_state
     btfsc   adc_state, 0
     goto    next_end
 
+    selbnkc ADCON0
     btfsc   ADCON0, GO
     goto    next_end
 
@@ -71,8 +71,7 @@ adc_idle macro
     endif
 
     ;; if ((adc_i & 0x0F) != 0) goto multisample_done
-    movlw   HIGH multisample_done
-    movwf   PCLATH
+    pagesel multisample_done
     movlw   0x0F
     selbnkc adc_i
     andwf   adc_i, W
@@ -83,8 +82,7 @@ adc_idle macro
     rr16fl  adc_acc, ADC_MULTISAMPLE_LOG, 0
 
     ;; *adc_var_table[adc_i] = adc_acc
-    movlw   HIGH adc_var_table
-    movwf   PCLATH
+    pagesel adc_var_table
     selbnkc adc_i
     swapf   adc_i, W            ; Upper nibble
     addlw   -1                  ; Previous channel
@@ -106,15 +104,16 @@ multisample_done:
 
     ;; if (adc_i >= 2 << 4) adc_i = 0
     movlw   2 << 4
+    selbank adc_i
     subwf   adc_i, W
     btfsc   STATUS, C
     clrf    adc_i
 
     ;; Set up the next channel.
-    movlw   HIGH adc_channel_table
-    movwf   PCLATH
+    pagesel adc_channel_table
     swapf   adc_i, W            ; Upper nibble
     call    adc_channel_table
+    selbank ADCON0
     xorwf   ADCON0, W
     andlw   (15 << CHS0)
     xorwf   ADCON0, F
@@ -128,13 +127,13 @@ next_end:
 adc_timer_next macro
     local   timer_next_end
 
-    movlw   HIGH timer_next_end
-    movwf   PCLATH
+    pagesel timer_next_end
     selbank adc_state
     btfss   adc_state, 0
     goto    timer_next_end
 
     ;; Start conversion.
+    selbnkc ADCON0
     bsf     ADCON0, GO
     bcf     adc_state, 0
 
@@ -156,8 +155,9 @@ adc_var_table:
 
     ifdef section_init
     movlw   (1 << ADON) | (0 << CHS0)
+    selbank ADCON0
     movwf   ADCON0
-    selbank ADCON1
+    selbnkc ADCON1
     movlw   (1 << ADFM) | (0 << VCFG1) | (0 << VCFG0)
     movwf   ADCON1
 
