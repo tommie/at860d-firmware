@@ -50,6 +50,8 @@ adc_idle macro
 
     selbnkc ADRESH
     movf    ADRESH, W
+    ;; Depending on where you read, the reserved upper bits are documented as
+    ;; unknown (Register 9-5) or read as zero (Figure 9-3).
     selbnkc adc_acc + 1
     addwf   adc_acc + 1, F
 
@@ -154,7 +156,8 @@ adc_var_table:
     endif
 
     ifdef section_init
-    movlw   (1 << ADON) | (0 << CHS0)
+    ;; 1:32 prescaler is the fastest possible at Fosc=20 MHz.
+    movlw   (2 << ADCS0) | (1 << ADON) | (0 << CHS0)
     selbank ADCON0
     movwf   ADCON0
     selbnkc ADCON1

@@ -248,7 +248,7 @@ rl16fl      macro   file, n, carry
 i   set     0
     while   i < n
 i   set     i + 1
-    if carry
+    if      carry
     bsf     STATUS, C
     else
     bcf     STATUS, C
@@ -271,7 +271,7 @@ rr16fl      macro   file, n, carry
 i   set     0
     while   i < n
 i   set     i + 1
-    if carry
+    if      carry
     bsf     STATUS, C
     else
     bcf     STATUS, C
@@ -685,6 +685,9 @@ i   set     i + 1
     selbnkc file
     rrf     file, F
     endw
+    if      l == 0
+    bcf     STATUS, C
+    endif
     endm
 
     ;; Count the number of leading zeros in W.
