@@ -213,8 +213,11 @@ arm_done:
     btfss   fp_state, FP_RUN_TMR
     goto    timer_done
 
-    ;; if (fp_t - timer_value >= 0) goto timer_done
-    bge16ff fp_t, timer_value, timer_done
+    ;; if (fp_t - timer_value > 0) goto timer_done
+    gts16ff fp_t, timer_value
+    pagesel timer_done
+    btfsc   STATUS, C
+    goto    timer_done
 
     ;; fp_state &= ~(...)
     selbank fp_state
