@@ -1,4 +1,32 @@
     ;; Temperature Controller
+    ;;
+    ;; P - increase to decrease rise time and decrease error.
+    ;; I - increase to remove steady-state error.
+    ;; D - increase to remove oscillation/overshoot.
+    ;;
+    ;; See https://en.wikipedia.org/wiki/Proportional%E2%80%93integral%E2%80%93derivative_controller#Manual_tuning
+    ;;
+    ;; # Tuning From Scratch
+    ;;
+    ;; 1. Set P to one and I, D, FRAC and POSTFRAC to zero.
+    ;;    Set MAX_ERR to 31 *C.
+    ;; 2. Set airpump to max and set a temperature above 150 *C.
+    ;; 3. Increase P until oscillation around some temperature.
+    ;;    If the size of P increases above allowed bit size, increase FRAC
+    ;;    and adjust P to compensate.
+    ;; 4. Adjust MAX_ERR to be larger than half the oscillation peak-to-peak.
+    ;;    Noting that a larger value may require P to shrink.
+    ;; 5. To remove the steady-state error, set I to one.
+    ;;    Temperature adjustment should feel very sluggish.
+    ;; 6. Increase FRAC (and adjust P) until it feels rapid again.
+    ;;    If FRAC is becoming close to the ADC value size (10 bits,)
+    ;;    subtract some from FRAC and add to POSTFRAC.
+    ;;    If the controller still cannot reach the set temperature,
+    ;;    increase I, and keep adjusting FRAC and P to compensate.
+    ;;    You may have to decrease P a bit, since the I term acts
+    ;;    in the same direction.
+    ;; 7. Increase D until oscillation goes away. If it is too coarse,
+    ;;    increase FRAC and adjust P and I.
 
     ifdef module_tempcontrol
 #undefine module_tempcontrol
@@ -22,13 +50,14 @@
     endif
 
     ifdef section_udata
-TEMPC_P         equ 16
-TEMPC_I         equ 0
-TEMPC_D         equ 0
-TEMPC_DT        equ 1           ; Time interval, in some unit.
-TEMPC_FRAC      equ 0           ; The log2-divisor; determines how many full-range samples can be accumulated before saturation.
-TEMPC_MAX_ERR   equ 20 << 1     ; 9.1 fixed point.
-TEMPC_INTERVAL  equ 10          ; Time interval, in 1ms units.
+TEMPC_P         equ 384         ; Max 15 - log(MAX_ERR) + FRAC bits.
+TEMPC_I         equ 1           ; This is pre-multiplied by dt.
+TEMPC_D         equ 24          ; This is pre-divided by dt.
+TEMPC_FRAC      equ 4           ; The log2-divisor; determines how many full-range samples can be accumulated before saturation.
+TEMPC_POSTFRAC  equ 4           ; The log2-divisor on the PID output; determines the influence of the I-term.
+TEMPC_MAX_ERR   equ 31 << 1     ; 5.1 fixed point.
+TEMPC_MAX_ACC   equ (1 << (TRIACZCC_NUM_FRAC_BITS + TRIACZCC_NUM_EXTRA_BITS + TEMPC_POSTFRAC)) - 1
+TEMPC_INTERVAL  equ 100         ; Time interval, in 1ms units.
 
     ;; tempc_state bits
 TEMPC_ACTIVE    equ 0
@@ -38,7 +67,7 @@ tempc_buf       res 2
 tempc_next_t    res 2           ; In 1ms units.
 tempc_state     res 1
 
-    pid_lit_udata   0, 2, TEMPC_P, TEMPC_I, TEMPC_D, TEMPC_DT, TEMPC_FRAC, TEMPC_MAX_ERR
+    pid_lit_udata   0, 2, TEMPC_P, TEMPC_I, TEMPC_D, 1, TEMPC_FRAC, TEMPC_MAX_ERR, TEMPC_MAX_ACC
     endif ; section_udata
 
     ifdef section_code
@@ -58,9 +87,9 @@ tempc_idle  macro
     selbnkc     w16
     movf        w16, W
 
-    ;; heater_setw(airpump_value ? tempc_value/2 & 0xFF : 0)
-    selbnkc     airpump_value
-    movf        airpump_value, F
+    ;; heater_setw(airpump_ratio ? tempc_value/2 & 0xFF : 0)
+    selbnkc     airpump_ratio
+    movf        airpump_ratio, F
     btfsc       STATUS, Z
     clrw
 
@@ -84,16 +113,19 @@ mend:
 
     pid_get16   0, tempc_buf
 
-    ;; tempc_buf = clamp(tempc_buf / 2^3, 0, 63)
-    divp2s16lf  tempc_buf, 3
-    clamps16f0l tempc_buf, (1 << (1 + TRIACZCC_NUM_FRAC_BITS)) - 1
+    ;; tempc_buf = clamp(tempc_buf / 2^POSTFRAC, 0)
+    divp2s16lf  tempc_buf, TEMPC_POSTFRAC
+    mov16ff     tempc_buf, w16
+    btfsc       w16 + 1, 7
+    clrf        w16
+    btfsc       w16 + 1, 7
+    clrf        w16 + 1
 
-    ;; heater_setw(airpump_value ? tempc_buf : 0)
-    selbnkc     tempc_buf
-    movf        tempc_buf, W
-
-    selbnkc     airpump_value
-    movf        airpump_value, F
+    ;; heater_setw(airpump_ratio ? tempc_buf & 0xFF : 0)
+    selbnkc     w16
+    movf        w16, W
+    selbnkc     airpump_ratio
+    movf        airpump_ratio, F
     btfsc       STATUS, Z
     clrw
 
@@ -132,7 +164,13 @@ tempc_set16 macro   file
     btfss   STATUS, C
     goto    mend
 
-    mov16ff file, tempc_value
+    eq16ff  file, tempc_value
+    pagesel mend
+    btfsc   STATUS, Z
+    goto    mend
+
+    pid_lit_reset   0
+    mov16ff         file, tempc_value
 mend:
     endm
     endif ; section_code

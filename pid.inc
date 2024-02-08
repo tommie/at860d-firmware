@@ -24,7 +24,7 @@
     ;; The `n` defines the number of bytes used to store the input and output values.
     ;; The `round` tells how many bits to round away after each multiplication.
     ;; `max_err` is the allowed range [-max_err, max_err] before clamping.
-pid_lit_udata   macro   index, n, kp, ki, kd, t, round, max_err
+pid_lit_udata   macro   index, n, kp, ki, kd, t, round, max_err, max_acc
 pid_out#v(index)        res n
 pid_z0_#v(index)        res n
 pid_z1_#v(index)        res n
@@ -36,19 +36,24 @@ pid_k2_#v(index)        equ -(kp + 2*kd/t)
 pid_k3_#v(index)        equ kd/t
 pid_rd#v(index)         equ round
 pid_max_err#v(index)    equ max_err
+pid_max_acc#v(index)    equ max_acc
     endm
     endif
 
     ifdef section_code
-    ;; Initializes the data of a `pid_lit_udata`.
-pid_lit_init    macro   index
-    if      pid_n#v(index) == 2
+pid_lit_reset   macro   index
     clr16f  pid_out#v(index)
     clr16f  pid_z0_#v(index)
     clr16f  pid_z1_#v(index)
     clr16f  pid_z2_#v(index)
+    endm
+
+    ;; Initializes the data of a `pid_lit_udata`.
+pid_lit_init    macro   index
+    if              pid_n#v(index) == 2
+    pid_lit_reset   index
     else
-    error "pid_lit is not implemented for this word size"
+    error           "pid_lit is not implemented for this word size"
     endif
     endm
 
@@ -82,6 +87,8 @@ pid_lit_update  macro   index, setfile, realfile
     mov16ff     pid_z0_#v(index), w16
     sfpmul16lf  pid_k1_#v(index), w16, pid_rd#v(index)
     satadds16ff w16, pid_out#v(index)
+
+    clamps16fl  pid_out#v(index), pid_max_acc#v(index)
     endif
     endm
 
