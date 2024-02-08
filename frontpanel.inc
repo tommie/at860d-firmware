@@ -326,6 +326,8 @@ fp_tempc_set16  macro   src
 fp_display  macro
     local   disp_temp
     local   disp_temp_unit
+    local   disp_air
+    local   air_done
     local   done
 
     mov16ff tempc_value, w16
@@ -374,7 +376,30 @@ disp_temp_unit:
     selbnkc airpump_value
     movf    airpump_value, W
     movwf   w16
+
+    ;; if (airpump_value != 0) goto disp_air
+    pagesel disp_air
+    iorlw   0
+    btfss   STATUS, Z
+    goto    disp_air
+
+    ;; Show "OFF"
+    movlw   LSA & LSB & LSC & LSD & LSE & LSF ; "O"
+    selbnkc display_buf + 2
+    movwf   display_buf + 2
+    movlw   LSA & LSE & LSF & LSG ; "F"
+    selbnkc display_buf + 1
+    movwf   display_buf + 1
+    selbnkc display_buf + 0
+    movwf   display_buf + 0
+    display_cur_update
+
+    pagesel air_done
+    goto    air_done
+
+disp_air:
     display_set_air_w16
+air_done:
 done:
     endm
 
