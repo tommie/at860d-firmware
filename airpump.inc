@@ -29,10 +29,6 @@ airpump_int_next  macro
     endm
 
 airpump_setw macro
-    zero_cross_is_not_good
-    btfsc   STATUS, Z
-    clrw
-
     ;; if (W > MAX_RATIO) W = MAX_RATIO
     ifndef  AIRPUMP_MAX_RATIO
     error   "AIRPUMP_MAX_RATIO is not defined"
@@ -45,13 +41,18 @@ airpump_setw macro
     selbank airpump_value
     movwf   airpump_value
 
-    ;; if (!W) W += OFFSET
+    ;; if (W) W += OFFSET
     ifndef  AIRPUMP_OFFSET
     error   "AIRPUMP_OFFSET is not defined"
     endif
     andlw   0xFF
     btfss   STATUS, Z
     addlw   AIRPUMP_OFFSET
+
+    ;; if (!zero_cross_is_good()) W = 0
+    zero_cross_is_not_good
+    btfsc   STATUS, Z
+    clrw
 
     selbnkc airpump_ratio
     movwf   airpump_ratio
