@@ -313,7 +313,11 @@ fp_airpump_setw macro
     endm
 
 fp_tempc_set16  macro   src
+    movlw       ~1
+    selbank     src
+    andwf       src, F          ; Truncate to integer.
     tempc_set16 src
+
     selbank     fp_state
     bsf         fp_state, FP_ARM_TMR
     bsf         fp_state, FP_TEMP_SET
