@@ -90,8 +90,6 @@ knob_skip_if_current_channel    macro   index
     ;; `size` is 1 for 8-bit values and 2 for 16-bit values.
     ;; `setmacro` sets the value in W for 8-bit and takes a source file in 16-bit mode.
 knob_idle   macro   index, size, lit_min, lit_max, file, setmacro
-    local   lit_size
-    local   shift_size
     local   is_pos
     local   is_active
     local   mend
@@ -99,16 +97,11 @@ knob_idle   macro   index, size, lit_min, lit_max, file, setmacro
     if      (size) < 1 || (size) > 2
     error   "size must be in [1, 2]"
     endif
+    if      (lit_max) >= 1 << (8*(size))
+    error   "lit_max cannot be represented by size bytes"
+    endif
     if      (lit_min) >= (lit_max)
     error   "lit_min must be less than lit_max"
-    endif
-lit_size    set 0
-    while   (1 << lit_size) <= (lit_max)
-lit_size    set lit_size + 1
-    endw
-    if      lit_size > 16 - 1
-    ;; There must be room for at least one bit from the knob...
-    error   "lit_max cannot be represented by 16-1 bits"
     endif
 
     ;; if (knob_index != index) goto mend
@@ -116,18 +109,9 @@ lit_size    set lit_size + 1
     knob_skip_if_current_channel    index
     goto    mend
 
-    ;; w16 = round(adc_knob_value / 2^shift_size)
-shift_size  set lit_size - (16 - 10)
-    if          shift_size < 0
-shift_size  set 0
-    endif
+    ;; w16 = (lit_max - lit_min) * adc_knob_value/2^10 + lit_min
     mov16ff     adc_knob_value, w16
-    bcf         STATUS, C
-    rr16fl      w16, shift_size, 0
-    add16cf     w16
-
-    ;; w16 = w16 * (lit_max - lit_min) / 2^(10 - shift_size) + lit_min
-    ufpmul16lf  (lit_max) - (lit_min), w16, 10 - (shift_size)
+    ufpmul16lf  (lit_max) - (lit_min), w16, 10
     add16lf     lit_min, w16
 
     ;; knob_state.eq = file == w16
