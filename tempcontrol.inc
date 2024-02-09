@@ -86,22 +86,22 @@ tempc_idle  macro
     btfss   tempc_state, TEMPC_ACTIVE
     goto    mend
 
-    ifdef       TEMPC_DIRECT_CONTROL
-    mov16ff     tempc_value, w16
-    rr16fl      w16, 1, 0       ; To FP9.0
-    selbnkc     w16
-    movf        w16, W
+    ifdef   TEMPC_DIRECT_CONTROL
+    mov16ff tempc_value, w16
+    rr16fl  w16, 1, 0       ; To FP9.0
+    selbnkc w16
+    movf    w16, W
 
     ;; heater_setw(airpump_ratio ? tempc_value/2 & 0xFF : 0)
-    selbnkc     airpump_ratio
-    movf        airpump_ratio, F
-    btfsc       STATUS, Z
+    selbnkc airpump_ratio
+    movf    airpump_ratio, F
+    btfsc   STATUS, Z
     clrw
 
     heater_setw
 mend:
     exitm
-    endif       ; TEMPC_DIRECT_CONTROL
+    endif   ; TEMPC_DIRECT_CONTROL
 
     ;; if (tempc_next_t - timer_value > 0) goto mend
     movlw   HIGH mend
@@ -131,8 +131,10 @@ no_fault:
     pid_get16   0, tempc_buf
 update_done:
 
-    ;; tempc_buf = clamp(tempc_buf / 2^POSTFRAC, 0)
+    ;; tempc_buf /= 2^POSTFRAC
     divp2s16lf  tempc_buf, TEMPC_POSTFRAC
+
+    ;; if (tempc_buf < 0) tempc_buf = 0
     mov16ff     tempc_buf, w16
     btfsc       w16 + 1, 7
     clrf        w16
@@ -197,7 +199,9 @@ mend:
     ifndef  TEMPCONTROL_MIN_TEMP
     error   "TEMPCONTROL_MIN_TEMP not defined"
     endif
-    ifndef  TEMPC_DIRECT_CONTROL
+    ifdef   TEMPC_DIRECT_CONTROL
+    messg   "Disabling tempcontrol: the heater is controlled open-loop!"
+    else
     if      TEMPCONTROL_MIN_TEMP < TEMP_CONST_INIT
     error   "TEMPCONTROL_MIN_TEMP must be at least TEMP_CONST_INIT"
     endif
