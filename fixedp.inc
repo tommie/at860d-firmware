@@ -68,7 +68,7 @@ l   set         l >> 1
     endw
 
     ;; Third step: round away the last bit. Because we stopped the
-	;; first step when l==0, we may need to remove more bits.
+    ;; first step when l==0, we may need to remove more bits.
 i25 set         i
     if          signed
     divp2s16lf  acc1, 1 + (frac) - i25
