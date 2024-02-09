@@ -400,9 +400,9 @@ fp_display  macro
 no_fault:
     temp_get16  w16
 
-    ;; if (w16 == TEMP_CONST_INIT) display_buf = "Low"
-    ge16lf  w16, TEMP_CONST_INIT
-    btfss   STATUS, Z
+    ;; if (w16 < MIN_TEMP) display_buf[5:3] = "Low"
+    ge16lf  w16, FRONTPANEL_MIN_TEMP
+    btfsc   STATUS, C
     goto    disp_temp
 
     movlw   LSD & LSE & LSF       ; "L"

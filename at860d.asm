@@ -24,6 +24,7 @@ BTN_HEAT_PANEL  equ 8
 #define COOLDOWN_AIR 64
 #define COOLDOWN_MAX_TEMP (70 << 1)     ;; 9.1 fixed point.
 #define DISPLAY_CURSOR_IVAL (768 / 256) ;; In 256 ms ticks.
+#define FRONTPANEL_MIN_TEMP (50 << 1)   ;; 9.1 fixed point.
 #define FRONTPANEL_SET_DELAY 3000       ;; In 1 ms ticks.
 #define KNOB_HYSTERESIS 4               ;; In ADC units.
 #define SELFTEST_TIMEOUT (10000 / 128)  ;; In 128 ms ticks.
