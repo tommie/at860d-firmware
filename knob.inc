@@ -42,7 +42,8 @@ knob_state  res 1
     ;; Sets the current channel the knob is connected to.
     ;; Use KNOB_DISABLED to disconnect the knob.
     ;; Does nothing if `index` is already the current channel.
-knob_activate   macro   index
+    ;; The knob starts out deactivated.
+knob_select macro   index
     bsf     STATUS, DC
     knob_skip_if_current_channel    index
     bcf     STATUS, DC

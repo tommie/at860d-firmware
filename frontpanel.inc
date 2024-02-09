@@ -155,7 +155,7 @@ down_done:
     btfss   fp_state, FP_BTN_AIR
     goto    air_disabled
 
-    knob_activate       FP_KNOB_AIR
+    knob_select         FP_KNOB_AIR
     display_set_cursor  0
 
     movlw   HIGH air_done
@@ -163,7 +163,7 @@ down_done:
     goto    air_done
 
 air_disabled:
-    knob_activate   FP_KNOB_TEMP
+    knob_select FP_KNOB_TEMP
     display_clear_cursor
 air_done:
 
@@ -198,7 +198,7 @@ air_done:
     btfsc   fp_state, FP_BTN_AIR
     goto    temp_cursor_done
 
-    knob_activate       FP_KNOB_TEMP
+    knob_select         FP_KNOB_TEMP
     display_set_cursor  3
 temp_cursor_done:
 arm_done:
@@ -231,7 +231,7 @@ arm_done:
     btfsc   fp_state, FP_BTN_AIR
     goto    clear_cursor_done
 
-    knob_activate   FP_KNOB_TEMP
+    knob_select FP_KNOB_TEMP
     display_clear_cursor
 clear_cursor_done:
 
@@ -532,7 +532,7 @@ mend:
     ifdef section_init
     selbank         fp_state
     clrf            fp_state
-    knob_activate   FP_KNOB_TEMP
+    knob_select     FP_KNOB_TEMP
     endif
 
     ifdef section_idle
