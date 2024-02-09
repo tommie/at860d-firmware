@@ -36,6 +36,9 @@
     ifndef module_airpump
     error "airpump module is a dependency of tempcontrol"
     endif
+    ifndef module_fault
+    error "fault module is a dependency of tempcontrol"
+    endif
     ifndef module_heater
     error "heater module is a dependency of tempcontrol"
     endif
@@ -72,6 +75,8 @@ tempc_state     res 1
 
     ifdef section_code
 tempc_idle  macro
+    local   no_fault
+    local   update_done
     local   mend
 
     ;; if (!tempc_state.active) goto mend
@@ -108,10 +113,23 @@ mend:
     ;; tempc_next_t += TEMPC_INTERVAL
     add16lf TEMPC_INTERVAL, tempc_next_t
 
+    ;; if (!fault_is_good) tempc_buf = 0
+    pagesel no_fault
+    fault_is_good
+    btfsc   STATUS, Z
+    goto    no_fault
+
+    clr16f  tempc_buf
+
+    pagesel update_done
+    goto    update_done
+
+no_fault:
     temp_get16      tempc_buf
     pid_lit_update  0, tempc_value, tempc_buf
 
     pid_get16   0, tempc_buf
+update_done:
 
     ;; tempc_buf = clamp(tempc_buf / 2^POSTFRAC, 0)
     divp2s16lf  tempc_buf, TEMPC_POSTFRAC

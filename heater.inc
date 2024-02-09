@@ -29,6 +29,11 @@ heater_int_next  macro
 heater_setw macro
     triaczcc_setw   0
     endm
+
+    ;; Sets Z to 1 if the heater is off.
+heater_is_inactive  macro
+    triaczcc_is_inactive    0
+    endm
     endif
 
     ifdef section_init

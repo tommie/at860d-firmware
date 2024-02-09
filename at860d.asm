@@ -12,6 +12,7 @@ BTN_PRESET_3    equ 5
 BTN_HEAT_PANEL  equ 8
 
 ;#define TEMPC_DIRECT_CONTROL
+;#define DISABLE_FAULT
 ;#define DISABLE_COOLDOWN
 ;#define DISABLE_SELFTEST
 ;#define DISABLE_STANDBY
@@ -41,6 +42,9 @@ BTN_HEAT_PANEL  equ 8
 #define TEMPCONTROL_MIN_TEMP 0
 #define TEMPCONTROL_MAX_TEMP ((1 << (TRIACZCC_NUM_FRAC_BITS + TRIACZCC_NUM_EXTRA_BITS)) - 1) << 1
     endif   ; TEMPC_DIRECT_CONTROL
+#define FAULT_MIN_TEMP (TEMPCONTROL_MIN_TEMP / 2) ;; 9.1 fixed point.
+#define FAULT_MAX_TEMP (550 << 1)                 ;; 9.1 fixed point.
+#define FAULT_HEATER_DELAY (10000 / 128)          ;; In 128 ms units.
 
     udata
 

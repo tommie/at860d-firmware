@@ -1,30 +1,41 @@
-    ;; First because many modules depend on it.
+    ;; Algorithms
     include "stdlib.inc"
     include "fixedp.inc"
+    include "pid.inc"
 
+    ;; Hardware drivers
     include "adc.inc"
     include "buttonscan.inc"
     include "buzzer.inc"
-    include "led.inc"           ; Required by display.
-    include "display.inc"       ; Required by timer0.
-    include "timer0.inc"
-    include "zerocross.inc"     ; Required by triac_pfc.
-    include "triac_pfc.inc"     ; Required by airpump.
-    include "airpump.inc"
-    include "triac_zcc.inc"     ; Required by heater.
-    include "heater.inc"        ; Required by timer1.
-    include "timer1.inc"        ; Required by int.
-    include "int.inc"
+    include "eeprom.inc"
     include "irq.inc"
+    include "led.inc"
     include "power.inc"
-    include "switch.inc"        ; Required by standby.
-    include "buttonpress.inc"   ; Required by frontpanel.
-    include "knob.inc"          ; Required by frontpanel.
-    include "eeprom.inc"        ; Required by frontpanel.
-    include "temp.inc"          ; Required by tempcontrol.
-    include "pid.inc"           ; Required by tempcontrol.
-    include "tempcontrol.inc"   ; Required by userconfig.
-    include "userconfig.inc"    ; Required by standby.
+    include "switch.inc"
+
+    ;; Tasks using the timer0 ISR
+    include "display.inc"
+    include "timer0.inc"
+
+    ;; Tasks using the timer1/int ISRs
+    ;; (Timer1 is synchronized to zero-crossings.)
+    include "zerocross.inc"
+    include "triac_pfc.inc"
+    include "triac_zcc.inc"
+    include "airpump.inc"
+    include "heater.inc"
+    include "timer1.inc"
+    include "int.inc"
+
+    ;; Best-effort tasks
+    include "buttonpress.inc"
+    include "knob.inc"
+    include "temp.inc"
+    include "fault.inc"
+    include "tempcontrol.inc"
+    include "userconfig.inc"
+
+    ;; High-level modes of operation
     ifndef  DISABLE_COOLDOWN
     include "cooldown.inc"
     endif
@@ -35,6 +46,4 @@
     include "standby.inc"
     endif
     include "frontpanel.inc"
-
-    ;; Last because it may enter a fault loop on init.
-    include "wdt.inc"
+    include "wdt.inc" ; Last because it may enter a fault loop on init.

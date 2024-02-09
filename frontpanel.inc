@@ -18,6 +18,9 @@
     ifndef module_display
     error "display module is a dependency of frontpanel"
     endif
+    ifndef module_fault
+    error "fault module is a dependency of frontpanel"
+    endif
     ifndef module_switch
     error "switch module is a dependency of frontpanel"
     endif
@@ -323,9 +326,53 @@ fp_tempc_set16  macro   src
     bsf         fp_state, FP_TEMP_SET
     endm
 
+fp_display_fault macro
+    local   temp_sensor_done
+    local   mend
+
+    selbank display_buf + 6
+    movlw   0xFF
+    movwf   display_buf + 6
+
+    pagesel temp_sensor_done
+    fault_skip_if_fault FAULT_TEMP_SENSOR
+    goto    temp_sensor_done
+
+    movlw   LSA & LSC & LSD & LSF & LSG ; "S"
+    selbnkc display_buf + 5
+    movwf   display_buf + 5
+    movlw   LSG                         ; "-"
+    selbnkc display_buf + 4
+    movwf   display_buf + 4
+    movlw   LSA & LSD & LSE & LSF & LSG ; "E"
+    selbnkc display_buf + 3
+    movwf   display_buf + 3
+
+    pagesel mend
+    goto    mend
+temp_sensor_done:
+
+    pagesel mend
+    fault_skip_if_fault FAULT_HEATER
+    goto    mend
+
+    movlw   LSB & LSC & LSE & LSF & LSG ; "H"
+    selbank display_buf + 5
+    movwf   display_buf + 5
+    movlw   LSG                         ; "-"
+    selbnkc display_buf + 4
+    movwf   display_buf + 4
+    movlw   LSA & LSD & LSE & LSF & LSG ; "E"
+    selbnkc display_buf + 3
+    movwf   display_buf + 3
+mend:
+    endm
+
 fp_display  macro
+    local   no_fault
     local   disp_temp
     local   disp_temp_unit
+    local   temp_done
     local   disp_air
     local   air_done
     local   done
@@ -339,6 +386,18 @@ fp_display  macro
     btfsc   fp_state, FP_TEMP_SET
     goto    disp_temp
 
+    ;; if (fault_is_good) goto no_fault
+    pagesel no_fault
+    fault_is_good
+    btfsc   STATUS, Z
+    goto    no_fault
+
+    fp_display_fault
+
+    pagesel temp_done
+    goto    temp_done
+
+no_fault:
     temp_get16  w16
 
     ;; if (w16 == TEMP_CONST_INIT) display_buf = "Low"
@@ -371,6 +430,7 @@ disp_temp_unit:
     movlw   LS2A & LS2B & LS2E & LS2F & LS2G    ; "P"
     selbnkc display_buf + 6
     movwf   display_buf + 6
+temp_done:
 
     clrf    w16 + 1
     selbnkc airpump_value
@@ -385,7 +445,7 @@ disp_temp_unit:
 
     ;; Show "OFF"
     movlw   LSA & LSB & LSC & LSD & LSE & LSF ; "O"
-    selbnkc display_buf + 2
+    selbank display_buf + 2
     movwf   display_buf + 2
     movlw   LSA & LSE & LSF & LSG ; "F"
     selbnkc display_buf + 1

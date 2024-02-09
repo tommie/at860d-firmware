@@ -11,6 +11,9 @@
     ifndef module_eeprom
     error "eeprom module is a dependency of userconfig"
     endif
+    ifndef module_fault
+    error "fault module is a dependency of userconfig"
+    endif
     ifndef module_tempcontrol
     error "tempcontrol module is a dependency of userconfig"
     endif
@@ -68,6 +71,7 @@ uc_skip_if_can_store    macro
     endm
 
 uc_idle macro
+    local   writing_done
     local   done
 
     ;; if (!(uc_state & (1 << UC_EE_WRITE))) goto write_ee_done
@@ -77,6 +81,12 @@ uc_idle macro
     btfss   uc_state, UC_EE_WRITE
     goto    done
 
+    ;; if (!fault_is_good) goto writing_done
+    pagesel writing_done
+    fault_is_good
+    btfss   STATUS, Z
+    goto    writing_done
+
     uc_try_write_ee16   tempc_value, uc_ee_temp, 2
     uc_try_write_ee     airpump_value, uc_ee_air, 1
 
@@ -85,6 +95,7 @@ uc_idle macro
     eeprom_skip_if_can_write
     goto    done
 
+writing_done:
     ;; Writing all values is done.
     selbnkc uc_state
     bcf     uc_state, UC_EE_WRITE

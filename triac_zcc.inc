@@ -68,6 +68,12 @@ i   set         i + 1
     movwf       triaczcc_delay + channel
     endm
 
+    ;; Sets Z to 1 if the channel is off.
+triaczcc_is_inactive    macro   channel
+    selbank     triaczcc_delay + channel
+    movf        triaczcc_delay + channel, F
+    endm
+
 triaczcc_int_next  macro
     if TRIACZCC_NUM_FRAC_BITS + TRIACZCC_NUM_EXTRA_BITS > 8
     error "triaczcc_cycle too small for TRIACZCC_NUM_FRAC_BITS+TRIACZCC_NUM_EXTRA_BITS"
