@@ -57,8 +57,7 @@ fp_idle_preset  macro   btn, index
     local   not_held
     local   done
 
-    movlw   HIGH not_held
-    movwf   PCLATH
+    pagesel not_held
     buttonpress_skip_if_held btn
     goto    not_held
 
@@ -69,13 +68,11 @@ fp_idle_preset  macro   btn, index
     movlw                   (1 << FP_PRESET_SET) | (1 << FP_ARM_TMR)
     iorwf                   fp_state, F
 
-    movlw   HIGH done
-    movwf   PCLATH
+    pagesel done
     goto    done
 not_held:
 
-    movlw   HIGH done
-    movwf   PCLATH
+    pagesel done
     buttonpress_skip_if_clicked btn
     goto    done
 
@@ -114,8 +111,7 @@ fp_idle macro
     knob_idle   FP_KNOB_TEMP, 2, TEMPCONTROL_MIN_TEMP, TEMPCONTROL_MAX_TEMP, tempc_value, fp_tempc_set16
     knob_idle   FP_KNOB_AIR, 1, 0, AIRPUMP_MAX_RATIO, airpump_value, fp_airpump_setw
 
-    movlw   HIGH up_done
-    movwf   PCLATH
+    pagesel up_done
     buttonpress_skip_if_clicked BTN_UP
     goto    up_done
 
@@ -128,8 +124,7 @@ fp_idle macro
     bsf     fp_state, FP_TEMP_SET
 up_done:
 
-    movlw   HIGH down_done
-    movwf   PCLATH
+    pagesel down_done
     buttonpress_skip_if_clicked BTN_DOWN
     goto    down_done
 
@@ -142,16 +137,14 @@ up_done:
     bsf     fp_state, FP_TEMP_SET
 down_done:
 
-    movlw   HIGH air_done
-    movwf   PCLATH
+    pagesel air_done
     buttonpress_skip_if_clicked BTN_HEAT_HNDL
     goto    air_done
 
     buttonpress_reset_clicked   BTN_HEAT_HNDL
     bsf     fp_state, FP_ARM_TMR
 
-    movlw   HIGH air_disabled
-    movwf   PCLATH
+    pagesel air_disabled
     movlw   1 << FP_BTN_AIR
     selbank fp_state
     xorwf   fp_state, F
@@ -161,8 +154,7 @@ down_done:
     knob_select         FP_KNOB_AIR
     display_set_cursor  0
 
-    movlw   HIGH air_done
-    movwf   PCLATH
+    pagesel air_done
     goto    air_done
 
 air_disabled:
@@ -170,8 +162,7 @@ air_disabled:
     display_clear_cursor
 air_done:
 
-    movlw   HIGH arm_done
-    movwf   PCLATH
+    pagesel arm_done
     selbank fp_state
     btfss   fp_state, FP_ARM_TMR
     goto    arm_done
@@ -195,8 +186,7 @@ air_done:
     btfss   fp_state, FP_TEMP_SET
     goto    arm_done
 
-    movlw   HIGH temp_cursor_done
-    movwf   PCLATH
+    pagesel temp_cursor_done
     selbnkc fp_state
     btfsc   fp_state, FP_BTN_AIR
     goto    temp_cursor_done
@@ -211,8 +201,7 @@ arm_done:
     fp_idle_preset  BTN_PRESET_3, 3
 
     ;; if (!(fp_state & (1 << FP_RUN_TMR))) goto timer_done
-    movlw   HIGH timer_done
-    movwf   PCLATH
+    pagesel timer_done
     btfss   fp_state, FP_RUN_TMR
     goto    timer_done
 
@@ -228,8 +217,7 @@ arm_done:
     andlw   ~((1 << FP_TEMP_SET) | (1 << FP_PRESET_SET) | (1 << FP_RUN_TMR))
     movwf   fp_state
 
-    movlw   HIGH clear_cursor_done
-    movwf   PCLATH
+    pagesel clear_cursor_done
     selbnkc fp_state
     btfsc   fp_state, FP_BTN_AIR
     goto    clear_cursor_done
@@ -250,14 +238,12 @@ fp_change_value_l   macro   delta
     local           airpump
     local           exit
 
-    movlw           HIGH airpump
-    movwf           PCLATH
+    pagesel         airpump
     btfsc           fp_state, FP_BTN_AIR
     goto            airpump
 
     fp_update_lfm16 2*(delta), tempc_value, tempc_set16, FP_KNOB_TEMP ; FP9.1
-    movlw           HIGH exit
-    movwf           PCLATH
+    pagesel         exit
     goto            exit
 
 airpump:
@@ -271,8 +257,7 @@ exit:
 fp_update_lfm   macro   delta, file, setwmacro, knob
     local   exit
 
-    movlw   HIGH exit
-    movwf   PCLATH
+    pagesel exit
     selbank file
     if      delta < 0
     movlw   -(delta)
@@ -296,8 +281,7 @@ exit:
 fp_update_lfm16 macro   delta, file, set16macro, knob
     local       exit
 
-    movlw       HIGH exit
-    movwf       PCLATH
+    pagesel     exit
     mov16ff     file, w16
     add16lf     delta, w16
     btfsc       w16 + 1, 7
@@ -380,8 +364,7 @@ fp_display  macro
     mov16ff tempc_value, w16
 
     ;; if (fp_state.temp_set) goto disp_temp
-    movlw   HIGH disp_temp
-    movwf   PCLATH
+    pagesel disp_temp
     selbank fp_state
     btfsc   fp_state, FP_TEMP_SET
     goto    disp_temp
@@ -415,8 +398,7 @@ no_fault:
     selbnkc display_buf + 3
     movwf   display_buf + 3
 
-    movlw   HIGH disp_temp_unit
-    movwf   PCLATH
+    pagesel disp_temp_unit
     goto    disp_temp_unit
 
 disp_temp:
@@ -467,8 +449,7 @@ fp_idle_cooldown macro   endlabel
     local       mend
 
     ifndef      DISABLE_COOLDOWN
-    movlw       HIGH mend
-    movwf       PCLATH
+    pagesel     mend
     cooldown_skip_if_active
     goto        mend
 
@@ -491,8 +472,7 @@ fp_idle_cooldown macro   endlabel
     selbnkc     display_buf + 0
     movwf       display_buf + 0
 
-    movlw       HIGH endlabel
-    movwf       PCLATH
+    pagesel     endlabel
     goto        endlabel
     endif
 mend:
@@ -503,8 +483,7 @@ fp_idle_selftest macro   endlabel
     local       mend
 
     ifndef      DISABLE_SELFTEST
-    movlw       HIGH mend
-    movwf       PCLATH
+    pagesel     mend
     selftest_skip_if_not_passed
     goto        mend
 
@@ -528,8 +507,7 @@ fp_idle_selftest macro   endlabel
     movwf       w16 + 1
     display_set_air_w16
 
-    movlw       HIGH failed
-    movwf       PCLATH
+    pagesel     failed
     selftest_skip_if_not_failed
     goto        failed
 
@@ -537,8 +515,7 @@ fp_idle_selftest macro   endlabel
     selbnkc     display_buf + 6
     movwf       display_buf + 6
 
-    movlw       HIGH endlabel
-    movwf       PCLATH
+    pagesel     endlabel
     goto        endlabel
 
 failed:
@@ -546,8 +523,7 @@ failed:
     selbank     display_buf + 6
     movwf       display_buf + 6
 
-    movlw       HIGH endlabel
-    movwf       PCLATH
+    pagesel     endlabel
     goto        endlabel
     endif
 mend:
@@ -557,8 +533,7 @@ fp_idle_standby  macro   endlabel
     local       mend
 
     ifndef      DISABLE_STANDBY
-    movlw       HIGH mend
-    movwf       PCLATH
+    pagesel     mend
     standby_skip_if_active
     goto        mend
 
@@ -581,8 +556,7 @@ fp_idle_standby  macro   endlabel
     selbnkc     display_buf + 0
     movwf       display_buf + 0
 
-    movlw       HIGH endlabel
-    movwf       PCLATH
+    pagesel     endlabel
     goto        endlabel
     endif
 mend:
