@@ -54,6 +54,7 @@ cooldown_idle       macro
     ;; cooldown_state_4 = temp_get16() > COOLDOWN_MAX_TEMP
     temp_get16      w16
     gt16fl          w16, COOLDOWN_MAX_TEMP
+    selbnkc         cooldown_state
     btfsc           STATUS, C
     bsf             cooldown_state, 4
 
@@ -63,6 +64,7 @@ cooldown_idle       macro
     ;; cooldown_state_5 = !swpower_get()
     swpower_get     cooldown_state, 5
     movlw           1 << 5
+    selbnkc         cooldown_state
     xorwf           cooldown_state, F
 
     ;; cooldown_state_4 = (cooldown_state_4 && cooldown_state_5) || cooldown_state_0

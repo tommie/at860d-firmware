@@ -77,6 +77,7 @@ wait_gie:
     goto    wait_gie
 
     movlw   0x55
+    selbnkc EECON2
     movwf   EECON2
     movlw   0xAA
     movwf   EECON2
@@ -120,6 +121,7 @@ eeprom_idle macro
     goto    done
 
     bcf     PIR2, EEIF
+    selbnkc EECON1
     bcf     EECON1, WREN
 
     selbnkc ee_state

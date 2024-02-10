@@ -34,6 +34,7 @@ display_timer_next  macro
     ledca_setf_irq display_i
 
     ;; ++display_i
+    selbnkc display_i
     incf    display_i, F
 
     ;; if (display_i >= 7) display_i = 0
@@ -159,7 +160,6 @@ display_idle    macro
     goto    exit
 
     movlw   1 << DISP_CUR_ON
-    selbnkc display_cursor
     xorwf   display_cursor, F
 
     display_cur_update
@@ -170,6 +170,7 @@ display_cur_update  macro
     selbank display_cursor
     movf    display_cursor, W
     andlw   DISP_CUR_MASK
+    selbnkc display_buf
     addlw   display_buf
     movwf   FSR
 

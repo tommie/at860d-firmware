@@ -34,20 +34,21 @@ fault_idle_heater   macro
 
     ;; if (fault_state.heater) goto mend
     pagesel     mend
+    selbank     fault_state
     btfsc       fault_state, FAULT_HEATER
     goto        mend
 
     ;; if (heater_is_inactive()) goto heater_inactive
     pagesel     heater_inactive
     heater_is_inactive
-    selbank     fault_state
+    selbnkc     fault_state
     btfsc       STATUS, Z
     goto        heater_inactive
 
     ;; if (temp_get16() >= MIN_TEMP) goto heater_inactive
     temp_get16  w16
     ge16lf      w16, FAULT_MIN_TEMP
-    selbank     fault_state
+    selbnkc     fault_state
     btfsc       STATUS, C
     goto        heater_inactive
 
@@ -77,6 +78,7 @@ heater_active:
     btfss       STATUS, C
     goto        mend
 
+    selbnkc     fault_state
     bsf         fault_state, FAULT_HEATER
 
     pagesel     mend

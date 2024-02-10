@@ -95,6 +95,7 @@ bp_idle     macro
     ;; the high byte of buttonscan_current.
     selbank buttonscan_current
     movf    buttonscan_current, W
+    selbnkc buttonscan_current + (BTN_HEAT_PANEL / 8)
     btfsc   buttonscan_current + (BTN_HEAT_PANEL / 8), BTN_HEAT_PANEL % 8
     iorlw   1 << BTN_HEAT_HNDL
     selbnkc bp_current
@@ -173,7 +174,6 @@ no_diff:
 
     ;; if (bp_state & (1 << BP_NOT_CLICK)) goto start_hold
     pagesel start_hold
-    selbnkc bp_state
     btfsc   bp_state, BP_NOT_CLICK
     goto    start_hold
 

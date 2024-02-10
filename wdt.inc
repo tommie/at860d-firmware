@@ -17,7 +17,7 @@
     ;; NOT_POR is used to signal that we have already handled the
     ;; WDTO. If MCLR is asserted, we'll be able to tell.
 wdto:
-    selbnkc PCON
+    selbank PCON
     bsf     PCON, NOT_POR
 
     clrw

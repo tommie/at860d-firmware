@@ -18,7 +18,7 @@ tblirq  res 1
 table_jump  macro   tblf
     local   case0
 
-    banksel tblf
+    selbank tblf
     movwf   tblf
     addlw   LOW case0
     movlw   HIGH case0
@@ -79,7 +79,7 @@ movbit  macro   srcf, srcb, destf, destb
     selbank srcf
     movwf   srcf, W
     andlw   1 << (srcb)
-    selbank destf
+    selbnkc destf
     btfsc   STATUS, Z
     bcf     destf, destb
     btfss   STATUS, Z
@@ -91,7 +91,7 @@ movinvbit   macro   srcf, srcb, destf, destb
     selbank srcf
     movf    srcf, W
     andlw   1 << (srcb)
-    selbank destf
+    selbnkc destf
     btfsc   STATUS, Z
     bsf     destf, destb
     btfss   STATUS, Z
@@ -156,9 +156,9 @@ gt16fl  macro   file, lit
     selbank file + 1
     movf    file + 1, W
     sublw   HIGH (lit)
-    selbnkc file
     movf    STATUS, W
     movwf   acc1
+    selbnkc file
     movf    file, W
     btfsc   acc1, Z
     sublw   LOW (lit)
@@ -243,7 +243,7 @@ mend:
 rl16fl      macro   file, n, carry
     local   i
 
-    selbank file + 1
+    selbank file
 
 i   set     0
     while   i < n
@@ -253,7 +253,7 @@ i   set     i + 1
     else
     bcf     STATUS, C
     endif
-    selbnkd file, file + 1
+    selbnkc file
     rlf     file, F
     selbnkc file + 1
     rlf     file + 1, F
@@ -266,7 +266,7 @@ i   set     i + 1
 rr16fl      macro   file, n, carry
     local   i
 
-    selbank file
+    selbank file + 1
 
 i   set     0
     while   i < n
@@ -276,7 +276,7 @@ i   set     i + 1
     else
     bcf     STATUS, C
     endif
-    selbnkd file + 1, file
+    selbnkc file + 1
     rrf     file + 1, F
     selbnkc file
     rrf     file, F
@@ -410,11 +410,11 @@ add16cf macro   dest
 
     movlw   HIGH mend
     movwf   PCLATH
-    selbank dest
     btfss   STATUS, C
     goto    mend
 
     movlw   1
+    selbank dest
     addwf   dest, F
     selbnkc dest + 1
     btfsc   STATUS, C
@@ -473,7 +473,7 @@ j   set     -j
 i   set i + 1
 
     if j & 1
-    selbnkd file + 1, file + 1
+    selbnkc file + 1
     movf    file + 1, W
     addwf   acc2, F
     selbnkc file
@@ -510,7 +510,7 @@ mul16wf macro   file
 
     movwf   acc3
 
-    selbank file
+    selbank file + 1
 
 mulloop:
     bcf     STATUS, C
@@ -521,7 +521,7 @@ mulloop:
     btfss   STATUS, C
     goto    mulskip
 
-    selbnkd file + 1, file
+    selbnkd file + 1, file + 1
     movf    file + 1, W
     addwf   acc2, F
     selbnkc file
@@ -532,6 +532,7 @@ mulloop:
 mulskip:
 
     bcf     STATUS, C
+    selbank file
     rlf     file, F
     selbnkc file + 1
     rlf     file + 1, F
@@ -672,15 +673,13 @@ divp2s16lf macro   file, l
     btfss   STATUS, Z
     bsf     STATUS, DC
 
-    selbnkc file
-
 i   set     0
     while   i < l
 i   set     i + 1
     bcf     STATUS, C
     btfsc   STATUS, DC
     bsf     STATUS, C
-    selbnkd file + 1, file
+    selbnkc file + 1
     rrf     file + 1, F
     selbnkc file
     rrf     file, F

@@ -97,7 +97,7 @@ uc_idle macro
 
 writing_done:
     ;; Writing all values is done.
-    selbnkc uc_state
+    selbank uc_state
     bcf     uc_state, UC_EE_WRITE
 done:
     endm

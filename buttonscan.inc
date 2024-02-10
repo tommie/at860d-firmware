@@ -45,6 +45,7 @@ buttonscan_idle     macro
     rrf     acc1, F
     rrf     acc1, W
     andlw   0x07
+    selbnkc buttonscan_buf
     iorwf   buttonscan_buf, F
 
     ;; ++buttonscan_i

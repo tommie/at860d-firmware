@@ -89,7 +89,6 @@ tempc_idle  macro
     ifdef   TEMPC_DIRECT_CONTROL
     mov16ff tempc_value, w16
     rr16fl  w16, 1, 0       ; To FP9.0
-    selbnkc w16
     movf    w16, W
 
     ;; heater_setw(airpump_ratio ? tempc_value/2 & 0xFF : 0)
@@ -142,7 +141,6 @@ update_done:
     clrf        w16 + 1
 
     ;; heater_setw(airpump_ratio ? tempc_buf & 0xFF : 0)
-    selbnkc     w16
     movf        w16, W
     selbnkc     airpump_ratio
     movf        airpump_ratio, F

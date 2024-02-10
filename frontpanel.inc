@@ -81,6 +81,7 @@ not_held:
     knob_deactivate_all
     uc_load                     index
 
+    selbnkc fp_state
     bsf     fp_state, FP_TEMP_SET
     bsf     fp_state, FP_ARM_TMR
 done:
@@ -142,11 +143,12 @@ down_done:
     goto    air_done
 
     buttonpress_reset_clicked   BTN_HEAT_HNDL
+    selbank fp_state
     bsf     fp_state, FP_ARM_TMR
 
     pagesel air_disabled
     movlw   1 << FP_BTN_AIR
-    selbank fp_state
+    selbnkc fp_state
     xorwf   fp_state, F
     btfss   fp_state, FP_BTN_AIR
     goto    air_disabled
@@ -173,11 +175,16 @@ air_done:
     ;; fp_t = timer_value + FRONTPANEL_SET_DELAY
     selbnkc timer_value
     movlw   HIGH FRONTPANEL_SET_DELAY
+    selbnkc timer_value + 1
     addwf   timer_value + 1, W
+    selbnkc fp_t + 1
     movwf   fp_t + 1
     movlw   LOW FRONTPANEL_SET_DELAY
+    selbnkc timer_value
     addwf   timer_value, W
+    selbnkc fp_t
     movwf   fp_t
+    selbnkc fp_t + 1
     btfsc   STATUS, C
     incf    fp_t + 1, F
 
@@ -187,7 +194,6 @@ air_done:
     goto    arm_done
 
     pagesel temp_cursor_done
-    selbnkc fp_state
     btfsc   fp_state, FP_BTN_AIR
     goto    temp_cursor_done
 
@@ -202,6 +208,7 @@ arm_done:
 
     ;; if (!(fp_state & (1 << FP_RUN_TMR))) goto timer_done
     pagesel timer_done
+    selbank fp_state
     btfss   fp_state, FP_RUN_TMR
     goto    timer_done
 
@@ -212,7 +219,7 @@ arm_done:
     goto    timer_done
 
     ;; fp_state &= ~(...)
-    selbank fp_state
+    selbnkc fp_state
     movf    fp_state, W
     andlw   ~((1 << FP_TEMP_SET) | (1 << FP_PRESET_SET) | (1 << FP_RUN_TMR))
     movwf   fp_state
@@ -239,6 +246,7 @@ fp_change_value_l   macro   delta
     local           exit
 
     pagesel         airpump
+    selbank         fp_state
     btfsc           fp_state, FP_BTN_AIR
     goto            airpump
 
