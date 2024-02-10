@@ -377,6 +377,7 @@ fp_display  macro
     btfsc   fp_state, FP_TEMP_SET
     goto    disp_temp
 
+    ifndef  DISABLE_FAULT
     ;; if (fault_is_good) goto no_fault
     pagesel no_fault
     fault_is_good
@@ -387,6 +388,7 @@ fp_display  macro
 
     pagesel temp_done
     goto    temp_done
+    endif   ; DISABLE_FAULT
 
 no_fault:
     temp_get16  w16
