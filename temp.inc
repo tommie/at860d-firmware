@@ -16,7 +16,7 @@ TEMP_CONST_INIT equ 0 << 1       ; 7.1 fixed point.
 TEMP_COEFF_INIT equ (1 << 5) + 0 ; 1.5 fixed point.
 
 temp_value      res 2            ; 9.1 fixed point.
-temp_coeff      res 1            ; 5.1 fixed point.
+temp_coeff      res 1            ; 1.5 fixed point.
 temp_const      res 1            ; 7.1 fixed point.
     endif ; section_udata
 
