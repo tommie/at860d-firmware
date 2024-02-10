@@ -21,7 +21,7 @@ BTN_HEAT_PANEL  equ 8
 #define AIRPUMP_MAX_RATIO (140 - AIRPUMP_OFFSET) ;; 0.8 fixed point.
 #define BUTTONPRESS_NUM_CHANNELS 6
 #define BUTTONPRESS_REPEAT_MASK ((1 << BTN_UP) | (1 << BTN_DOWN))
-#define COOLDOWN_AIR 64
+#define COOLDOWN_AIR AIRPUMP_MAX_RATIO
 #define COOLDOWN_MAX_TEMP (70 << 1)     ;; 9.1 fixed point.
 #define DISPLAY_CURSOR_IVAL (768 / 256) ;; In 256 ms ticks.
 #define FRONTPANEL_MIN_TEMP (50 << 1)   ;; 9.1 fixed point.
@@ -29,8 +29,8 @@ BTN_HEAT_PANEL  equ 8
 #define KNOB_HYSTERESIS 4               ;; In ADC units.
 #define SELFTEST_TIMEOUT (10000 / 128)  ;; In 128 ms ticks.
 #define SELFTEST_ACCEPT_STATE SELFTEST_FAST_TESTS
-#define STANDBY_AIR COOLDOWN_AIR
-#define STANDBY_DELAY (20000 / 128)     ;; In 128 ms ticks.
+#define STANDBY_AIR (AIRPUMP_MAX_RATIO / 4)
+#define STANDBY_DELAY (3000 / 128)      ;; In 128 ms ticks.
 #define STANDBY_MAX_TEMP COOLDOWN_MAX_TEMP
 #define TRIACPFC_NUM_CHANNELS 1
 #define TRIACZCC_NUM_CHANNELS 1
