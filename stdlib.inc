@@ -15,21 +15,6 @@ tblirq  res 1
     endif
 
     ifdef section_code
-table_jump  macro   tblf
-    local   case0
-
-    selbank tblf
-    movwf   tblf
-    addlw   LOW case0
-    movlw   HIGH case0
-    btfsc   STATUS, C
-    addlw   1
-    movwf   PCLATH
-    movf    tblf, W
-    addwf   PCL, F
-case0:
-    endm
-
     ;; The bank issued by an earlier selbank, or -1 if unknown.
 bank    set -1
     ;; Issues a banksel, and updates the bank variable.
@@ -57,6 +42,21 @@ selbnkd     macro   file, prevfile
     if      bank < 0 || (file) >> 7 != (prevfile) >> 7
     selbank file
     endif
+    endm
+
+table_jump  macro   tblf
+    local   case0
+
+    selbank tblf
+    movwf   tblf
+    addlw   LOW case0
+    movlw   HIGH case0
+    btfsc   STATUS, C
+    addlw   1
+    movwf   PCLATH
+    movf    tblf, W
+    addwf   PCL, F
+case0:
     endm
 
     ;; Z := *file == 0
