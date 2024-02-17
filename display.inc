@@ -23,12 +23,20 @@ DISP_CUR_ON         EQU 7
 display_timer_next  macro
     ledca_blank
 
-    selbank display_buf
-    movlw   display_buf
+    ;; Using `if (HIGH display_buf)` doesn't work, because udata symbols are
+    ;; still unassigned (zero) when `if` is evaluated.
+    bcf     STATUS, IRP
+    movlw   HIGH display_buf
+    iorlw   0
+    btfss   STATUS, Z
+    bsf     STATUS, IRP
+    movlw   LOW display_buf
     movwf   FSR
-    selbnkc display_i
+    selbank display_i
     movf    display_i, W
     addwf   FSR, F
+    btfsc   STATUS, C
+    bsf     STATUS, IRP         ; This assumes IRP never overflows.
     movf    INDF, W
     ledseg_set
     ledca_setf_irq display_i
@@ -167,12 +175,19 @@ exit:
     endm
 
 display_cur_update  macro
+    bcf     STATUS, IRP
+    movlw   HIGH display_buf
+    iorlw   0
+    btfss   STATUS, Z
+    bsf     STATUS, IRP
     selbank display_cursor
     movf    display_cursor, W
     andlw   DISP_CUR_MASK
     selbnkc display_buf
     addlw   display_buf
     movwf   FSR
+    btfsc   STATUS, C
+    bsf     STATUS, IRP         ; This assumes IRP never overflows.
 
     selbnkc display_cursor
     movlw   LSDP

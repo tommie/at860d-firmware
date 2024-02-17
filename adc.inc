@@ -70,7 +70,7 @@ adc_idle macro
     addwf   adc_i, F
     movlw   ~(((1 << (4 - ADC_MULTISAMPLE_LOG)) - 1) << ADC_MULTISAMPLE_LOG)
     andwf   adc_i, F
-    endif
+    endif   ; ADC_MULTISAMPLE_LOG < 4
 
     ;; if ((adc_i & 0x0F) != 0) goto multisample_done
     pagesel multisample_done
@@ -88,9 +88,16 @@ adc_idle macro
     selbnkc adc_i
     swapf   adc_i, W            ; Upper nibble
     addlw   -1                  ; Previous channel
+    movwf   acc1
     call    adc_var_table
     movwf   FSR
-    bcf     STATUS, IRP         ; TODO: need to set IRP bit correctly
+    movf    acc1, W
+    pagesel adc_varh_table
+    call    adc_varh_table
+    bcf     STATUS, IRP
+    iorlw   0
+    btfss   STATUS, Z
+    bsf     STATUS, IRP
 
     selbank adc_acc
     movf    adc_acc, W
@@ -98,6 +105,8 @@ adc_idle macro
     selbnkc adc_acc + 1
     movf    adc_acc + 1, W
     incf    FSR, F
+    btfsc   STATUS, Z
+    bsf     STATUS, IRP
     movwf   INDF
 
     ;; adc_acc = 0
@@ -154,7 +163,13 @@ adc_var_table:
     table_jump  tbl
     dt          LOW adc_temp_value
     dt          LOW adc_knob_value
-    endif
+
+adc_varh_table:
+    andlw       0x01
+    table_jump  tbl
+    dt          HIGH adc_temp_value
+    dt          HIGH adc_knob_value
+    endif ; section_code
 
     ifdef section_init
     ;; 1:32 prescaler is the fastest possible at Fosc=20 MHz.
