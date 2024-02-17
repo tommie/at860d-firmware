@@ -544,7 +544,7 @@ fp_idle_standby  macro   endlabel
 
     ifndef      DISABLE_STANDBY
     pagesel     mend
-    standby_skip_if_active
+    standby_skip_if_sleep
     goto        mend
 
     buttonpress_reset_all

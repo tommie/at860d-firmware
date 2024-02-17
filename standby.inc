@@ -167,6 +167,18 @@ standby_skip_if_not_active  macro
     selbank     standby_state
     btfsc       standby_state, 0
     endm
+
+    ;; Skips the next instruction if the temperature is low enough to be safe.
+standby_skip_if_sleep   macro
+    temp_get16  w16
+    gt16fl      w16, STANDBY_MAX_TEMP
+    bcf         STATUS, DC
+    btfss       STATUS, C
+    bsf         STATUS, DC
+    standby_skip_if_active
+    bcf         STATUS, DC
+    btfss       STATUS, DC
+    endm
     endif
 
     ifdef section_init
