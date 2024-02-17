@@ -1,7 +1,6 @@
 # #v(index) inside a macro causes "Symbol index not assigned a value."
 # --mpasm-compatible should fix that, in at least v1.5.0.
 AS = gpasm --mpasm-compatible
-CC = sdcc
 LD = gplink
 GPVC = gpvc
 
