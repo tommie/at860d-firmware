@@ -112,6 +112,7 @@ mend:
     ;; tempc_next_t += TEMPC_INTERVAL
     add16lf TEMPC_INTERVAL, tempc_next_t
 
+    ifndef  DISABLE_FAULT
     ;; if (!fault_is_good) tempc_buf = 0
     pagesel no_fault
     fault_is_good
@@ -122,6 +123,7 @@ mend:
 
     pagesel update_done
     goto    update_done
+    endif   ; DISABLE_FAULT
 
 no_fault:
     temp_get16      tempc_buf

@@ -81,11 +81,13 @@ uc_idle macro
     btfss   uc_state, UC_EE_WRITE
     goto    done
 
+    ifndef  DISABLE_FAULT
     ;; if (!fault_is_good) goto writing_done
     pagesel writing_done
     fault_is_good
     btfss   STATUS, Z
     goto    writing_done
+    endif   ; DISABLE_FAULT
 
     uc_try_write_ee16   tempc_value, uc_ee_temp, 2
     uc_try_write_ee     airpump_value, uc_ee_air, 1
