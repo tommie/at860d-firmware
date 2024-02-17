@@ -92,7 +92,7 @@ adc_idle macro
     movwf   FSR
     bcf     STATUS, IRP         ; TODO: need to set IRP bit correctly
 
-    selbnkc adc_acc
+    selbank adc_acc
     movf    adc_acc, W
     movwf   INDF
     selbnkc adc_acc + 1
@@ -137,6 +137,7 @@ adc_timer_next macro
     ;; Start conversion.
     selbnkc ADCON0
     bsf     ADCON0, GO
+    selbnkc adc_state
     bcf     adc_state, 0
 
 timer_next_end:
@@ -167,6 +168,7 @@ adc_var_table:
     selbnkc ANSEL
     movlw   (1 << RA0) | (1 << RA3)
     movwf   ANSEL
+    selbnkc ANSELH
     clrf    ANSELH
 
     selbnkc adc_i
@@ -176,7 +178,7 @@ adc_var_table:
     clr16f  adc_temp_value
     clr16f  adc_knob_value
     clr16f  adc_acc
-    endif
+    endif ; section_init
 
     ifdef section_idle
     adc_idle

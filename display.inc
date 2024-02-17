@@ -34,7 +34,7 @@ display_timer_next  macro
     ledca_setf_irq display_i
 
     ;; ++display_i
-    selbnkc display_i
+    selbank display_i
     incf    display_i, F
 
     ;; if (display_i >= 7) display_i = 0
@@ -51,7 +51,7 @@ display_set_digits  macro   base, vf, ndigits
 
 i   set             0
     while           i < ndigits
-    selbnkd         vf, base + i - 1
+    selbnkc         vf
     divmod1608fl    vf, 10
     movwf           acc1
 

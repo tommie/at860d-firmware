@@ -469,7 +469,7 @@ fp_idle_cooldown macro   endlabel
     rr16fl      w16, 1, 0       ; To FP9.0
     display_set_temp_w16
     movlw       LS2A & LS2D & LS2E & LS2F & LS2DP   ; "*C"
-    selbnkc     display_buf + 6
+    selbank     display_buf + 6
     movwf       display_buf + 6
 
     movlw       LSA & LSD & LSE & LSF               ; "C"
@@ -500,7 +500,7 @@ fp_idle_selftest macro   endlabel
     buttonpress_reset_all
 
     movlw       LSA & LSE & LSF             ; "T"
-    selbnkc     display_buf + 5
+    selbank     display_buf + 5
     movwf       display_buf + 5
     selbnkc     display_buf + 3
     movwf       display_buf + 3
@@ -522,7 +522,7 @@ fp_idle_selftest macro   endlabel
     goto        failed
 
     movlw       ~0
-    selbnkc     display_buf + 6
+    selbank     display_buf + 6
     movwf       display_buf + 6
 
     pagesel     endlabel

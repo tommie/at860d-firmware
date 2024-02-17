@@ -37,7 +37,7 @@ ledca_setf_irq  macro   file
     selbank file
     movf    file, W
     call    ledca_table_irq
-    selbnkc PORTC
+    selbank PORTC
     iorwf   PORTC, F
     endm
 

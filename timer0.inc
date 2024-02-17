@@ -26,9 +26,10 @@ timer0_irq  macro
 
     bcf     INTCON, T0IF
     movlw   256 - 156           ; PS=3: 0.0004992 ms, 2003 Hz
+    selbank TMR0
     addwf   TMR0, F
 
-    selbank timer_value
+    selbnkc timer_value
     incf    timer_value, F
     selbnkc timer_value + 1
     btfsc   STATUS, Z
@@ -51,10 +52,7 @@ irq_end:
     selbnkc INTCON
     bsf     INTCON, T0IE
 
-    selbnkc timer_value
-    clrf    timer_value
-    selbnkc timer_value + 1
-    clrf    timer_value + 1
+    clr16f  timer_value
     endif
 
     ifdef section_irq

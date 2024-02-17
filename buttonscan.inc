@@ -82,7 +82,7 @@ done_newscan:
     selbank buttonscan_i
     movf    buttonscan_i, W
     call    buttonscan_driver_table
-    selbnkc PORTB
+    selbank PORTB
     xorwf   PORTB, W
     andlw   (1 << RB5) | (1 << RB6) | (1 << RB7)
     xorwf   PORTB, F
@@ -108,6 +108,7 @@ buttonscan_driver_table:
     andlw   0xFC
     xorwf   TRISB, F
 
+    selbnkc OPTION_REG
     bcf     OPTION_REG, NOT_RBPU
     movlw   0xFC
     selbnkc WPUB

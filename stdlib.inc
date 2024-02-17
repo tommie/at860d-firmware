@@ -19,28 +19,30 @@ tblirq  res 1
 bank    set -1
     ;; Issues a banksel, and updates the bank variable.
     ;; Ignores bank-agnostic files.
-selbank     macro   file
-    if      ((file) & 0x7F) < 0x70 ; Files in udata won't be allocated here, and they default to zero, causing this to be safe.
-    banksel file
-bank    set (file) >> 7
+selbank macro   file
+    ;; Files in udata won't be allocated here, and their addresses default to
+    ;; zero, causing this to be safe, but only if we don't include INDF.
+    if          ((file) & 0x7F) < 0x70
+    banksel     file
+bank    set     (file) >> 7
     else
-bank    set -1
+bank    set     -1
     endif
     endm
 
     ;; Only issue "banksel" if the bank differs from the last bank.
     ;; This must not be used across branching.
-selbnkc     macro   file
-    if bank != (file) >> 7
-    selbank file
+selbnkc macro   file
+    if          (file) == 0 || bank != (file) >> 7
+    selbank     file
     endif
     endm
 
     ;; Only issue "banksel" if the bank differs from prevfile.
     ;; This is useful across branches, if you can guarantee the same bank for all origins.
-selbnkd     macro   file, prevfile
-    if      bank < 0 || (file) >> 7 != (prevfile) >> 7
-    selbank file
+selbnkd macro   file, prevfile
+    if          bank < 0 || (file) == 0 || (file) >> 7 != (prevfile) >> 7
+    selbank     file
     endif
     endm
 
