@@ -38,6 +38,7 @@
     ;; standby_state bits
 STANDBY_ACTIVE      equ 0
 STANDBY_WAS_ACTIVE  equ 1
+STANDBY_WAS_COOL    equ 2
 
 standby_time    res 1           ; In units of 128 ms.
 standby_state   res 1
@@ -121,11 +122,18 @@ idle_end:
     selbank         standby_state
     bsf             standby_state, STANDBY_WAS_ACTIVE
 
-    ;; airpump_setw(temp_get16() > STANDBY_MAX_TEMP ? STANDBY_AIR : 0)
+    ;; if (temp_get16() <= STANDBY_MAX_TEMP) standby_state.was_cool = 1
+    ;;
+    ;; Using was_cool avoids flicker right at the STANDBY_MAX_TEMP,
+    ;; because the temperature goes up when we turn off the airflow.
     temp_get16      w16
     gt16fl          w16, STANDBY_MAX_TEMP
-    movlw           STANDBY_AIR
     btfss           STATUS, C
+    bsf             standby_state, STANDBY_WAS_COOL
+
+    ;; airpump_setw(standby_state.was_cool ? 0 : STANDBY_AIR)
+    movlw           STANDBY_AIR
+    btfsc           standby_state, STANDBY_WAS_COOL
     clrw
     airpump_setw
 
@@ -139,13 +147,14 @@ idle_end:
     goto            mend
 
 not_active:
-    ;; if (!STANDBY_WAS_ACTIVE) goto mend
+    ;; if (!standby_state.was_active) goto mend
     pagesel         mend
     selbank         standby_state
     btfss           standby_state, STANDBY_WAS_ACTIVE
     goto            mend
 
     bcf                 standby_state, STANDBY_WAS_ACTIVE
+    bcf                 standby_state, STANDBY_WAS_COOL
     tempc_set_active    1
     uc_load             0
 
@@ -164,14 +173,8 @@ standby_skip_if_not_active  macro
 
     ;; Skips the next instruction if the temperature is low enough to be safe.
 standby_skip_if_sleep   macro
-    temp_get16  w16
-    gt16fl      w16, STANDBY_MAX_TEMP
-    bcf         STATUS, DC
-    btfss       STATUS, C
-    bsf         STATUS, DC
-    standby_skip_if_active
-    bcf         STATUS, DC
-    btfss       STATUS, DC
+    selbank     standby_state
+    btfss       standby_state, STANDBY_WAS_COOL
     endm
     endif
 
