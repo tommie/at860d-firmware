@@ -80,7 +80,7 @@ handle_in_cradle:
     btfss           STATUS, Z
     goto            time_set
 
-    ;; standby_time = timer_value + (timer_value == 0 ? 1 : 0)
+    ;; standby_time = timer_value%256 + (timer_value%256 == 0 ? 1 : 0)
     selbank         timer_value
     movf            timer_value, W
     btfsc           STATUS, Z
@@ -89,7 +89,7 @@ handle_in_cradle:
     movwf           standby_time
 
 time_set:
-    ;; if (timer_value - standby_time > delay) standby_state |= 1 << STANDBY_ACTIVE
+    ;; if ((int) timer_value%256 - (standby_time + delay) > 0) standby_state |= 1 << STANDBY_ACTIVE
     ifndef          STANDBY_AIR
     error "STANDBY_AIR is not defined"
     endif
@@ -99,16 +99,17 @@ time_set:
     ifndef          STANDBY_MAX_TEMP
     error "STANDBY_MAX_TEMP is not defined"
     endif
-    if              STANDBY_DELAY > 255
-    error "STANDBY_DELAY larger than a byte"
+    if              STANDBY_DELAY >= 1 << 7
+    error "STANDBY_DELAY larger than a signed byte"
     endif
     selbank         standby_time
     movf            standby_time, W
+    addlw           STANDBY_DELAY
     selbank         timer_value
     subwf           timer_value, W
-    sublw           STANDBY_DELAY
+    andlw           0x80
     selbank         standby_state
-    btfss           STATUS, C
+    btfsc           STATUS, Z
     bsf             standby_state, STANDBY_ACTIVE
 idle_end:
 
@@ -124,7 +125,7 @@ idle_end:
     temp_get16      w16
     gt16fl          w16, STANDBY_MAX_TEMP
     movlw           STANDBY_AIR
-    btfsc           STATUS, C
+    btfss           STATUS, C
     clrw
     airpump_setw
 
