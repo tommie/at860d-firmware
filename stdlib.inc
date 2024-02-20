@@ -368,16 +368,31 @@ sub0816ff macro   file8, dest16
     endm
 
     ;; file *= W
-mul16wf macro   file
+    ;;
+    ;; Clobbers FSR, IRP, acc1-3.
+mul16wf     macro   file
+    if      (file) == acc1 || (file) == acc2
+    error   "Cannot use acc1-3 in mul16wf."
+    endif
+    movwf   acc3
+    movlw   LOW (file)
+    movwf   FSR
+    bcf     STATUS, IRP
+    movlw   HIGH (file)
+    andlw   0x01
+    btfss   STATUS, Z
+    bsf     STATUS, IRP
+
+    pagesel _mul16wf
+    call    _mul16wf
+    endm
+
+mul16wf__   macro
     local   mulloop
     local   mulskip
 
     clrf    acc1
     clrf    acc2
-
-    movwf   acc3
-
-    selbank file + 1
 
 mulloop:
     bcf     STATUS, C
@@ -387,29 +402,37 @@ mulloop:
     btfss   STATUS, C
     goto    mulskip
 
-    selbank file + 1
-    movf    file + 1, W
+    incf    FSR, F
+    movf    INDF, W
     addwf   acc2, F
-    selbank file
-    movf    file, W
+    decf    FSR, F
+    movf    INDF, W
     addwf   acc1, F
     btfsc   STATUS, C
     incf    acc2, F
 mulskip:
 
     bcf     STATUS, C
-    selbank file
-    rlf     file, F
-    selbank file + 1
-    rlf     file + 1, F
+    rlf     INDF, F
+    incf    FSR, F
+    rlf     INDF, F
+    decf    FSR, F
 
     pagesel mulloop
     movf    acc3, F
     btfss   STATUS, Z
     goto    mulloop
 
-    mov16ff acc1, file
+    movf    acc1, W
+    movwf   INDF
+    incf    FSR, F
+    movf    acc2, W
+    movwf   INDF
     endm
+
+_mul16wf:
+    mul16wf__
+    return
 
     ;; file = -file
     ;;
