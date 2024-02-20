@@ -102,48 +102,10 @@ writing_done:
 done:
     endm
 
-    ;; Starts writing file at eeaddr, if there is no write in progress.
-    ;; Skips writing if the EEPROM is already updated. This is useful
-    ;; 1) to avoid wear, and
-    ;; 2) so that multiple positions can be written by simply calling
-    ;;    this macro in sequence.
+    ;; Starts writing file at eeaddr+uc_index*stride, if there is no
+    ;; write in progress.
 uc_try_write_ee macro   file, eeaddr, stride
-    local           exit
-    local           i
-
-    pagesel         exit
-    eeprom_skip_if_can_write
-    goto            exit
-
-    pagesel         exit
-    selbank         uc_index
-    movf            uc_index, W
-i   set             1
-    while           i < stride
-i   set             i+1
-    addwf           uc_index, W
-    endw
-    addlw           eeaddr
-    eeprom_read_w
-    selbank         file
-    subwf           file, W
-    btfsc           STATUS, Z
-    goto            exit
-
-    selbank         uc_index
-    movf            uc_index, W
-i   set             1
-    while           i < stride
-i   set             i+1
-    addwf           uc_index, W
-    endw
-    addlw           eeaddr
-    selbank         EEADR
-    movwf           EEADR
-    selbank         file
-    movf            file, W
-    eeprom_write_w
-exit:
+    eeprom_try_write_fl file, eeaddr, uc_index, stride
     endm
 
 uc_try_write_ee16   macro   file16, eeaddr, stride

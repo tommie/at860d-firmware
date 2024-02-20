@@ -45,5 +45,8 @@
     ifndef  DISABLE_STANDBY
     include "standby.inc"
     endif
+    ifndef  DISABLE_CALIBRATION
+    include "calibration.inc"
+    endif
     include "frontpanel.inc"
     include "wdt.inc" ; Last because it may enter a fault loop on init.

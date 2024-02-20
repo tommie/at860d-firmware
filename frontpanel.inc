@@ -105,6 +105,7 @@ fp_idle macro
     ;; Modes of operation. In priority order.
     fp_idle_cooldown fp_idle_done
     fp_idle_selftest fp_idle_done
+    fp_idle_cal      fp_idle_done
     fp_idle_standby  fp_idle_done
 
     fp_display
@@ -539,7 +540,23 @@ failed:
 mend:
     endm
 
-fp_idle_standby  macro   endlabel
+fp_idle_cal macro   endlabel
+    local   mend
+
+    ifndef  DISABLE_CALIBRATION
+    pagesel mend
+    cal_skip_if_active
+    goto    mend
+
+    cal_idle
+
+    pagesel endlabel
+    goto    endlabel
+    endif   ; DISABLE_CALIBRATION
+mend:
+    endm
+
+fp_idle_standby macro   endlabel
     local       mend
 
     ifndef      DISABLE_STANDBY

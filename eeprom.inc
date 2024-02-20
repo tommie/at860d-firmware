@@ -94,6 +94,45 @@ eeprom_write_lw16   macro addr
     eeprom_write_lw addr
     endm
 
+    ;; Starts writing file at eeaddr+offset_file*stride, if there is no write
+    ;; in progress. Skips writing if the EEPROM is already updated. This is useful
+    ;;
+    ;; 1) to avoid wear, and
+    ;; 2) so that multiple positions can be written by simply calling
+    ;;    this macro in sequence.
+eeprom_try_write_fl macro   file, eeaddr, offset_file, stride
+    local           mend
+    local           i
+
+    pagesel         mend
+    eeprom_skip_if_can_write
+    goto            mend
+
+    if              stride > 0
+    selbank         offset_file
+    movf            offset_file, W
+i   set             1
+    while           i < stride
+i   set             i+1
+    addwf           offset_file, W
+    endw
+    addlw           eeaddr
+    else
+    movlw           eeaddr
+    endif           ; stride > 0
+    eeprom_read_w
+    selbank         file
+    subwf           file, W
+    btfsc           STATUS, Z
+    goto            mend
+
+    ;; EEADR is already loaded.
+    selbank         file
+    movf            file, W
+    eeprom_write_w
+mend:
+    endm
+
 eeprom_skip_if_can_write    macro
     bcf     STATUS, Z
     movlw   -2
