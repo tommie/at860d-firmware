@@ -11,11 +11,35 @@ BTN_PRESET_2    equ 4
 BTN_PRESET_3    equ 5
 BTN_HEAT_PANEL  equ 8
 
+    ;; Direct temperature control operates the device in open-loop
+    ;; mode, and the buttons/knob directly affect the heater duty
+    ;; cycle. This can burn out your heating element and set things
+    ;; on fire if you are not careful.
 ;#define TEMPC_DIRECT_CONTROL
+
+    ;; Disables the fault detection module, which checks for temperature
+    ;; sensor and heater element issues.
 ;#define DISABLE_FAULT
+
+    ;; Disables the calibration mode.
 ;#define DISABLE_CALIBRATION
+
+    ;; Disables cooldown (the device automatically keeps the airpump
+    ;; on until a "safe" temperature is reached.)
 ;#define DISABLE_COOLDOWN
+
+    ;; Disables the self-test on startup. This checks that the ADC is
+    ;; stable, no buttons are stuck, there is mains voltage, etc.
+    ;;
+    ;; See also SELFTEST_ACCEPT_STATE for which tests to run.
+    ;;
+    ;; TODO: the cooldown mode might kick on cold start if the
+    ;; self-test is disabled, probably because the power switch is read
+    ;; before the opto-coupler+filter has stabilized.
 ;#define DISABLE_SELFTEST
+
+    ;; Disables the standby mode. This mode disables the heater when
+    ;; the handle is in the cradle.
 ;#define DISABLE_STANDBY
 
 #define AIRPUMP_OFFSET 15                        ;; 0.8 fixed point.
