@@ -100,12 +100,12 @@ fp_idle macro
     local   arm_done
     local   clear_cursor_done
     local   timer_done
-    local   done
+    local   fp_idle_done
 
     ;; Modes of operation. In priority order.
-    fp_idle_cooldown done
-    fp_idle_selftest done
-    fp_idle_standby  done
+    fp_idle_cooldown fp_idle_done
+    fp_idle_selftest fp_idle_done
+    fp_idle_standby  fp_idle_done
 
     fp_display
 
@@ -238,7 +238,7 @@ clear_cursor_done:
     uc_store    0
     endif
 timer_done:
-done:
+fp_idle_done:
     endm
 
 fp_change_value_l   macro   delta
