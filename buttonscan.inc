@@ -54,6 +54,7 @@ buttonscan_idle     macro
     ;; if (buttonscan_i >= 3)
     ;;   buttonscan_i = 0
     ;;   buttonscan_current = buttonscan_buf
+    ;;   buttonscan_buf = 0
     pagesel done_newscan
     movlw   3
     subwf   buttonscan_i, W
@@ -61,18 +62,8 @@ buttonscan_idle     macro
     goto    done_newscan
 
     clrf    buttonscan_i
-    selbank buttonscan_buf
-    movf    buttonscan_buf, W
-    selbank buttonscan_current
-    movwf   buttonscan_current
-    selbank buttonscan_buf + 1
-    movf    buttonscan_buf + 1, W
-    selbank buttonscan_current + 1
-    movwf   buttonscan_current + 1
-    selbank buttonscan_buf
-    clrf    buttonscan_buf
-    selbank buttonscan_buf + 1
-    clrf    buttonscan_buf + 1
+    mov16ff buttonscan_buf, buttonscan_current
+    clr16f  buttonscan_buf
 done_newscan:
 
     ;; Set PORTB driver pin.
@@ -94,7 +85,7 @@ buttonscan_driver_table:
     dt          ~(1 << RB7)     ; handle, K1, K2
     dt          ~0
 
-    endif
+    endif ; section_code
 
     ifdef section_init
     movlw   0xFC                ; Outputs are active low. Inputs have pull-ups.
