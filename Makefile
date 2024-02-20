@@ -7,6 +7,9 @@ GPVC = gpvc
 ASFLAGS = -p p16f887 -r dec
 LDFLAGS = -m
 
+# These optimizations are only available since gputils 1.5.0.
+ldflags_gplink1_5 = -b 1 -p 1
+
 .PHONY: all
 all: at860d.hex
 
