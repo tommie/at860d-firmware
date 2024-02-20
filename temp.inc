@@ -12,8 +12,8 @@
     endif
 
     ifdef section_udata
-TEMP_CONST_INIT equ 0 << 1       ; 7.1 fixed point.
-TEMP_COEFF_INIT equ (1 << 5) + 0 ; 1.5 fixed point.
+TEMP_CONST_INIT equ 14 << 1         ; 7.1 fixed point.
+TEMP_COEFF_INIT equ 75*(1 << 5)/100 ; 1.5 fixed point.
 
 temp_value      res 2            ; 9.1 fixed point.
 temp_coeff      res 1            ; 1.5 fixed point.
