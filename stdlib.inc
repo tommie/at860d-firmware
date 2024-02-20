@@ -18,9 +18,9 @@ tblirq  res 1
     ;; Issues a banksel, and updates the bank variable.
     ;; Ignores bank-agnostic files.
 selbank macro   file
-    ;; Files in udata won't be allocated here, and their addresses default to
-    ;; zero, causing this to be safe, but only if we don't include INDF.
-    if          ((file) & 0x7F) < 0x70 && (file) != 0x02 && (file) != 0x03 && (file) != 0x0A && (file) != 0x0B
+    ;; Files in udata won't be allocated here, and their addresses evaluate to
+    ;; low values, causing this to be safe.
+    if          ((file) & 0x7F) < 0x70
     banksel     file
     endif
     endm
