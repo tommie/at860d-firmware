@@ -21,7 +21,7 @@ at860d.hex: at860d.o
 %.lst: %.hex
 %.hex: %.o
 	$(LD) $(LDFLAGS) -o $@ $^
-	@$(GPVC) $(basename $@).cod | awk -Wnon-decimal-data '/using ROM 0+ / { print "Program:", 1+("0x" $$5); } /using ROM 0021.. / { print "EEDATA:", 1+("0x" $$5)-("0x" $$3); }'
+	@$(GPVC) $(basename $@).cod | awk -Wnon-decimal-data '/using ROM 0021.. / { print "EEDATA:", 1+("0x" $$5)-("0x" $$3); } /using ROM 002/ { next; } /using ROM 0/ { prog += 1+("0x" $$5)-("0x" $$3); } END { print "Program:", prog; }'
 
 %.o: %.asm *.inc
 	@echo $(AS) $(ASFLAGS) -c -o $@ $<
