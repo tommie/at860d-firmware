@@ -495,45 +495,69 @@ movs0816ff   macro   src8, dest16
     comf    dest16 + 1, F
     endm
 
-    ;; W = file16 % l
-    ;; file16 /= l
-divmod1608fl    macro   file16, l
+    ;; W = file16 % lit8
+    ;; file16 /= lit8
+    ;;
+    ;; Clobbers FSR, IRP, acc1-3.
+divmod1608fl    macro   file16, lit8
+    if      (file16) == acc1 || (file16) == acc2
+    error   "Cannot use acc1-3 in divmod1608fl."
+    endif
+    movlw   lit8
+    movwf   acc3
+    movlw   LOW (file16)
+    movwf   FSR
+    bcf     STATUS, IRP
+    movlw   HIGH (file16)
+    andlw   0x01
+    btfss   STATUS, Z
+    bsf     STATUS, IRP
+
+    pagesel _divmod1608fl
+    call    _divmod1608fl
+    endm
+
+divmod1608fl__  macro
     local   divloop
     local   divend
-    if      file16 == acc1
-    error   "Cannot use acc1 for divmod16"
-    endif
-    selbank file16
-    movf    file16, W
-    movwf   acc1
-    clrf    file16
-    selbank file16 + 1
-    movf    file16 + 1, W
-    movwf   acc2
-    clrf    file16 + 1
+
+    clrf    acc1
+    clrf    acc2
 
 divloop:
-    movlw   l
-    subwf   acc1, F
+    movf    acc3, W
+    subwf   INDF, F
     clrw
     btfss   STATUS, C
     movlw   1
-    subwf   acc2, F
+    incf    FSR, F
+    subwf   INDF, F
+    decf    FSR, F
     pagesel divend
     btfss   STATUS, C
     goto    divend
 
-    selbank file16
-    incf    file16, F
-    selbank file16 + 1
+    incf    acc1, F
     btfsc   STATUS, Z
-    incf    file16 + 1, F
+    incf    acc2, F
     pagesel divloop
     goto    divloop
 divend:
-    movlw   l
-    addwf   acc1, W
+    movf    INDF, W
+    addwf   acc3, F
+
+    movf    acc1, W
+    movwf   INDF
+    incf    FSR, F
+    movf    acc2, W
+    movwf   INDF
+
+    movf    acc3, W
     endm
+
+_divmod1608fl:
+    divmod1608fl__
+    return
 
     ;; Divide file by 2^l.
 divp2lf macro   file, l
