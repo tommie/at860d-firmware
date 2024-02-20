@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+# Finds macros, sorted by the number of invocations.
+
+set -e
+set -o pipefail
+
+grep -hvE '\bmacro\b|^\s*;' *.inc *.asm \
+	| awk '/^\s+/ { print $1; }' \
+    | grep -hFf <(awk '$2 == "macro" { print $1; }' *.inc) \
+	| sort \
+	| uniq -c \
+	| sort -k1,1n
