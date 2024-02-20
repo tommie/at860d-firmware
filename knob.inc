@@ -63,7 +63,7 @@ knob_select macro   index
     clrf    knob_state
 
     movlw   index
-    selbnkc knob_index
+    selbank knob_index
     movwf   knob_index
     endm
 
@@ -78,7 +78,7 @@ knob_deactivate macro   index
     knob_skip_if_current_channel    index
     goto    mend
 
-    selbnkc knob_state
+    selbank knob_state
     clrf    knob_state
 mend:
     endm
@@ -140,14 +140,14 @@ knob_idle   macro   index, size, lit_min, lit_max, file, setmacro
 
     ;; knob_state.eq = w16 == 0
     zero16f w16
-    selbnkc knob_state
+    selbank knob_state
     bcf     knob_state, KNOB_EQ
     btfsc   STATUS, Z
     bsf     knob_state, KNOB_EQ
 
     ;; if (knob_state.active) goto is_active
     pagesel is_active
-    selbnkc knob_state
+    selbank knob_state
     btfsc   knob_state, KNOB_ACTIVE
     goto    is_active
 
@@ -182,18 +182,18 @@ knob_idle   macro   index, size, lit_min, lit_max, file, setmacro
 is_active:
     ;; if (knob_state.eq) goto mend
     pagesel mend
-    selbnkc knob_state
+    selbank knob_state
     btfsc   knob_state, KNOB_EQ
     goto    mend
 
     ;; Clear state bits to be recomputed.
-    selbnkc knob_state
+    selbank knob_state
     movlw   ~((1 << KNOB_NEG) | (1 << KNOB_POS))
     andwf   knob_state, F
 
     ;; knob_state.neg = adc_knob_value < knob_hystl
     gts16ff knob_hystl, adc_knob_value
-    selbnkc knob_state
+    selbank knob_state
     btfsc   STATUS, C
     bsf     knob_state, KNOB_NEG
 
@@ -202,7 +202,7 @@ is_active:
     ;; Plus 1 for the current value.
     add16lf ((KNOB_HYSTERESIS) * 3 + 1) / 2 + 1, knob_hystl
     gts16ff adc_knob_value, knob_hystl
-    selbnkc knob_state
+    selbank knob_state
     btfsc   STATUS, C
     bsf     knob_state, KNOB_POS
     add16lf -(((KNOB_HYSTERESIS) * 3 + 1) / 2 + 1), knob_hystl
@@ -236,9 +236,9 @@ is_active:
     movlw       -(KNOB_HYSTERESIS)
     btfss       knob_state, KNOB_POS
     movlw       -(KNOB_HYSTERESIS) / 2
-    selbnkc     knob_hystl
+    selbank     knob_hystl
     movwf       knob_hystl
-    selbnkc     knob_hystl + 1
+    selbank     knob_hystl + 1
     clrf        knob_hystl + 1
     comf        knob_hystl + 1, F
     add16ff     adc_knob_value, knob_hystl
@@ -251,6 +251,6 @@ mend:
     movlw   KNOB_DISABLED
     selbank knob_index
     movwf   knob_index
-    selbnkc knob_state
+    selbank knob_state
     clrf    knob_state
     endif

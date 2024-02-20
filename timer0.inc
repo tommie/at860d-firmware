@@ -28,9 +28,9 @@ timer0_irq  macro
     selbank TMR0
     addwf   TMR0, F
 
-    selbnkc timer_value
+    selbank timer_value
     incf    timer_value, F
-    selbnkc timer_value + 1
+    selbank timer_value + 1
     btfsc   STATUS, Z
     incf    timer_value + 1, F
 
@@ -48,7 +48,7 @@ irq_end:
     iorlw   3 << PS0            ; 1:16 prescaler
     movwf   OPTION_REG
 
-    selbnkc INTCON
+    selbank INTCON
     bsf     INTCON, T0IE
 
     clr16f  timer_value

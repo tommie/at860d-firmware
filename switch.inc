@@ -18,10 +18,10 @@ swcal_get       macro   file, bit
     selbank file
     movf    file, W
     andlw   ~(1 << bit)
-    selbnkc PORTB
+    selbank PORTB
     btfss   PORTB, 1
     iorlw   1 << bit
-    selbnkc file
+    selbank file
     movwf   file
     endm
 
@@ -29,10 +29,10 @@ swset_get       macro   file, bit
     selbank file
     movf    file, W
     andlw   ~(1 << bit)
-    selbnkc PORTA
+    selbank PORTA
     btfss   PORTA, 2
     iorlw   1 << bit
-    selbnkc file
+    selbank file
     movwf   file
     endm
 
@@ -40,10 +40,10 @@ swstandby_get   macro   file, bit
     selbank file
     movf    file, W
     andlw   ~(1 << bit)
-    selbnkc PORTA
+    selbank PORTA
     btfss   PORTA, 4
     iorlw   1 << bit
-    selbnkc file
+    selbank file
     movwf   file
     endm
 
@@ -51,10 +51,10 @@ swpower_get macro   file, bit
     selbank file
     movf    file, W
     andlw   ~(1 << bit)
-    selbnkc PORTA
+    selbank PORTA
     btfss   PORTA, 5
     iorlw   1 << bit
-    selbnkc file
+    selbank file
     movwf   file
     endm
 endif

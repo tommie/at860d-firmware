@@ -26,7 +26,7 @@ zero_cross_int_next macro
     ;; W = timer1_value - zero_cross_time
     selbank zero_cross_time
     movf    zero_cross_time, W
-    selbnkc timer1_value
+    selbank timer1_value
     subwf   timer1_value, W
 
     ;; if (W > 100) goto set_end
@@ -41,7 +41,7 @@ zero_cross_int_next macro
 
     ;; if (zero_cross_period == 0) zero_cross_period += W
     ;; else zero_cross_period += (W - zero_cross_period) / 8
-    selbnkc zero_cross_period
+    selbank zero_cross_period
     movf    zero_cross_period, F
     btfsc   STATUS, Z
     goto    set_period
@@ -50,7 +50,7 @@ zero_cross_int_next macro
     subwf   zero_cross_period, W
     xorlw   0xFF
     addlw   1 + 4
-    selbnkc acc1
+    selbank acc1
     movwf   acc1
     bcf     STATUS, C
     btfsc   acc1, 7
@@ -73,7 +73,7 @@ set_end:
 
     selbank timer1_value
     movf    timer1_value, W
-    selbnkc zero_cross_time
+    selbank zero_cross_time
     movwf   zero_cross_time
     endm
 
@@ -87,7 +87,7 @@ zero_cross_is_not_good  macro
     ifdef section_init
     selbank zero_cross_period
     clrf    zero_cross_period
-    selbnkc zero_cross_time
+    selbank zero_cross_time
     clrf    zero_cross_time
     bsf     INTCON, INTEDG
     endif

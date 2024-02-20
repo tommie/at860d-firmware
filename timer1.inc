@@ -27,10 +27,10 @@ timer1_int_next macro
     selbank     TMR1H
     movwf       TMR1H
     movlw       LOW TIMER1_RELOAD
-    selbnkc     TMR1L
+    selbank     TMR1L
     movwf       TMR1L
 
-    selbnkc     PIR1
+    selbank     PIR1
     bcf         PIR1, TMR1IF
     endm
 
@@ -45,18 +45,18 @@ timer1_irq  macro
     bcf     PIR1, TMR1IF
 
     movlw   HIGH TIMER1_RELOAD
-    selbnkc TMR1H
+    selbank TMR1H
     addwf   TMR1H, F
     movlw   LOW TIMER1_RELOAD
-    selbnkc TMR1L
+    selbank TMR1L
     addwf   TMR1L, F
-    selbnkc TMR1H
+    selbank TMR1H
     btfsc   STATUS, C
     incf    TMR1H, F
 
-    selbnkc timer1_value
+    selbank timer1_value
     incf    timer1_value, F
-    selbnkc timer1_value + 1
+    selbank timer1_value + 1
     btfsc   STATUS, Z
     incf    timer1_value + 1, F
 
@@ -72,13 +72,13 @@ irq_end:
     movlw   (1 << T1CKPS0) | (0 << TMR1CS) | (1 << TMR1ON) ; 1:2 prescaler
     movwf   T1CON
 
-    selbnkc INTCON
+    selbank INTCON
     bsf     INTCON, PEIE
-    selbnkc PIE1
+    selbank PIE1
     bsf     PIE1, TMR1IE
-    selbnkc TMR1H
+    selbank TMR1H
     clrf    TMR1H
-    selbnkc TMR1L
+    selbank TMR1L
     clrf    TMR1L
     bcf     PIR1, TMR1IF
 

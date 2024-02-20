@@ -42,7 +42,7 @@ airpump_commitw macro
     btfsc   STATUS, Z
     clrw
 
-    selbnkc airpump_ratio
+    selbank airpump_ratio
     movwf   airpump_ratio
 
     triacpfc_set    0, airpump_ratio
@@ -75,7 +75,7 @@ airpump_idle    macro
     goto    mend
 
     ;; if (airpump_ratio) goto mend
-    selbnkc airpump_ratio
+    selbank airpump_ratio
     movf    airpump_ratio, F
     btfss   STATUS, Z
     goto    mend
@@ -85,7 +85,7 @@ airpump_idle    macro
     btfsc   STATUS, Z
     goto    mend
 
-    selbnkc airpump_value
+    selbank airpump_value
     movf    airpump_value, W
     airpump_commitw
 
@@ -96,11 +96,11 @@ mend:
     ifdef section_init
     selbank PORTE
     bsf     PORTE, 1
-    selbnkc TRISE
+    selbank TRISE
     bcf     TRISE, 1
-    selbnkc airpump_value
+    selbank airpump_value
     clrf    airpump_value
-    selbnkc airpump_ratio
+    selbank airpump_ratio
     clrf    airpump_ratio
     endif ; section_init
 

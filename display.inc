@@ -59,7 +59,7 @@ display_set_digits  macro   base, vf, ndigits
 
 i   set             0
     while           i < ndigits
-    selbnkc         vf
+    selbank         vf
     divmod1608fl    vf, 10
     movwf           acc1
 
@@ -76,7 +76,7 @@ i   set             0
     endif
 
     ledseg_translate acc1
-    selbnkc         base + i
+    selbank         base + i
     movwf           base + i
 i   set             i + 1
     endw
@@ -136,7 +136,7 @@ display_clear_cursor    macro
     movlw   ~LSDP
 i   set     0
     while   i < 6
-    selbnkc display_buf + i
+    selbank display_buf + i
     iorwf   display_buf + i, F
 i   set     i + 1
     endw
@@ -148,7 +148,7 @@ display_idle    macro
     pagesel exit
     selbank timer_value + 1
     movf    timer_value + 1, W
-    selbnkc display_cursor_tmr
+    selbank display_cursor_tmr
     subwf   display_cursor_tmr, W
     btfss   STATUS, Z
     goto    exit
@@ -156,10 +156,10 @@ display_idle    macro
     ;; We let the timer run even if the cursor is off, to keep a
     ;; steady pace.
     movlw   DISPLAY_CURSOR_IVAL
-    selbnkc display_cursor_tmr
+    selbank display_cursor_tmr
     addwf   display_cursor_tmr, F
 
-    selbnkc display_cursor
+    selbank display_cursor
     btfss   display_cursor, DISP_CUR_EN
     goto    exit
 
@@ -179,13 +179,13 @@ display_cur_update  macro
     selbank display_cursor
     movf    display_cursor, W
     andlw   DISP_CUR_MASK
-    selbnkc display_buf
+    selbank display_buf
     addlw   display_buf
     movwf   FSR
     btfsc   STATUS, C
     bsf     STATUS, IRP         ; This assumes IRP never overflows.
 
-    selbnkc display_cursor
+    selbank display_cursor
     movlw   LSDP
     btfsc   display_cursor, DISP_CUR_ON
     andwf   INDF, F
@@ -202,13 +202,13 @@ display_init    macro
     movlw   0xFF
 i   set     0
     while   i < 7
-    selbnkc display_buf + i
+    selbank display_buf + i
     movwf   display_buf + i
 i   set     i + 1
     endw
-    selbnkc display_cursor
+    selbank display_cursor
     clrf    display_cursor
-    selbnkc display_cursor_tmr
+    selbank display_cursor_tmr
     clrf    display_cursor_tmr
     endm
 

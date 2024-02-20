@@ -16,6 +16,6 @@ buzzer_set  macro   file, bit
     ifdef section_init
     selbank PORTC
     bcf     PORTC, 0
-    selbnkc TRISC
+    selbank TRISC
     bcf     TRISC, 0
     endif

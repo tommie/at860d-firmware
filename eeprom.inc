@@ -32,7 +32,7 @@ eeprom_read16_lf    macro addr, dest
     selbank dest
     movwf   dest
     eeprom_read_lw  (addr) + 1
-    selbnkc (dest) + 1
+    selbank (dest) + 1
     movwf   (dest) + 1
     endm
 
@@ -40,7 +40,7 @@ eeprom_read macro
     selbank EECON1
     bcf     EECON1, EEPGD
     bsf     EECON1, RD
-    selbnkc EEDAT
+    selbank EEDAT
     movf    EEDAT, W
     endm
 
@@ -51,7 +51,7 @@ eeprom_write_lw     macro addr
     selbank EEDAT
     movwf   EEDAT
     movlw   addr
-    selbnkc EEADR
+    selbank EEADR
     movwf   EEADR
     eeprom_write
     endm
@@ -76,7 +76,7 @@ wait_gie:
     goto    wait_gie
 
     movlw   0x55
-    selbnkc EECON2
+    selbank EECON2
     movwf   EECON2
     movlw   0xAA
     movwf   EECON2
@@ -88,7 +88,7 @@ eeprom_write_lw16   macro addr
     movf    w16 + 1, W
     selbank ee_dath
     movwf   ee_dath
-    selbnkc ee_state
+    selbank ee_state
     bsf     ee_state, EE_WR_W16
     movf    w16, W
     eeprom_write_lw addr
@@ -100,7 +100,7 @@ eeprom_skip_if_can_write    macro
     selbank EECON1
     btfss   EECON1, WR
     addlw   1
-    selbnkc PIR2
+    selbank PIR2
     btfss   PIR2, EEIF
     addlw   1
     btfss   STATUS, Z
@@ -114,22 +114,22 @@ eeprom_idle macro
     btfsc   EECON1, WR
     goto    done
 
-    selbnkc PIR2
+    selbank PIR2
     btfss   PIR2, EEIF
     goto    done
 
     bcf     PIR2, EEIF
-    selbnkc EECON1
+    selbank EECON1
     bcf     EECON1, WREN
 
-    selbnkc ee_state
+    selbank ee_state
     btfss   ee_state, EE_WR_W16
     goto    done
 
     bcf     ee_state, EE_WR_W16
-    selbnkc EEADR
+    selbank EEADR
     incf    EEADR, 1
-    selbnkc ee_dath
+    selbank ee_dath
     movf    ee_dath, W
     eeprom_write_w
 

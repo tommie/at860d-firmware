@@ -96,27 +96,27 @@ triaczcc_int_next_ch  macro channel, set_macro
     goto        next_end
 
     ;; if (triaczcc_delay == 0) goto next_end
-    selbnkc     triaczcc_delay + channel
+    selbank     triaczcc_delay + channel
     movf        triaczcc_delay + channel, F
     btfsc       STATUS, Z
     goto        next_end
 
     ;; if (triaczcc_cycle - triaczcc_prev_on[channel] <= triaczcc_delay[channel]) goto next_end
-    selbnkc     triaczcc_prev_on + channel
+    selbank     triaczcc_prev_on + channel
     movf        triaczcc_prev_on + channel, W
-    selbnkc     triaczcc_cycle
+    selbank     triaczcc_cycle
     subwf       triaczcc_cycle, W
-    selbnkc     triaczcc_delay + channel
+    selbank     triaczcc_delay + channel
     subwf       triaczcc_delay + channel, W
     btfsc       STATUS, C
     goto        next_end
 
     ;; triaczcc_prev_on[channel] += triaczcc_delay[channel]
     movf        triaczcc_delay + channel, W
-    selbnkc     triaczcc_prev_on + channel
+    selbank     triaczcc_prev_on + channel
     addwf       triaczcc_prev_on + channel, F
 
-    selbnkc     triaczcc_state + (channel / 8)
+    selbank     triaczcc_state + (channel / 8)
     bsf         triaczcc_state + (channel / 8), (channel % 8)
     set_macro   triaczcc_state + (channel / 8), (channel % 8)
 next_end:
@@ -135,20 +135,20 @@ triaczcc_timer_next_ch  macro channel, set_macro, timer_value
     goto        next_end
 
     ;; if (timer_value - zero_cross_time <= zero_cross_period / 2) goto next_end
-    selbnkc     zero_cross_period
+    selbank     zero_cross_period
     movf        zero_cross_period, W
     movwf       acc1
     bcf         STATUS, C
     rrf         acc1, F
-    selbnkc     zero_cross_time
+    selbank     zero_cross_time
     movf        zero_cross_time, W
-    selbnkc     timer_value
+    selbank     timer_value
     subwf       timer_value, W
     subwf       acc1, W
     btfsc       STATUS, C
     goto        next_end
 
-    selbnkc     triaczcc_state + (channel / 8)
+    selbank     triaczcc_state + (channel / 8)
     bcf         triaczcc_state + (channel / 8), (channel % 8)
     set_macro   triaczcc_state + (channel / 8), (channel % 8)
 next_end:
@@ -184,15 +184,15 @@ triaczcc_init   macro
     clrf    triaczcc_cycle
 i   set     0
     while   i < TRIACZCC_NUM_CHANNELS
-    selbnkc triaczcc_delay + i
+    selbank triaczcc_delay + i
     clrf    triaczcc_delay + i
-    selbnkc triaczcc_prev_on + i
+    selbank triaczcc_prev_on + i
     clrf    triaczcc_prev_on + i
 i   set     i + 1
     endw
 i   set     0
     while   i < TRIACZCC_NUM_CHANNELS / 8
-    selbnkc triaczcc_state + (i / 8)
+    selbank triaczcc_state + (i / 8)
     clrf    triaczcc_state + (i / 8)
 i   set     i + 1
     endw

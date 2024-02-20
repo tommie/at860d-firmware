@@ -91,7 +91,7 @@ tempc_idle  macro
     movf    w16, W
 
     ;; heater_setw(airpump_ratio ? tempc_value/2 & 0xFF : 0)
-    selbnkc airpump_ratio
+    selbank airpump_ratio
     movf    airpump_ratio, F
     btfsc   STATUS, Z
     clrw
@@ -142,7 +142,7 @@ update_done:
 
     ;; heater_setw(airpump_ratio ? tempc_buf & 0xFF : 0)
     movf        w16, W
-    selbnkc     airpump_ratio
+    selbank     airpump_ratio
     movf        airpump_ratio, F
     btfsc       STATUS, Z
     clrw
@@ -205,7 +205,7 @@ mend:
 
     mov16lf         TEMPCONTROL_MIN_TEMP, tempc_value
     mov16lf         1, tempc_next_t
-    selbnkc         tempc_state
+    selbank         tempc_state
     clrf            tempc_state
     pid_lit_init    0
     endif ; section_init

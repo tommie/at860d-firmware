@@ -64,7 +64,7 @@ fp_idle_preset  macro   btn, index
     ;; Write
     buttonpress_reset_held  btn
     uc_store                index
-    selbnkc                 fp_state
+    selbank                 fp_state
     movlw                   (1 << FP_PRESET_SET) | (1 << FP_ARM_TMR)
     iorwf                   fp_state, F
 
@@ -81,7 +81,7 @@ not_held:
     knob_deactivate_all
     uc_load                     index
 
-    selbnkc fp_state
+    selbank fp_state
     bsf     fp_state, FP_TEMP_SET
     bsf     fp_state, FP_ARM_TMR
 done:
@@ -132,7 +132,7 @@ up_done:
     buttonpress_reset_clicked   BTN_DOWN
     fp_change_value_l   -1
 
-    selbnkc fp_state
+    selbank fp_state
     bsf     fp_state, FP_ARM_TMR
     btfss   fp_state, FP_BTN_AIR
     bsf     fp_state, FP_TEMP_SET
@@ -148,7 +148,7 @@ down_done:
 
     pagesel air_disabled
     movlw   1 << FP_BTN_AIR
-    selbnkc fp_state
+    selbank fp_state
     xorwf   fp_state, F
     btfss   fp_state, FP_BTN_AIR
     goto    air_disabled
@@ -173,23 +173,23 @@ air_done:
     bsf     fp_state, FP_RUN_TMR
 
     ;; fp_t = timer_value + FRONTPANEL_SET_DELAY
-    selbnkc timer_value
+    selbank timer_value
     movlw   HIGH FRONTPANEL_SET_DELAY
-    selbnkc timer_value + 1
+    selbank timer_value + 1
     addwf   timer_value + 1, W
-    selbnkc fp_t + 1
+    selbank fp_t + 1
     movwf   fp_t + 1
     movlw   LOW FRONTPANEL_SET_DELAY
-    selbnkc timer_value
+    selbank timer_value
     addwf   timer_value, W
-    selbnkc fp_t
+    selbank fp_t
     movwf   fp_t
-    selbnkc fp_t + 1
+    selbank fp_t + 1
     btfsc   STATUS, C
     incf    fp_t + 1, F
 
     ;; if (fp_state.temp_set) display_set_cursor(3)
-    selbnkc fp_state
+    selbank fp_state
     btfss   fp_state, FP_TEMP_SET
     goto    arm_done
 
@@ -219,13 +219,13 @@ arm_done:
     goto    timer_done
 
     ;; fp_state &= ~(...)
-    selbnkc fp_state
+    selbank fp_state
     movf    fp_state, W
     andlw   ~((1 << FP_TEMP_SET) | (1 << FP_PRESET_SET) | (1 << FP_RUN_TMR))
     movwf   fp_state
 
     pagesel clear_cursor_done
-    selbnkc fp_state
+    selbank fp_state
     btfsc   fp_state, FP_BTN_AIR
     goto    clear_cursor_done
 
@@ -331,13 +331,13 @@ fp_display_fault macro
     goto    temp_sensor_done
 
     movlw   LSA & LSC & LSD & LSF & LSG ; "S"
-    selbnkc display_buf + 5
+    selbank display_buf + 5
     movwf   display_buf + 5
     movlw   LSG                         ; "-"
-    selbnkc display_buf + 4
+    selbank display_buf + 4
     movwf   display_buf + 4
     movlw   LSA & LSD & LSE & LSF & LSG ; "E"
-    selbnkc display_buf + 3
+    selbank display_buf + 3
     movwf   display_buf + 3
 
     pagesel mend
@@ -352,10 +352,10 @@ temp_sensor_done:
     selbank display_buf + 5
     movwf   display_buf + 5
     movlw   LSG                         ; "-"
-    selbnkc display_buf + 4
+    selbank display_buf + 4
     movwf   display_buf + 4
     movlw   LSA & LSD & LSE & LSF & LSG ; "E"
-    selbnkc display_buf + 3
+    selbank display_buf + 3
     movwf   display_buf + 3
 mend:
     endm
@@ -399,13 +399,13 @@ no_fault:
     goto    disp_temp
 
     movlw   LSD & LSE & LSF       ; "L"
-    selbnkc display_buf + 5
+    selbank display_buf + 5
     movwf   display_buf + 5
     movlw   LSC & LSD & LSE & LSG ; "o"
-    selbnkc display_buf + 4
+    selbank display_buf + 4
     movwf   display_buf + 4
     movlw   LSC & LSD & LSE       ; "w"
-    selbnkc display_buf + 3
+    selbank display_buf + 3
     movwf   display_buf + 3
 
     pagesel disp_temp_unit
@@ -420,12 +420,12 @@ disp_temp_unit:
     selbank fp_state
     btfsc   fp_state, FP_PRESET_SET
     movlw   LS2A & LS2B & LS2E & LS2F & LS2G    ; "P"
-    selbnkc display_buf + 6
+    selbank display_buf + 6
     movwf   display_buf + 6
 temp_done:
 
     clrf    w16 + 1
-    selbnkc airpump_value
+    selbank airpump_value
     movf    airpump_value, W
     movwf   w16
 
@@ -440,9 +440,9 @@ temp_done:
     selbank display_buf + 2
     movwf   display_buf + 2
     movlw   LSA & LSE & LSF & LSG ; "F"
-    selbnkc display_buf + 1
+    selbank display_buf + 1
     movwf   display_buf + 1
-    selbnkc display_buf + 0
+    selbank display_buf + 0
     movwf   display_buf + 0
     display_cur_update
 
@@ -473,13 +473,13 @@ fp_idle_cooldown macro   endlabel
     movwf       display_buf + 6
 
     movlw       LSA & LSD & LSE & LSF               ; "C"
-    selbnkc     display_buf + 2
+    selbank     display_buf + 2
     movwf       display_buf + 2
     movlw       LSA & LSB & LSC & LSD & LSE & LSF   ; "O"
-    selbnkc     display_buf + 1
+    selbank     display_buf + 1
     movwf       display_buf + 1
     movlw       LSD & LSE & LSF                     ; "L"
-    selbnkc     display_buf + 0
+    selbank     display_buf + 0
     movwf       display_buf + 0
 
     pagesel     endlabel
@@ -502,16 +502,16 @@ fp_idle_selftest macro   endlabel
     movlw       LSA & LSE & LSF             ; "T"
     selbank     display_buf + 5
     movwf       display_buf + 5
-    selbnkc     display_buf + 3
+    selbank     display_buf + 3
     movwf       display_buf + 3
     movlw       LSA & LSC & LSD & LSF & LSG ; "S"
-    selbnkc     display_buf + 4
+    selbank     display_buf + 4
     movwf       display_buf + 4
 
-    selbnkc     selftest_state
+    selbank     selftest_state
     movf        selftest_state, W
     movwf       w16
-    selbnkc     selftest_state + 1
+    selbank     selftest_state + 1
     movf        selftest_state + 1, W
     andlw       0x03
     movwf       w16 + 1
@@ -557,13 +557,13 @@ fp_idle_standby  macro   endlabel
     movwf       display_buf + 6
 
     movlw       LSA & LSC & LSD & LSF & LSG ; "S"
-    selbnkc     display_buf + 2
+    selbank     display_buf + 2
     movwf       display_buf + 2
     movlw       LSD & LSE & LSF             ; "L"
-    selbnkc     display_buf + 1
+    selbank     display_buf + 1
     movwf       display_buf + 1
     movlw       LSA & LSB & LSE & LSF & LSG ; "P"
-    selbnkc     display_buf + 0
+    selbank     display_buf + 0
     movwf       display_buf + 0
 
     pagesel     endlabel

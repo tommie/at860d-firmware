@@ -43,10 +43,10 @@ temp_get16  macro   dest
     ifdef   section_init
     clr16f  temp_value
     movlw   TEMP_COEFF_INIT
-    selbnkc temp_coeff
+    selbank temp_coeff
     movwf   temp_coeff
     movlw   TEMP_CONST_INIT
-    selbnkc temp_const
+    selbank temp_const
     movwf   temp_const
     endif ; section_init
 

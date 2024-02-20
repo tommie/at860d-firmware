@@ -35,28 +35,28 @@ adc_idle macro
     btfsc   adc_state, 0
     goto    next_end
 
-    selbnkc ADCON0
+    selbank ADCON0
     btfsc   ADCON0, GO
     goto    next_end
 
     ;; adc_acc += ADRES
-    selbnkc ADRESL
+    selbank ADRESL
     movf    ADRESL, W
-    selbnkc adc_acc
+    selbank adc_acc
     addwf   adc_acc, F
-    selbnkc adc_acc + 1
+    selbank adc_acc + 1
     btfsc   STATUS, C
     incf    adc_acc + 1, F
 
-    selbnkc ADRESH
+    selbank ADRESH
     movf    ADRESH, W
     ;; Depending on where you read, the reserved upper bits are documented as
     ;; unknown (Register 9-5) or read as zero (Figure 9-3).
-    selbnkc adc_acc + 1
+    selbank adc_acc + 1
     addwf   adc_acc + 1, F
 
     ;; ++adc_i
-    selbnkc adc_i
+    selbank adc_i
     incf    adc_i, F
 
     ;; If the multisample counter is smaller than a nibble, forward wrap-around.
@@ -65,7 +65,7 @@ adc_idle macro
     endif
     if      ADC_MULTISAMPLE_LOG < 4
     movlw   0x10
-    selbnkc adc_i
+    selbank adc_i
     btfsc   adc_i, ADC_MULTISAMPLE_LOG
     addwf   adc_i, F
     movlw   ~(((1 << (4 - ADC_MULTISAMPLE_LOG)) - 1) << ADC_MULTISAMPLE_LOG)
@@ -75,7 +75,7 @@ adc_idle macro
     ;; if ((adc_i & 0x0F) != 0) goto multisample_done
     pagesel multisample_done
     movlw   0x0F
-    selbnkc adc_i
+    selbank adc_i
     andwf   adc_i, W
     btfss   STATUS, Z
     goto    multisample_done
@@ -85,7 +85,7 @@ adc_idle macro
 
     ;; *adc_var_table[adc_i] = adc_acc
     pagesel adc_var_table
-    selbnkc adc_i
+    selbank adc_i
     swapf   adc_i, W            ; Upper nibble
     addlw   -1                  ; Previous channel
     movwf   acc1
@@ -102,7 +102,7 @@ adc_idle macro
     selbank adc_acc
     movf    adc_acc, W
     movwf   INDF
-    selbnkc adc_acc + 1
+    selbank adc_acc + 1
     movf    adc_acc + 1, W
     incf    FSR, F
     btfsc   STATUS, Z
@@ -129,7 +129,7 @@ multisample_done:
     andlw   (15 << CHS0)
     xorwf   ADCON0, F
 
-    selbnkc adc_state
+    selbank adc_state
     bsf     adc_state, 0
 
 next_end:
@@ -144,9 +144,9 @@ adc_timer_next macro
     goto    timer_next_end
 
     ;; Start conversion.
-    selbnkc ADCON0
+    selbank ADCON0
     bsf     ADCON0, GO
-    selbnkc adc_state
+    selbank adc_state
     bcf     adc_state, 0
 
 timer_next_end:
@@ -176,19 +176,19 @@ adc_varh_table:
     movlw   (2 << ADCS0) | (1 << ADON) | (0 << CHS0)
     selbank ADCON0
     movwf   ADCON0
-    selbnkc ADCON1
+    selbank ADCON1
     movlw   (1 << ADFM) | (0 << VCFG1) | (0 << VCFG0)
     movwf   ADCON1
 
-    selbnkc ANSEL
+    selbank ANSEL
     movlw   (1 << RA0) | (1 << RA3)
     movwf   ANSEL
-    selbnkc ANSELH
+    selbank ANSELH
     clrf    ANSELH
 
-    selbnkc adc_i
+    selbank adc_i
     clrf    adc_i
-    selbnkc adc_state
+    selbank adc_state
     clrf    adc_state
     clr16f  adc_temp_value
     clr16f  adc_knob_value

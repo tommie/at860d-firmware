@@ -68,7 +68,7 @@ standby_idle    macro   timer_value
 not_enabled:
     selbank         standby_time
     clrf            standby_time
-    selbnkc         standby_state
+    selbank         standby_state
     bcf             standby_state, STANDBY_ACTIVE
     pagesel         idle_end
     goto            idle_end
@@ -81,11 +81,11 @@ handle_in_cradle:
     goto            time_set
 
     ;; standby_time = timer_value + (timer_value == 0 ? 1 : 0)
-    selbnkc         timer_value
+    selbank         timer_value
     movf            timer_value, W
     btfsc           STATUS, Z
     addlw           1
-    selbnkc         standby_time
+    selbank         standby_time
     movwf           standby_time
 
 time_set:
@@ -104,10 +104,10 @@ time_set:
     endif
     selbank         standby_time
     movf            standby_time, W
-    selbnkc         timer_value
+    selbank         timer_value
     subwf           timer_value, W
     sublw           STANDBY_DELAY
-    selbnkc         standby_state
+    selbank         standby_state
     btfss           STATUS, C
     bsf             standby_state, STANDBY_ACTIVE
 idle_end:
@@ -177,7 +177,7 @@ standby_skip_if_sleep   macro
     ifdef section_init
     selbank     standby_time
     clrf        standby_time
-    selbnkc     standby_state
+    selbank     standby_state
     clrf        standby_state
     endif
 

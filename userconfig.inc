@@ -61,7 +61,7 @@ uc_store    macro   index
     movlw   index
     selbank uc_index
     movwf   uc_index
-    selbnkc uc_state
+    selbank uc_state
     bsf     uc_state, UC_EE_WRITE
     endm
 
@@ -125,12 +125,12 @@ i   set             i+1
     endw
     addlw           eeaddr
     eeprom_read_w
-    selbnkc         file
+    selbank         file
     subwf           file, W
     btfsc           STATUS, Z
     goto            exit
 
-    selbnkc         uc_index
+    selbank         uc_index
     movf            uc_index, W
 i   set             1
     while           i < stride
@@ -138,9 +138,9 @@ i   set             i+1
     addwf           uc_index, W
     endw
     addlw           eeaddr
-    selbnkc         EEADR
+    selbank         EEADR
     movwf           EEADR
-    selbnkc         file
+    selbank         file
     movf            file, W
     eeprom_write_w
 exit:

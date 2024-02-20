@@ -15,34 +15,13 @@ tblirq  res 1
     endif
 
     ifdef section_code
-    ;; The bank issued by an earlier selbank, or -1 if unknown.
-bank    set -1
     ;; Issues a banksel, and updates the bank variable.
     ;; Ignores bank-agnostic files.
 selbank macro   file
     ;; Files in udata won't be allocated here, and their addresses default to
     ;; zero, causing this to be safe, but only if we don't include INDF.
-    if          ((file) & 0x7F) < 0x70
+    if          ((file) & 0x7F) < 0x70 && (file) != 0x02 && (file) != 0x03 && (file) != 0x0A && (file) != 0x0B
     banksel     file
-bank    set     (file) >> 7
-    else
-bank    set     -1
-    endif
-    endm
-
-    ;; Only issue "banksel" if the bank differs from the last bank.
-    ;; This must not be used across branching.
-selbnkc macro   file
-    if          (file) == 0 || bank != (file) >> 7
-    selbank     file
-    endif
-    endm
-
-    ;; Only issue "banksel" if the bank differs from prevfile.
-    ;; This is useful across branches, if you can guarantee the same bank for all origins.
-selbnkd macro   file, prevfile
-    if          bank < 0 || (file) == 0 || (file) >> 7 != (prevfile) >> 7
-    selbank     file
     endif
     endm
 
@@ -67,7 +46,7 @@ case0:
 zero16f macro   file
     selbank file
     movf    file, W
-    selbnkc file + 1
+    selbank file + 1
     iorwf   file + 1, W
     endm
 
@@ -81,7 +60,7 @@ movbit  macro   srcf, srcb, destf, destb
     selbank srcf
     movwf   srcf, W
     andlw   1 << (srcb)
-    selbnkc destf
+    selbank destf
     btfsc   STATUS, Z
     bcf     destf, destb
     btfss   STATUS, Z
@@ -93,7 +72,7 @@ movinvbit   macro   srcf, srcb, destf, destb
     selbank srcf
     movf    srcf, W
     andlw   1 << (srcb)
-    selbnkc destf
+    selbank destf
     btfsc   STATUS, Z
     bsf     destf, destb
     btfss   STATUS, Z
@@ -107,14 +86,14 @@ eq16ff  macro   file1, file2
     bsf     STATUS, DC
     selbank file2
     movf    file2, W
-    selbnkc file1
+    selbank file1
     xorwf   file1, W
     btfss   STATUS, Z
     bcf     STATUS, DC
 
-    selbnkc file2 + 1
+    selbank file2 + 1
     movf    file2 + 1, W
-    selbnkc file1 + 1
+    selbank file1 + 1
     xorwf   file1 + 1, W
     btfss   STATUS, Z
     bcf     STATUS, DC
@@ -132,14 +111,14 @@ eq16ff  macro   file1, file2
 gts16ff     macro   file1, file2
     selbank file2
     movf    file2, W
-    selbnkc file1
+    selbank file1
     subwf   file1, W
 
-    selbnkc file2 + 1
+    selbank file2 + 1
     movf    file2 + 1, W
     btfss   STATUS, C
     incf    file2 + 1, W
-    selbnkc file1 + 1
+    selbank file1 + 1
     subwf   file1 + 1, W
 
     bsf     STATUS, C
@@ -160,7 +139,7 @@ gt16fl  macro   file, lit
     sublw   HIGH (lit)
     movf    STATUS, W
     movwf   acc1
-    selbnkc file
+    selbank file
     movf    file, W
     btfsc   acc1, Z
     sublw   LOW (lit)
@@ -178,7 +157,7 @@ ge16lf  macro   file, lit
     selbank file + 1
     subwf   file + 1, W
     movlw   LOW (lit)
-    selbnkc file
+    selbank file
     btfsc   STATUS, Z
     subwf   file, W
     endm
@@ -200,7 +179,7 @@ bge16lf macro   file1, lit, dest
 
     pagesel dest
     movlw   LOW lit
-    selbnkc file1
+    selbank file1
     subwf   file1, W
     btfsc   STATUS, C
     goto    dest
@@ -214,7 +193,7 @@ bge16ff macro   file1, file2, dest
     pagesel dest
     selbank file1 + 1
     movf    file1 + 1, W
-    selbnkc file2 + 1
+    selbank file2 + 1
     subwf   file2 + 1, W
     btfss   STATUS, C
     goto    dest
@@ -224,9 +203,9 @@ bge16ff macro   file1, file2, dest
     goto    mend
 
     pagesel dest
-    selbnkc file2
+    selbank file2
     movf    file2, W
-    selbnkc file1
+    selbank file1
     subwf   file1, W
     btfsc   STATUS, C
     goto    dest
@@ -249,9 +228,9 @@ i   set     i + 1
     else
     bcf     STATUS, C
     endif
-    selbnkc file
+    selbank file
     rlf     file, F
-    selbnkc file + 1
+    selbank file + 1
     rlf     file + 1, F
     endw
     endm
@@ -272,9 +251,9 @@ i   set     i + 1
     else
     bcf     STATUS, C
     endif
-    selbnkc file + 1
+    selbank file + 1
     rrf     file + 1, F
-    selbnkc file
+    selbank file
     rrf     file, F
     endw
     endm
@@ -282,7 +261,7 @@ i   set     i + 1
 clr16f  macro   file
     selbank file + 1
     clrf    file + 1
-    selbnkc file
+    selbank file
     clrf    file
     endm
 
@@ -290,13 +269,13 @@ clr16f  macro   file
 add16ff macro   file, dest
     selbank file + 1
     movf    file + 1, W
-    selbnkc dest + 1
+    selbank dest + 1
     addwf   dest + 1, F
-    selbnkc file
+    selbank file
     movf    file, W
-    selbnkc dest
+    selbank dest
     addwf   dest, F
-    selbnkc dest + 1
+    selbank dest + 1
     btfsc   STATUS, C
     incf    dest + 1, F
     endm
@@ -309,9 +288,9 @@ add16lf macro   l, dest
     addwf   dest + 1, F
     endif
     movlw   LOW (l)
-    selbnkc dest
+    selbank dest
     addwf   dest, F
-    selbnkc dest + 1
+    selbank dest + 1
     btfsc   STATUS, C
     incf    dest + 1, F
     endm
@@ -320,9 +299,9 @@ add16lf macro   l, dest
 add0816ff macro   file8, dest16
     selbank file8
     movf    file8, W
-    selbnkc dest16
+    selbank dest16
     addwf   dest16, F
-    selbnkc dest16 + 1
+    selbank dest16 + 1
     btfsc   STATUS, C
     incf    dest16 + 1, F
     endm
@@ -342,7 +321,7 @@ satadds16ff macro   file, dest
     movf    file + 1, W
     andlw   0x80
     movwf   acc1
-    selbnkc dest + 1
+    selbank dest + 1
     movf    dest + 1, W
     andlw   0x80
     xorwf   acc1, W
@@ -364,7 +343,7 @@ satadds16ff macro   file, dest
 
     ;; Check if saturation happened.
     ;; if (sign(dest) == acc1:7) goto mend
-    selbnkc dest + 1
+    selbank dest + 1
     movf    dest + 1, W
     xorwf   acc1, W
     andlw   0x80
@@ -374,12 +353,12 @@ satadds16ff macro   file, dest
 
     ;; Saturation happened.
 
-    selbnkc dest
+    selbank dest
     clrf    dest
     btfss   acc1, 7
     comf    dest, F
 
-    selbnkc dest + 1
+    selbank dest + 1
     movlw   0x80
     movwf   dest + 1
     btfss   acc1, 7
@@ -410,7 +389,7 @@ add16cf macro   dest
     movlw   1
     selbank dest
     addwf   dest, F
-    selbnkc dest + 1
+    selbank dest + 1
     btfsc   STATUS, C
     incf    dest + 1, F
 mend:
@@ -420,13 +399,13 @@ mend:
 sub16ff macro   file, dest
     selbank file + 1
     movf    file + 1, W
-    selbnkc dest + 1
+    selbank dest + 1
     subwf   dest + 1, F
-    selbnkc file
+    selbank file
     movf    file, W
-    selbnkc dest
+    selbank dest
     subwf   dest, F
-    selbnkc dest + 1
+    selbank dest + 1
     btfss   STATUS, C
     decf    dest + 1, F
     endm
@@ -435,9 +414,9 @@ sub16ff macro   file, dest
 sub0816ff macro   file8, dest16
     selbank file8
     movf    file8, W
-    selbnkc dest16
+    selbank dest16
     subwf   dest16, F
-    selbnkc dest16 + 1
+    selbank dest16 + 1
     btfss   STATUS, C
     decf    dest16 + 1, F
     endm
@@ -467,10 +446,10 @@ j   set     -j
 i   set i + 1
 
     if j & 1
-    selbnkc file + 1
+    selbank file + 1
     movf    file + 1, W
     addwf   acc2, F
-    selbnkc file
+    selbank file
     movf    file, W
     addwf   acc1, F
     btfsc   STATUS, C
@@ -478,9 +457,9 @@ i   set i + 1
     endif
 
     bcf     STATUS, C
-    selbnkc file
+    selbank file
     rlf     file, F
-    selbnkc file + 1
+    selbank file + 1
     rlf     file + 1, F
 
 j   set     j >> 1
@@ -514,10 +493,10 @@ mulloop:
     btfss   STATUS, C
     goto    mulskip
 
-    selbnkd file + 1, file + 1
+    selbank file + 1
     movf    file + 1, W
     addwf   acc2, F
-    selbnkc file
+    selbank file
     movf    file, W
     addwf   acc1, F
     btfsc   STATUS, C
@@ -527,7 +506,7 @@ mulskip:
     bcf     STATUS, C
     selbank file
     rlf     file, F
-    selbnkc file + 1
+    selbank file + 1
     rlf     file + 1, F
 
     pagesel mulloop
@@ -545,7 +524,7 @@ neg16f  macro   file
     selbank file
     comf    file, F
     incf    file, F
-    selbnkc file + 1
+    selbank file + 1
     btfsc   STATUS, Z
     decf    file + 1, F
     comf    file + 1, F
@@ -554,11 +533,11 @@ neg16f  macro   file
 mov16ff macro   src, dest
     selbank src + 1
     movf    src + 1, W
-    selbnkc dest + 1
+    selbank dest + 1
     movwf   dest + 1
-    selbnkc src
+    selbank src
     movf    src, W
-    selbnkc dest
+    selbank dest
     movwf   dest
     endm
 
@@ -566,7 +545,7 @@ mov16lf macro   l, file
     movlw   LOW (l)
     selbank file
     movwf   file
-    selbnkc file + 1
+    selbank file + 1
     movlw   HIGH (l)
     movwf   file + 1
     endm
@@ -578,9 +557,9 @@ mov16lw macro   l
 mov0816ff   macro   src, dest
     selbank src
     movf    src, W
-    selbnkc dest
+    selbank dest
     movwf   dest
-    selbnkc dest + 1
+    selbank dest + 1
     clrf    dest + 1
     endm
 
@@ -588,12 +567,12 @@ mov0816ff   macro   src, dest
 movs0816ff   macro   src8, dest16
     selbank src8
     movf    src8, W
-    selbnkc dest16
+    selbank dest16
     movwf   dest16
     bcf     STATUS, DC
     btfsc   dest16, 7
     bsf     STATUS, DC
-    selbnkc dest16 + 1
+    selbank dest16 + 1
     clrf    dest16 + 1
     btfsc   STATUS, DC
     comf    dest16 + 1, F
@@ -611,7 +590,7 @@ divmod1608fl    macro   file16, l
     movf    file16, W
     movwf   acc1
     clrf    file16
-    selbnkc file16 + 1
+    selbank file16 + 1
     movf    file16 + 1, W
     movwf   acc2
     clrf    file16 + 1
@@ -627,9 +606,9 @@ divloop:
     btfss   STATUS, C
     goto    divend
 
-    selbnkd file16, file16 + 1
+    selbank file16
     incf    file16, F
-    selbnkc file16 + 1
+    selbank file16 + 1
     btfsc   STATUS, Z
     incf    file16 + 1, F
     pagesel divloop
@@ -669,9 +648,9 @@ i   set     i + 1
     bcf     STATUS, C
     btfsc   STATUS, DC
     bsf     STATUS, C
-    selbnkc file + 1
+    selbank file + 1
     rrf     file + 1, F
-    selbnkc file
+    selbank file
     rrf     file, F
     endw
     if      l == 0
@@ -774,4 +753,4 @@ is_neg:
 
 mend:
     endm
-    endif
+    endif   ; section_code

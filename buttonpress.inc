@@ -74,9 +74,9 @@ buttonpress_reset_all macro
     selbank bp_clicked
 i   set     0
     while   i < (BUTTONPRESS_NUM_CHANNELS + 7) / 8
-    selbnkc bp_clicked + i
+    selbank bp_clicked + i
     clrf    bp_clicked + i
-    selbnkc bp_held + i
+    selbank bp_held + i
     clrf    bp_held + i
 i   set     i + 1
     endw
@@ -95,42 +95,42 @@ bp_idle     macro
     ;; the high byte of buttonscan_current.
     selbank buttonscan_current
     movf    buttonscan_current, W
-    selbnkc buttonscan_current + (BTN_HEAT_PANEL / 8)
+    selbank buttonscan_current + (BTN_HEAT_PANEL / 8)
     btfsc   buttonscan_current + (BTN_HEAT_PANEL / 8), BTN_HEAT_PANEL % 8
     iorlw   1 << BTN_HEAT_HNDL
-    selbnkc bp_current
+    selbank bp_current
     movwf   bp_current
 
     ;; if (bp_current == bp_prev) goto no_diff
     pagesel no_diff
     movf    bp_current, W
-    selbnkc bp_prev
+    selbank bp_prev
     xorwf   bp_prev, W
     btfsc   STATUS, Z
     goto    no_diff
 
     ;; if ((bp_state & (1 << BP_DEBOUNCED)) && !(bp_state & (1 << BP_NOT_CLICK))) bp_clicked = bp_prev & ~bp_current
     pagesel done_set_clicked
-    selbnkc bp_state
+    selbank bp_state
     movf    bp_state, W
     andlw   (1 << BP_DEBOUNCED) | (1 << BP_NOT_CLICK)
     xorlw   (1 << BP_DEBOUNCED)
     btfss   STATUS, Z
     goto    done_set_clicked
 
-    selbnkc bp_current
+    selbank bp_current
     movf    bp_current, W
     xorlw   0xFF
-    selbnkc bp_prev
+    selbank bp_prev
     andwf   bp_prev, W
-    selbnkc bp_clicked
+    selbank bp_clicked
     movwf   bp_clicked
 done_set_clicked:
 
     ;; bp_holding &= bp_current
     selbank bp_current
     movf    bp_current, W
-    selbnkc bp_holding
+    selbank bp_holding
     andwf   bp_holding, F
 
     ;; bp_t = timer_value + BP_DEBOUNCE_MS
@@ -139,11 +139,11 @@ done_set_clicked:
 
     ;; bp_state = (1 << BP_VALID_T)
     movlw   0
-    selbnkc bp_current
+    selbank bp_current
     movf    bp_current, F
     btfss   STATUS, Z
     movlw   (1 << BP_VALID_T)
-    selbnkc bp_state
+    selbank bp_state
     movwf   bp_state
 
     pagesel idle_done
@@ -163,12 +163,12 @@ no_diff:
     goto    idle_done
 
     ;; bp_state &= ~(1 << BP_VALID_T)
-    selbnkc bp_state
+    selbank bp_state
     bcf     bp_state, BP_VALID_T
 
     ;; if (bp_state & (1 << BP_HELD)) goto repeat_click
     pagesel repeat_click
-    selbnkc bp_state
+    selbank bp_state
     btfsc   bp_state, BP_HELD
     goto    repeat_click
 
@@ -187,7 +187,7 @@ no_diff:
 
     ;; bp_state |= (1 << BP_DEBOUNCED) | BP_VALID_T
     movlw   (1 << BP_DEBOUNCED) | (1 << BP_VALID_T)
-    selbnkc bp_state
+    selbank bp_state
     iorwf   bp_state, F
 
     pagesel idle_done
@@ -200,7 +200,7 @@ not_clicked:
 
     ;; if (bp_current & REPEAT_MASK) goto start_hold
     pagesel start_hold
-    selbnkc bp_current
+    selbank bp_current
     movf    bp_current, W
     andlw   BUTTONPRESS_REPEAT_MASK
     btfss   STATUS, Z
@@ -210,7 +210,7 @@ not_clicked:
     add16lf (BP_MIN_HOLD_MS - BP_MAX_CLICK_MS) * 2, bp_t
 
     ;; bp_state |= 1 << BP_VALID_T
-    selbnkc bp_state
+    selbank bp_state
     bsf     bp_state, BP_VALID_T
 
     pagesel idle_done
@@ -221,11 +221,11 @@ start_hold:
     selbank bp_state
     bsf     bp_state, BP_HELD
 
-    selbnkc bp_current
+    selbank bp_current
     movf    bp_current, W
-    selbnkc bp_holding
+    selbank bp_holding
     movwf   bp_holding
-    selbnkc bp_held
+    selbank bp_held
     iorwf   bp_held, F
 
     ;; bp_ival = BP_MAX_REPEAT_MS
@@ -238,14 +238,14 @@ repeat_click:
     selbank bp_holding
     movf    bp_holding, W
     andlw   BUTTONPRESS_REPEAT_MASK
-    selbnkc bp_clicked
+    selbank bp_clicked
     iorwf   bp_clicked, F
 
     ;; bp_t += bp_ival
     add16ff bp_ival, bp_t
 
     ;; bp_state |= 1 << BP_VALID_T
-    selbnkc bp_state
+    selbank bp_state
     bsf     bp_state, BP_VALID_T
 
     ;; bp_ival -= BP_REPEAT_STEP_MS
@@ -263,7 +263,7 @@ done_cap_ival:
 idle_done:
     selbank bp_current
     movf    bp_current, W
-    selbnkc bp_prev
+    selbank bp_prev
     movwf   bp_prev
     endm
 
@@ -272,19 +272,19 @@ bp_init     macro
 
     clr16f  bp_t
     clr16f  bp_ival
-    selbnkc bp_state
+    selbank bp_state
     clrf    bp_state
 i   set     0
     while   i < (BUTTONPRESS_NUM_CHANNELS + 7) / 8
-    selbnkc bp_current + i
+    selbank bp_current + i
     clrf    bp_current + i
-    selbnkc bp_prev + i
+    selbank bp_prev + i
     clrf    bp_prev + i
-    selbnkc bp_clicked + i
+    selbank bp_clicked + i
     clrf    bp_clicked + i
-    selbnkc bp_held + i
+    selbank bp_held + i
     clrf    bp_held + i
-    selbnkc bp_holding + i
+    selbank bp_holding + i
     clrf    bp_holding + i
 i   set     i + 1
     endw

@@ -39,6 +39,6 @@ heater_is_inactive  macro
     ifdef section_init
     selbank PORTE
     bsf     PORTE, 2
-    selbnkc TRISE
+    selbank TRISE
     bcf     TRISE, 2
     endif

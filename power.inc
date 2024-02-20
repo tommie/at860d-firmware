@@ -19,6 +19,6 @@ power_set   macro   file, bit
     ifdef section_init
     selbank PORTE
     bsf     PORTE, 0
-    selbnkc TRISE
+    selbank TRISE
     bcf     TRISE, 0
     endif

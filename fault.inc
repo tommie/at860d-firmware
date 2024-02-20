@@ -41,14 +41,14 @@ fault_idle_heater   macro
     ;; if (heater_is_inactive()) goto heater_inactive
     pagesel     heater_inactive
     heater_is_inactive
-    selbnkc     fault_state
+    selbank     fault_state
     btfsc       STATUS, Z
     goto        heater_inactive
 
     ;; if (temp_get16() >= MIN_TEMP) goto heater_inactive
     temp_get16  w16
     ge16lf      w16, FAULT_MIN_TEMP
-    selbnkc     fault_state
+    selbank     fault_state
     btfsc       STATUS, C
     goto        heater_inactive
 
@@ -59,13 +59,13 @@ fault_idle_heater   macro
 
     ;; fault_heater_t = timer_value + HEATER_DELAY
     movlw       FAULT_HEATER_DELAY
-    selbnkc     timer_value + 1
+    selbank     timer_value + 1
     addwf       timer_value + 1, W
-    selbnkc     fault_heater_t
+    selbank     fault_heater_t
     movwf       fault_heater_t
 
     ;; fault_state.heater_en = 1
-    selbnkc     fault_state
+    selbank     fault_state
     bsf         fault_state, FAULT_HEATER_EN
 
 heater_active:
@@ -73,12 +73,12 @@ heater_active:
     pagesel     mend
     selbank     fault_heater_t
     movf        fault_heater_t, W
-    selbnkc     timer_value + 1
+    selbank     timer_value + 1
     subwf       timer_value + 1, W
     btfss       STATUS, C
     goto        mend
 
-    selbnkc     fault_state
+    selbank     fault_state
     bsf         fault_state, FAULT_HEATER
 
     pagesel     mend

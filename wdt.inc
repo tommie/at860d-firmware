@@ -51,7 +51,7 @@ not_wdto:
     bcf     PCON, NOT_POR
 
     ;; 1.06s WDT
-    selbnkc WDTCON
+    selbank WDTCON
     movlw   (10 << WDTPS0)
     movwf   WDTCON
     endif

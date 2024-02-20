@@ -106,14 +106,14 @@ ledseg_table:
     movlw   ~0xFE
     selbank PORTC
     andwf   PORTC, F
-    selbnkc TRISC
+    selbank TRISC
     andwf   TRISC, F
 
     ;; Digits (CA)
     clrw
     sublw   1
-    selbnkc PORTD
+    selbank PORTD
     movwf   PORTD
-    selbnkc TRISD
+    selbank TRISD
     clrf    TRISD
     endif

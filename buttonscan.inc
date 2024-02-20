@@ -24,32 +24,32 @@ buttonscan_idle     macro
     ;; buttonscan_buf <<= 3
     selbank buttonscan_buf
     rlf     buttonscan_buf, F
-    selbnkc buttonscan_buf + 1
+    selbank buttonscan_buf + 1
     rlf     buttonscan_buf + 1, F
-    selbnkc buttonscan_buf
+    selbank buttonscan_buf
     rlf     buttonscan_buf, F
-    selbnkc buttonscan_buf + 1
+    selbank buttonscan_buf + 1
     rlf     buttonscan_buf + 1, F
-    selbnkc buttonscan_buf
+    selbank buttonscan_buf
     rlf     buttonscan_buf, F
-    selbnkc buttonscan_buf + 1
+    selbank buttonscan_buf + 1
     rlf     buttonscan_buf + 1, F
     movlw   ~0x07
-    selbnkc buttonscan_buf
+    selbank buttonscan_buf
     andwf   buttonscan_buf, F
 
     ;; buttonscan_buf |= (PORTB >> 2) & 0x07
-    selbnkc PORTB
+    selbank PORTB
     comf    PORTB, W            ; Active-low inputs.
     movwf   acc1
     rrf     acc1, F
     rrf     acc1, W
     andlw   0x07
-    selbnkc buttonscan_buf
+    selbank buttonscan_buf
     iorwf   buttonscan_buf, F
 
     ;; ++buttonscan_i
-    selbnkc buttonscan_i
+    selbank buttonscan_i
     incf    buttonscan_i, F
     ;; if (buttonscan_i >= 3)
     ;;   buttonscan_i = 0
@@ -61,17 +61,17 @@ buttonscan_idle     macro
     goto    done_newscan
 
     clrf    buttonscan_i
-    selbnkc buttonscan_buf
+    selbank buttonscan_buf
     movf    buttonscan_buf, W
-    selbnkc buttonscan_current
+    selbank buttonscan_current
     movwf   buttonscan_current
-    selbnkc buttonscan_buf + 1
+    selbank buttonscan_buf + 1
     movf    buttonscan_buf + 1, W
-    selbnkc buttonscan_current + 1
+    selbank buttonscan_current + 1
     movwf   buttonscan_current + 1
-    selbnkc buttonscan_buf
+    selbank buttonscan_buf
     clrf    buttonscan_buf
-    selbnkc buttonscan_buf + 1
+    selbank buttonscan_buf + 1
     clrf    buttonscan_buf + 1
 done_newscan:
 
@@ -100,19 +100,19 @@ buttonscan_driver_table:
     movlw   0xFC                ; Outputs are active low. Inputs have pull-ups.
     selbank PORTB
     iorwf   PORTB, F
-    selbnkc TRISB
+    selbank TRISB
     movlw   0x1F
     xorwf   TRISB, W
     andlw   0xFC
     xorwf   TRISB, F
 
-    selbnkc OPTION_REG
+    selbank OPTION_REG
     bcf     OPTION_REG, NOT_RBPU
     movlw   0xFC
-    selbnkc WPUB
+    selbank WPUB
     movwf   WPUB
 
-    selbnkc buttonscan_i
+    selbank buttonscan_i
     clrf    buttonscan_i
     clr16f  buttonscan_buf
     clr16f  buttonscan_current
