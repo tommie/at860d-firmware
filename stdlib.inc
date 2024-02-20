@@ -526,12 +526,15 @@ i   set     i + 1
     endm
 
     ;; Divide signed 16-bit file by 2^l.
+    ;;
+    ;; Clobbers W, STATUS.
 divp2s16lf macro   file, l
     local   i
 
-    selbank file + 1
+    if      l != 0
+    selbank (file) + 1
     movlw   0x80
-    andwf   file + 1, W
+    andwf   (file) + 1, W
     bcf     STATUS, DC
     btfss   STATUS, Z
     bsf     STATUS, DC
@@ -542,16 +545,15 @@ i   set     i + 1
     bcf     STATUS, C
     btfsc   STATUS, DC
     bsf     STATUS, C
-    selbank file + 1
-    rrf     file + 1, F
+    selbank (file) + 1
+    rrf     (file) + 1, F
     selbank file
     rrf     file, F
     endw
-    if      l == 0
+    else
     bcf     STATUS, C
-    endif
+    endif   ; l != 0
     endm
-
 
     ;; Clamp signed *file16 within [-lit_abs_max, lit_abs_max].
     ;;
