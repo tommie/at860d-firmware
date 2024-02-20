@@ -58,19 +58,17 @@ SELFTEST_SLOW_TESTS equ 0x0300
 SELFTEST_ALL_TESTS  equ SELFTEST_SLOW_TESTS | SELFTEST_FAST_TESTS
 SELFTEST_FAILURES   equ (1 << SELFTEST_S_ETIMEOUT)
 
-    ;; 100 * 500 µs is 50 ms.
-SELFTEST_SWITCHES_DURATION  equ 100
-    ;; Two periods at 2*50 Hz is 20 ms. 50 ms means four.
-SELFTEST_ZCPERIOD_DURATION  equ 100
-SELFTEST_ZCPERIOD_MIN       equ 16 - 5
-SELFTEST_ZCPERIOD_MAX       equ 20 + 5
-SELFTEST_TEMPADC_DURATION   equ 100
+SELFTEST_SWITCHES_DURATION  equ 50000 / 500     ; In 500 µs units.
+SELFTEST_ZCPERIOD_DURATION  equ 3*2000 / 50     ; In 500 µs units; 3 cycles at 50 Hz.
+SELFTEST_ZCPERIOD_MIN       equ 2000 / 60 - 4   ; In 500 µs units.
+SELFTEST_ZCPERIOD_MAX       equ 2000 / 50 + 4   ; In 500 µs units.
+SELFTEST_TEMPADC_DURATION   equ 50000 / 500     ; In 500 µs units.
 SELFTEST_TEMPADC_DEV        equ 2
 SELFTEST_TEMP_AMB_MAX       equ 10
 SELFTEST_TEMP_AIRFLOW       equ 64
-SELFTEST_HEATER_AIRFLOW     equ 128
+SELFTEST_HEATER_AIRFLOW     equ AIRPUMP_MAX_RATIO
 SELFTEST_HEATER_TEMP_INC    equ 5
-SELFTEST_AIRPUMP_AIRFLOW    equ 128
+SELFTEST_AIRPUMP_AIRFLOW    equ AIRPUMP_MAX_RATIO
     endif
 
     ifdef section_code
@@ -185,13 +183,17 @@ selftest_t_switches macro   timer_value
     iorwf           acc1, W
     movwf           selftest_switches
 
-    ;; if (timer_value - selftest_start_time <= SELFTEST_SWITCHES_DURATION) goto t_end
+    ;; if ((int) timer_value % 256 - (selftest_start_time % 256 + SELFTEST_SWITCHES_DURATION) < 0) goto t_end
+    if              SELFTEST_SWITCHES_DURATION > 127
+    error           "Assertion failed: SELFTEST_SWITCHES_DURATION < 2^7"
+    endif
     selbank         selftest_start_time
     movf            selftest_start_time, W
+    addlw           SELFTEST_SWITCHES_DURATION
     selbank         timer_value
     subwf           timer_value, W
-    sublw           SELFTEST_SWITCHES_DURATION
-    btfsc           STATUS, C
+    andlw           0x80
+    btfsc           STATUS, Z
     goto            t_end
 
     ;; if ((selftest_switches & 0x0F) == 0) goto t_ok
@@ -221,6 +223,7 @@ t_end:
 
     ;; This resets selftest_start_time until the period is reasonable.
 selftest_t_zcperiod macro   timer_value
+    local   t_not_ok
     local   t_end
 
     pagesel t_end
@@ -229,46 +232,43 @@ selftest_t_zcperiod macro   timer_value
     goto    t_end
 
     ;; if (zero_cross_period <= SELFTEST_ZCPERIOD_MIN) selftest_start_time = timer_value
+    pagesel t_not_ok
     selbank zero_cross_period
     movf    zero_cross_period, W
     sublw   SELFTEST_ZCPERIOD_MIN
-    selbank timer_value
-    movf    timer_value, W
-    selbank selftest_start_time
     btfsc   STATUS, C
-    movwf   selftest_start_time
-    selbank timer_value + 1
-    movf    timer_value + 1, W
-    selbank selftest_start_time + 1
-    btfsc   STATUS, C
-    movwf   selftest_start_time + 1
+    goto    t_not_ok
 
     ;; if (zero_cross_period > SELFTEST_ZCPERIOD_MAX) selftest_start_time = timer_value
     selbank zero_cross_period
     movf    zero_cross_period, W
     sublw   SELFTEST_ZCPERIOD_MAX
-    selbank timer_value
-    movf    timer_value, W
-    selbank selftest_start_time
     btfss   STATUS, C
-    movwf   selftest_start_time
-    selbank timer_value + 1
-    movf    timer_value + 1, W
-    selbank selftest_start_time + 1
-    btfss   STATUS, C
-    movwf   selftest_start_time + 1
+    goto    t_not_ok
 
-    ;; if (timer_value - selftest_start_time <= SELFTEST_ZCPERIOD_DURATION) goto t_end
+    ;; if ((int) timer_value % 256 - (selftest_start_time % 256 + SELFTEST_ZCPERIOD_DURATION) < 0) goto t_end
+    if      SELFTEST_ZCPERIOD_DURATION > 127
+    error   "Assertion failed: SELFTEST_ZCPERIOD_DURATION < 2^7"
+    endif
+    pagesel t_end
     selbank selftest_start_time
     movf    selftest_start_time, W
+    addlw   SELFTEST_ZCPERIOD_DURATION
     selbank timer_value
     subwf   timer_value, W
-    sublw   SELFTEST_ZCPERIOD_DURATION
-    btfsc   STATUS, C
+    andlw   0x80
+    btfsc   STATUS, Z
     goto    t_end
 
     selbank selftest_state + SELFTEST_S_ZCPERIOD / 8
     bsf     selftest_state + SELFTEST_S_ZCPERIOD / 8, SELFTEST_S_ZCPERIOD % 8
+
+    goto    t_end
+
+t_not_ok:
+    ;; selftest_start_time = timer_value
+    mov16ff         timer_value, selftest_start_time
+
 t_end:
     endm
 
@@ -321,14 +321,15 @@ selftest_t_tempadc  macro   timer_value
     btfsc   STATUS, C
     goto    t_not_ok
 
-    ;; if (timer_value - selftest_start_time > SELFTEST_TEMPADC_DURATION) selftest_state |= 1 << SELFTEST_S_TEMPADC
+    ;; if ((int) timer_value % 256 - (selftest_start_time % 256 + SELFTEST_TEMPADC_DURATION) >= 0) selftest_state |= 1 << SELFTEST_S_TEMPADC
     selbank selftest_start_time
     movf    selftest_start_time, W
     selbank timer_value
     subwf   timer_value, W
     sublw   SELFTEST_TEMPADC_DURATION
+    andlw   0x80
     selbank selftest_state + SELFTEST_S_TEMPADC / 8
-    btfss   STATUS, C
+    btfsc   STATUS, Z
     bsf     selftest_state + SELFTEST_S_TEMPADC / 8, SELFTEST_S_TEMPADC % 8
 
     pagesel t_end
@@ -504,16 +505,21 @@ selftest_idle_func:
     btfss   STATUS, Z
     return
 
-    ;; if (timer_value - selftest_start_time >= SELFTEST_HEATER_TIMEOUT) goto selftest_idle_timeout
+    ;; if ((int) timer_value / 256 - (selftest_start_time / 256 + SELFTEST_HEATER_TIMEOUT) >= 0) goto selftest_idle_timeout
+    ;;
     ;; Note that some tests keep incrementing start_time. The timeout is mostly
     ;; useful for the slow tests.
+    if      SELFTEST_TIMEOUT > 127
+    error   "Assertion failed: SELFTEST_TIMEOUT < 2^7"
+    endif
     pagesel selftest_idle_timeout
     selbank selftest_start_time + 1
     movf    selftest_start_time + 1, W
+    addlw   SELFTEST_TIMEOUT
     selbank timer_value + 1
     subwf   timer_value + 1, W
-    sublw   SELFTEST_TIMEOUT
-    btfss   STATUS, C
+    andlw   0x80
+    btfsc   STATUS, Z
     goto    selftest_idle_timeout
 
     selftest_t_power    timer_value
