@@ -128,6 +128,7 @@ idle_end:
     ;; because the temperature goes up when we turn off the airflow.
     temp_get16      w16
     gt16fl          w16, STANDBY_MAX_TEMP
+    selbank         standby_state
     btfss           STATUS, C
     bsf             standby_state, STANDBY_WAS_COOL
 
