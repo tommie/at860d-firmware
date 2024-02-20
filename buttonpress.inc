@@ -252,7 +252,10 @@ repeat_click:
     add16lf -(BP_REPEAT_STEP_MS) * 2, bp_ival
 
     ;; if (bp_ival < BP_MIN_REPEAT_MS) bp_ival = BP_MIN_REPEAT_MS
-    bge16lf bp_ival, (BP_MIN_REPEAT_MS) * 2, done_cap_ival
+    ge16lf  bp_ival, (BP_MIN_REPEAT_MS) * 2
+    pagesel done_cap_ival
+    btfsc   STATUS, C
+    goto    done_cap_ival
 
     mov16lf (BP_MIN_REPEAT_MS) * 2, bp_ival
 done_cap_ival:

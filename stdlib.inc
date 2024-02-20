@@ -152,6 +152,8 @@ gt16fl  macro   file, lit
     ;;
     ;; Z := *file == lit
     ;; C := *file >= lit
+    ;;
+    ;; Clobbers W.
 ge16lf  macro   file, lit
     movlw   HIGH (lit)
     selbank file + 1
@@ -160,56 +162,6 @@ ge16lf  macro   file, lit
     selbank file
     btfsc   STATUS, Z
     subwf   file, W
-    endm
-
-    ;; if ((int) (*file1 - lit) >= 0) goto dest
-bge16lf macro   file1, lit, dest
-    local   mend
-
-    pagesel dest
-    selbank file1 + 1
-    movf    file1 + 1, W
-    sublw   HIGH lit
-    btfss   STATUS, C
-    goto    dest
-
-    pagesel mend
-    btfss   STATUS, Z
-    goto    mend
-
-    pagesel dest
-    movlw   LOW lit
-    selbank file1
-    subwf   file1, W
-    btfsc   STATUS, C
-    goto    dest
-mend:
-    endm
-
-    ;; if ((int) (*file1 - *file2) >= 0) goto dest
-bge16ff macro   file1, file2, dest
-    local   mend
-
-    pagesel dest
-    selbank file1 + 1
-    movf    file1 + 1, W
-    selbank file2 + 1
-    subwf   file2 + 1, W
-    btfss   STATUS, C
-    goto    dest
-
-    pagesel mend
-    btfss   STATUS, Z
-    goto    mend
-
-    pagesel dest
-    selbank file2
-    movf    file2, W
-    selbank file1
-    subwf   file1, W
-    btfsc   STATUS, C
-    goto    dest
-mend:
     endm
 
     ;; Performs a left-rotate n times on file, setting low bits to carry.
@@ -373,12 +325,6 @@ mend:
     ;; Awkward name because addcf is a valid instruction name.
     ;;
     ;; Clobbers W.
-add08cf macro   dest
-    selbank dest
-    btfsc   STATUS, C
-    incf    dest, F
-    endm
-
 add16cf macro   dest
     local   mend
 
@@ -419,58 +365,6 @@ sub0816ff macro   file8, dest16
     selbank dest16 + 1
     btfss   STATUS, C
     decf    dest16 + 1, F
-    endm
-
-    ;; file *= lit
-    ;;
-    ;; Clobbers acc1, acc2.
-mul16fl macro   file, lit
-    local   i, j
-
-    if      file == acc1
-    error   "Cannot use acc1 in mul16fl"
-    endif
-
-    if      lit != 0
-    clrf    acc1
-    clrf    acc2
-
-    selbank file + 1
-
-i   set     0
-j   set     lit
-    if      lit < 0
-j   set     -j
-    endif
-    while   i < 16 && j > 0
-i   set i + 1
-
-    if j & 1
-    selbank file + 1
-    movf    file + 1, W
-    addwf   acc2, F
-    selbank file
-    movf    file, W
-    addwf   acc1, F
-    btfsc   STATUS, C
-    incf    acc2, F
-    endif
-
-    bcf     STATUS, C
-    selbank file
-    rlf     file, F
-    selbank file + 1
-    rlf     file + 1, F
-
-j   set     j >> 1
-    endw
-    if      lit < 0
-    neg16f  acc1
-    endif
-    mov16ff acc1, file
-    else                        ; lit == 0
-    clr16f  file
-    endif
     endm
 
     ;; file *= W
@@ -658,67 +552,6 @@ i   set     i + 1
     endif
     endm
 
-    ;; Count the number of leading zeros in W.
-    ;;
-    ;; Returns the count in W.
-    ;;
-    ;; Clobbers STATUS, acc1.
-lzw macro
-    local   mloop
-
-    movwf   acc1
-    pagesel mloop
-    clrw
-
-mloop:
-    addlw   1
-    bsf     STATUS, C
-    rlf     acc1, F
-    btfss   STATUS, C
-    goto    mloop
-    addlw   -1
-    endm
-
-    ;; Count the number of leading zeros in w16.
-    ;;
-    ;; Returns the count in W.
-    ;;
-    ;; Clobbers STATUS, acc1, w16.
-lzw16   macro
-    movf    w16 + 1, W
-    lzw
-    movwf   w16 + 1
-    movlw   8
-    subwf   w16 + 1, W
-    btfss   STATUS, Z
-    movf    w16, W
-    lzw
-    addwf   w16 + 1, W
-    endm
-
-    ;; Clamp signed *file16 within [0, lit_max].
-clamps16f0l macro   file16, lit_max
-    local   is_neg
-    local   mend
-
-    pagesel is_neg
-    selbank file16 + 1
-    btfsc   file16 + 1, 7
-    goto    is_neg
-
-    pagesel mend
-    gt16fl  file16, lit_max
-    btfss   STATUS, C
-    goto    mend
-
-    mov16lf lit_max, file16
-    goto    mend
-
-is_neg:
-    clr16f  file16
-
-mend:
-    endm
 
     ;; Clamp signed *file16 within [-lit_abs_max, lit_abs_max].
     ;;
