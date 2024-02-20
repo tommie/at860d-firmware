@@ -27,8 +27,13 @@ heater_int_next  macro
     endm
 
 heater_setw macro
-    triaczcc_setw   0
+    pagesel heater_setw_func
+    call    heater_setw_func
     endm
+
+heater_setw_func:
+    triaczcc_setw   0
+    return
 
     ;; Sets Z to 1 if the heater is off.
 heater_is_inactive  macro

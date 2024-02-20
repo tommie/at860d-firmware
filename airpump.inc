@@ -49,6 +49,11 @@ airpump_commitw macro
     endm
 
 airpump_setw macro
+    pagesel airpump_setw_func
+    call    airpump_setw_func
+    endm
+
+airpump_setw_func:
     ;; if (W > MAX_RATIO) W = MAX_RATIO
     ifndef  AIRPUMP_MAX_RATIO
     error   "AIRPUMP_MAX_RATIO is not defined"
@@ -62,7 +67,7 @@ airpump_setw macro
     movwf   airpump_value
 
     airpump_commitw
-    endm
+    return
 
 airpump_idle    macro
     local   mend
