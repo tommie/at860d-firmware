@@ -69,8 +69,7 @@ eeprom_write    macro
     bcf     EECON1, EEPGD
     bsf     EECON1, WREN
     bcf     INTCON, GIE
-    movlw   HIGH wait_gie
-    movwf   PCLATH
+    pagesel wait_gie
 
 wait_gie:
     btfsc   INTCON, GIE
@@ -110,8 +109,7 @@ eeprom_skip_if_can_write    macro
 eeprom_idle macro
     local   done
 
-    movlw   HIGH done
-    movwf   PCLATH
+    pagesel done
     selbank EECON1
     btfsc   EECON1, WR
     goto    done

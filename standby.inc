@@ -54,14 +54,12 @@ standby_idle    macro   timer_value
 
     ifndef DISABLE_COOLDOWN
     ;; if (cooldown_active) goto not_enabled
-    movlw           HIGH not_enabled
-    movwf           PCLATH
+    pagesel         not_enabled
     cooldown_skip_if_not_active
     goto            not_enabled
     endif
 
-    movlw           HIGH handle_in_cradle
-    movwf           PCLATH
+    pagesel         handle_in_cradle
     swstandby_get   STATUS, C
     btfsc           STATUS, C
     goto            handle_in_cradle
@@ -72,13 +70,11 @@ not_enabled:
     clrf            standby_time
     selbnkc         standby_state
     bcf             standby_state, STANDBY_ACTIVE
-    movlw           HIGH idle_end
-    movwf           PCLATH
+    pagesel         idle_end
     goto            idle_end
 
 handle_in_cradle:
-    movlw           HIGH time_set
-    movwf           PCLATH
+    pagesel         time_set
     selbank         standby_time
     movf            standby_time, F
     btfss           STATUS, Z
@@ -117,8 +113,7 @@ time_set:
 idle_end:
 
     ;; if (!standby_active) goto not_active
-    movlw           HIGH not_active
-    movwf           PCLATH
+    pagesel         not_active
     standby_skip_if_active
     goto            not_active
 
@@ -139,14 +134,12 @@ idle_end:
     clrw
     heater_setw
 
-    movlw           HIGH mend
-    movwf           PCLATH
+    pagesel         mend
     goto            mend
 
 not_active:
     ;; if (!STANDBY_WAS_ACTIVE) goto mend
-    movlw           HIGH mend
-    movwf           PCLATH
+    pagesel         mend
     selbank         standby_state
     btfss           standby_state, STANDBY_WAS_ACTIVE
     goto            mend

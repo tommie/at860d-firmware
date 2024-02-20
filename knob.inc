@@ -74,8 +74,7 @@ knob_deactivate macro   index
     local   mend
 
     ;; if (knob_index != index) goto mend
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     knob_skip_if_current_channel    index
     goto    mend
 

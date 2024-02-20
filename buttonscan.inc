@@ -54,8 +54,7 @@ buttonscan_idle     macro
     ;; if (buttonscan_i >= 3)
     ;;   buttonscan_i = 0
     ;;   buttonscan_current = buttonscan_buf
-    movlw   HIGH done_newscan
-    movwf   PCLATH
+    pagesel done_newscan
     movlw   3
     subwf   buttonscan_i, W
     btfss   STATUS, C
@@ -77,8 +76,7 @@ buttonscan_idle     macro
 done_newscan:
 
     ;; Set PORTB driver pin.
-    movlw   HIGH buttonscan_driver_table
-    movwf   PCLATH
+    pagesel buttonscan_driver_table
     selbank buttonscan_i
     movf    buttonscan_i, W
     call    buttonscan_driver_table

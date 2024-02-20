@@ -80,8 +80,7 @@ tempc_idle  macro
     local   mend
 
     ;; if (!tempc_state.active) goto mend
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     selbank tempc_state
     btfss   tempc_state, TEMPC_ACTIVE
     goto    mend
@@ -103,8 +102,7 @@ mend:
     endif   ; TEMPC_DIRECT_CONTROL
 
     ;; if (tempc_next_t - timer_value > 0) goto mend
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     gts16ff tempc_next_t, timer_value
     btfsc   STATUS, C
     goto    mend
@@ -171,15 +169,13 @@ tempc_set16 macro   file
     local   mend
 
     ;; if (file > TEMPCONTROL_MAX_TEMP) goto mend
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     ge16lf  file, (TEMPCONTROL_MAX_TEMP) + 1
     btfsc   STATUS, C
     goto    mend
 
     ;; if (file < TEMPCONTROL_MIN_TEMP) goto mend
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     ge16lf  file, TEMPCONTROL_MIN_TEMP
     btfss   STATUS, C
     goto    mend

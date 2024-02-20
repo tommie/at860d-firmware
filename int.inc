@@ -24,8 +24,7 @@
 int_irq     macro
     local   int_end
 
-    movlw   HIGH int_end
-    movwf   PCLATH
+    pagesel int_end
     btfss   INTCON, INTF
     goto    int_end
 

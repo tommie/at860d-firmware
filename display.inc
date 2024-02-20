@@ -89,8 +89,7 @@ display_set_temp    macro   vf
     endm
 
 display_set_temp_w16        macro
-    movlw   HIGH display_set_temp_w16_func
-    movwf   PCLATH
+    pagesel display_set_temp_w16_func
     call    display_set_temp_w16_func
     endm
 
@@ -104,8 +103,7 @@ display_set_air     macro   vf
     endm
 
 display_set_air_w16         macro
-    movlw   HIGH display_set_air_w16_func
-    movwf   PCLATH
+    pagesel display_set_air_w16_func
     call    display_set_air_w16_func
     endm
 
@@ -117,8 +115,7 @@ display_set_all    macro   vf
     endm
 
 display_set_all_w16        macro
-    movlw   HIGH display_set_all_w16_func
-    movwf   PCLATH
+    pagesel display_set_all_w16_func
     call    display_set_all_w16_func
     endm
 
@@ -148,8 +145,7 @@ i   set     i + 1
 display_idle    macro
     local   exit
 
-    movlw   HIGH exit
-    movwf   PCLATH
+    pagesel exit
     selbank timer_value + 1
     movf    timer_value + 1, W
     selbnkc display_cursor_tmr

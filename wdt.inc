@@ -29,8 +29,7 @@ wdto:
     movwf   acc1
     ledca_setf_irq acc1
     ;buzzer_set  STATUS, NOT_TO
-    movlw   HIGH wdto_loop
-    movwf   PCLATH
+    pagesel wdto_loop
 
 wdto_loop:
     clrwdt
@@ -40,12 +39,10 @@ wdto_loop:
 
     ifdef section_init
     selbank PCON
-    movlw   HIGH not_wdto
-    movwf   PCLATH
+    pagesel not_wdto
     btfsc   PCON, NOT_POR
     goto    not_wdto
-    movlw   HIGH wdto
-    movwf   PCLATH
+    pagesel wdto
     btfss   STATUS, NOT_TO
     goto    wdto
 not_wdto:

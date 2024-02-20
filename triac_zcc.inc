@@ -60,8 +60,7 @@ i   set         0
 i   set         i + 1
     endw
 
-    movlw       HIGH triaczcc_table
-    movwf       PCLATH
+    pagesel     triaczcc_table
     movf        acc1, W
     call        triaczcc_table
     selbank     triaczcc_delay + channel
@@ -91,8 +90,7 @@ triaczcc_int_next_ch  macro channel, set_macro
 
     local       next_end
 
-    movlw       HIGH next_end
-    movwf       PCLATH
+    pagesel     next_end
     selbank     triaczcc_state + (channel / 8)
     btfsc       triaczcc_state + (channel / 8), (channel % 8)
     goto        next_end
@@ -131,8 +129,7 @@ triaczcc_timer_next_ch  macro channel, set_macro, timer_value
 
     local       next_end
 
-    movlw       HIGH next_end
-    movwf       PCLATH
+    pagesel     next_end
     selbank     triaczcc_state + (channel / 8)
     btfss       triaczcc_state + (channel / 8), (channel % 8)
     goto        next_end

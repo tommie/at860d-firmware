@@ -77,8 +77,7 @@ SELFTEST_AIRPUMP_AIRFLOW    equ 128
 selftest_t_power    macro   timer_value
     local       t_end
 
-    movlw       HIGH t_end
-    movwf       PCLATH
+    pagesel     t_end
     selbank     selftest_state + SELFTEST_S_POWER / 8
     btfsc       selftest_state + SELFTEST_S_POWER / 8, SELFTEST_S_POWER % 8
     goto        t_end
@@ -92,8 +91,7 @@ t_end:
 selftest_t_btnscan2 macro
     local   t_end
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbank selftest_state + SELFTEST_S_BTNSCAN2 / 8
     btfsc   selftest_state + SELFTEST_S_BTNSCAN2 / 8, SELFTEST_S_BTNSCAN2 % 8
     goto    t_end
@@ -111,8 +109,7 @@ t_end:
 selftest_t_btnscan0 macro
     local   t_end
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbank selftest_state + SELFTEST_S_BTNSCAN2 / 8
     btfss   selftest_state + SELFTEST_S_BTNSCAN2 / 8, SELFTEST_S_BTNSCAN2 % 8
     goto    t_end
@@ -134,8 +131,7 @@ t_end:
 selftest_t_buttons macro
     local   t_end
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbank selftest_state + SELFTEST_S_BTNSCAN0 / 8
     btfss   selftest_state + SELFTEST_S_BTNSCAN0 / 8, SELFTEST_S_BTNSCAN0 % 8
     goto    t_end
@@ -171,8 +167,7 @@ selftest_t_switches macro   timer_value
     local           t_ok
     local           t_end
 
-    movlw           HIGH t_end
-    movwf           PCLATH
+    pagesel         t_end
     selbank         selftest_state + SELFTEST_S_SWITCHES / 8
     btfsc           selftest_state + SELFTEST_S_SWITCHES / 8, SELFTEST_S_SWITCHES % 8
     goto            t_end
@@ -203,8 +198,7 @@ selftest_t_switches macro   timer_value
     movlw           0x0F
     selbnkc         selftest_switches
     andwf           selftest_switches, W
-    movlw           HIGH t_ok
-    movwf           PCLATH
+    pagesel         t_ok
     btfsc           STATUS, Z
     goto            t_ok
 
@@ -215,8 +209,7 @@ selftest_t_switches macro   timer_value
     ;; selftest_start_time = timer_value
     mov16ff         timer_value, selftest_start_time
 
-    movlw           HIGH t_end
-    movwf           PCLATH
+    pagesel         t_end
     goto            t_end
 
 t_ok:
@@ -230,8 +223,7 @@ t_end:
 selftest_t_zcperiod macro   timer_value
     local   t_end
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbank selftest_state + SELFTEST_S_ZCPERIOD / 8
     btfsc   selftest_state + SELFTEST_S_ZCPERIOD / 8, SELFTEST_S_ZCPERIOD % 8
     goto    t_end
@@ -284,8 +276,7 @@ selftest_t_tempadc  macro   timer_value
     local   t_not_ok
     local   t_end
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbank selftest_state + SELFTEST_S_TEMPADC / 8
     btfsc   selftest_state + SELFTEST_S_TEMPADC / 8, SELFTEST_S_TEMPADC % 8
     goto    t_end
@@ -313,8 +304,7 @@ selftest_t_tempadc  macro   timer_value
     addwf   selftest_temp, F
 
     ;; if (adc_temp_value + SELFTEST_TEMPADC_DEV <= selftest_temp) goto t_not_ok
-    movlw   HIGH t_not_ok
-    movwf   PCLATH
+    pagesel t_not_ok
     selbnkc adc_temp_value
     movf    adc_temp_value, W
     addlw   SELFTEST_TEMPADC_DEV
@@ -341,8 +331,7 @@ selftest_t_tempadc  macro   timer_value
     btfss   STATUS, C
     bsf     selftest_state + SELFTEST_S_TEMPADC / 8, SELFTEST_S_TEMPADC % 8
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     goto    t_end
 
 t_not_ok:
@@ -363,8 +352,7 @@ selftest_t_temp     macro
     local   t_ok
     local   t_end
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbank selftest_state + SELFTEST_S_TEMPADC / 8
     btfss   selftest_state + SELFTEST_S_TEMPADC / 8, SELFTEST_S_TEMPADC % 8
     goto    t_end
@@ -374,8 +362,7 @@ selftest_t_temp     macro
     goto    t_end
 
     ;; if (adc_temp_value < SELFTEST_TEMP_AMB_MAX) goto t_ok
-    movlw   HIGH t_ok
-    movwf   PCLATH
+    pagesel t_ok
     movlw   SELFTEST_TEMP_AMB_MAX
     selbnkc adc_temp_value
     subwf   adc_temp_value, W
@@ -387,8 +374,7 @@ selftest_t_temp     macro
 
     ;; Require a decrease of at least 3 to call it decreasing.
     ;; if (adc_temp_value + 2 > selftest_temp) goto t_end
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbnkc adc_temp_value
     movf    adc_temp_value, W
     addlw   2
@@ -417,8 +403,7 @@ selftest_t_heater     macro
     local   t_ok
     local   t_end
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbank selftest_state + SELFTEST_S_TEMP / 8
     btfss   selftest_state + SELFTEST_S_TEMP / 8, SELFTEST_S_TEMP % 8
     goto    t_end
@@ -472,8 +457,7 @@ selftest_t_airpump     macro
     local   t_ok
     local   t_end
 
-    movlw   HIGH t_end
-    movwf   PCLATH
+    pagesel t_end
     selbank selftest_state + SELFTEST_S_HEATER / 8
     btfss   selftest_state + SELFTEST_S_HEATER / 8, SELFTEST_S_HEATER % 8
     goto    t_end
@@ -523,8 +507,7 @@ selftest_idle_func:
     ;; if (timer_value - selftest_start_time >= SELFTEST_HEATER_TIMEOUT) goto selftest_idle_timeout
     ;; Note that some tests keep incrementing start_time. The timeout is mostly
     ;; useful for the slow tests.
-    movlw   HIGH selftest_idle_timeout
-    movwf   PCLATH
+    pagesel selftest_idle_timeout
     selbnkc selftest_start_time + 1
     movf    selftest_start_time + 1, W
     selbnkc timer_value + 1
@@ -554,8 +537,7 @@ selftest_idle_func:
     endif
 
     ;; if ((~selftest_state & SELFTEST_ACCEPT_STATE) == 0) selftest_state.passed = true
-    movlw   HIGH selftest_not_passed
-    movwf   PCLATH
+    pagesel selftest_not_passed
     selbnkc selftest_state
     movf    selftest_state, W
     xorlw   0xFF
@@ -620,8 +602,7 @@ selftest_skip_if_not_failed macro
     endif
 
     ifdef section_idle
-    movlw   HIGH selftest_idle_func
-    movwf   PCLATH
+    pagesel selftest_idle_func
     selftest_skip_if_passed
     call    selftest_idle_func
     endif

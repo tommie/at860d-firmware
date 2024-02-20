@@ -21,8 +21,7 @@ zero_cross_int_next macro
     local   set_period
     local   set_end
 
-    movlw   HIGH set_end
-    movwf   PCLATH
+    pagesel set_end
 
     ;; W = timer1_value - zero_cross_time
     selbank zero_cross_time
@@ -37,8 +36,7 @@ zero_cross_int_next macro
     addlw   100
 
     movwf   acc1
-    movlw   HIGH set_period
-    movwf   PCLATH
+    pagesel set_period
     movf    acc1, W
 
     ;; if (zero_cross_period == 0) zero_cross_period += W

@@ -75,8 +75,7 @@ uc_idle macro
     local   done
 
     ;; if (!(uc_state & (1 << UC_EE_WRITE))) goto write_ee_done
-    movlw   HIGH done
-    movwf   PCLATH
+    pagesel done
     selbank uc_state
     btfss   uc_state, UC_EE_WRITE
     goto    done
@@ -92,8 +91,7 @@ uc_idle macro
     uc_try_write_ee16   tempc_value, uc_ee_temp, 2
     uc_try_write_ee     airpump_value, uc_ee_air, 1
 
-    movlw   HIGH done
-    movwf   PCLATH
+    pagesel done
     eeprom_skip_if_can_write
     goto    done
 
@@ -113,13 +111,11 @@ uc_try_write_ee macro   file, eeaddr, stride
     local           exit
     local           i
 
-    movlw           HIGH exit
-    movwf           PCLATH
+    pagesel         exit
     eeprom_skip_if_can_write
     goto            exit
 
-    movlw           HIGH exit
-    movwf           PCLATH
+    pagesel         exit
     selbank         uc_index
     movf            uc_index, W
 i   set             1

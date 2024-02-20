@@ -19,8 +19,7 @@ timer_value res 2               ; Units of 500 µs
 timer0_irq  macro
     local   irq_end
 
-    movlw   HIGH irq_end
-    movwf   PCLATH
+    pagesel irq_end
     btfss   INTCON, T0IF
     goto    irq_end
 

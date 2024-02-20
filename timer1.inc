@@ -37,8 +37,7 @@ timer1_int_next macro
 timer1_irq  macro
     local   irq_end
 
-    movlw   HIGH irq_end
-    movwf   PCLATH
+    pagesel irq_end
     btfss   PIR1, TMR1IF
     goto    irq_end
 

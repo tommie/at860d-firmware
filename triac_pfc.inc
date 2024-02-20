@@ -42,8 +42,7 @@ triacpfc_set macro channel, ratiof
     endif
 
     ;; if (*ratiof == 0) goto set_end (triacpfc_delay[channel] = 0xFF)
-    movlw   HIGH set_end
-    movwf   PCLATH
+    pagesel set_end
     selbank ratiof
     movf    ratiof, F
     movlw   0xFF
@@ -100,15 +99,13 @@ triacpfc_timer_next_ch macro  channel, set_macro, timer_value
     error "triac_pfc channel out of bounds"
     endif
 
-    movlw       HIGH is_enabled
-    movwf       PCLATH
+    pagesel     is_enabled
     selbank     triacpfc_state + (channel / 4)
     btfsc       triacpfc_state + (channel / 4), (channel % 4) * 2
     goto        is_enabled
 
     ;; if (timer_value - zero_cross_time <= triacpfc_delay[channel]) goto next_end
-    movlw       HIGH next_end
-    movwf       PCLATH
+    pagesel     next_end
     selbnkc     zero_cross_time
     movf        zero_cross_time, W
     selbnkc     timer_value

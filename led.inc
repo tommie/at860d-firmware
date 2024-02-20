@@ -32,8 +32,7 @@ ledseg_set      macro
 
     ;; ledca_blank must be called first.
 ledca_setf_irq  macro   file
-    movlw   HIGH ledca_table_irq
-    movwf   PCLATH
+    pagesel ledca_table_irq
     selbank file
     movf    file, W
     call    ledca_table_irq
@@ -57,8 +56,7 @@ ledca_table_irq:
     dt      0
 
 ledseg_translate    macro file
-    movlw   HIGH ledseg_table
-    movwf   PCLATH
+    pagesel ledseg_table
     selbank file
     movf    file, W
     call    ledseg_table

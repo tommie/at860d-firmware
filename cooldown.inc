@@ -77,8 +77,7 @@ cooldown_idle       macro
     swapf           cooldown_state, F
 
     ;; if (!cooldown_active) goto active_done
-    movlw           HIGH active_done
-    movwf           PCLATH
+    pagesel         active_done
     cooldown_skip_if_active
     goto            active_done
 

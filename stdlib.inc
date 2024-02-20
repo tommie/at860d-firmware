@@ -187,21 +187,18 @@ ge16lf  macro   file, lit
 bge16lf macro   file1, lit, dest
     local   mend
 
-    movlw   HIGH dest
-    movwf   PCLATH
+    pagesel dest
     selbank file1 + 1
     movf    file1 + 1, W
     sublw   HIGH lit
     btfss   STATUS, C
     goto    dest
 
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     btfss   STATUS, Z
     goto    mend
 
-    movlw   HIGH dest
-    movwf   PCLATH
+    pagesel dest
     movlw   LOW lit
     selbnkc file1
     subwf   file1, W
@@ -214,8 +211,7 @@ mend:
 bge16ff macro   file1, file2, dest
     local   mend
 
-    movlw   HIGH dest
-    movwf   PCLATH
+    pagesel dest
     selbank file1 + 1
     movf    file1 + 1, W
     selbnkc file2 + 1
@@ -223,13 +219,11 @@ bge16ff macro   file1, file2, dest
     btfss   STATUS, C
     goto    dest
 
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     btfss   STATUS, Z
     goto    mend
 
-    movlw   HIGH dest
-    movwf   PCLATH
+    pagesel dest
     selbnkc file2
     movf    file2, W
     selbnkc file1
@@ -364,8 +358,7 @@ satadds16ff macro   file, dest
 
     ;; Check if saturation was possible.
     ;; if (!acc1:0) goto mend
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     btfss   acc1, 0
     goto    mend
 
@@ -410,8 +403,7 @@ add08cf macro   dest
 add16cf macro   dest
     local   mend
 
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     btfss   STATUS, C
     goto    mend
 
@@ -518,8 +510,7 @@ mulloop:
     bcf     STATUS, C
     rrf     acc3, F
 
-    movlw   HIGH mulskip
-    movwf   PCLATH
+    pagesel mulskip
     btfss   STATUS, C
     goto    mulskip
 
@@ -539,8 +530,7 @@ mulskip:
     selbnkc file + 1
     rlf     file + 1, F
 
-    movlw   HIGH mulloop
-    movwf   PCLATH
+    pagesel mulloop
     movf    acc3, F
     btfss   STATUS, Z
     goto    mulloop
@@ -633,8 +623,7 @@ divloop:
     btfss   STATUS, C
     movlw   1
     subwf   acc2, F
-    movlw   HIGH divend
-    movwf   PCLATH
+    pagesel divend
     btfss   STATUS, C
     goto    divend
 
@@ -643,8 +632,7 @@ divloop:
     selbnkc file16 + 1
     btfsc   STATUS, Z
     incf    file16 + 1, F
-    movlw   HIGH divloop
-    movwf   PCLATH
+    pagesel divloop
     goto    divloop
 divend:
     movlw   l
@@ -700,8 +688,7 @@ lzw macro
     local   mloop
 
     movwf   acc1
-    movlw   HIGH mloop
-    movwf   PCLATH
+    pagesel mloop
     clrw
 
 mloop:
@@ -735,14 +722,12 @@ clamps16f0l macro   file16, lit_max
     local   is_neg
     local   mend
 
-    movlw   HIGH is_neg
-    movwf   PCLATH
+    pagesel is_neg
     selbank file16 + 1
     btfsc   file16 + 1, 7
     goto    is_neg
 
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     gt16fl  file16, lit_max
     btfss   STATUS, C
     goto    mend
@@ -763,14 +748,12 @@ clamps16fl  macro   file16, lit_abs_max
     local   is_neg
     local   mend
 
-    movlw   HIGH is_neg
-    movwf   PCLATH
+    pagesel is_neg
     selbank file16 + 1
     btfsc   file16 + 1, 7
     goto    is_neg
 
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     ge16lf  file16, lit_abs_max
     btfss   STATUS, C
     goto    mend
@@ -782,8 +765,7 @@ is_neg:
     mov16ff file16, w16
     neg16f  w16
 
-    movlw   HIGH mend
-    movwf   PCLATH
+    pagesel mend
     ge16lf  w16, lit_abs_max
     btfss   STATUS, C
     goto    mend
