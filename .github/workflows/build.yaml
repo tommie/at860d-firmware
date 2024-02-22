@@ -1,0 +1,39 @@
+---
+name: Build
+
+on:
+  pull_request: {}
+  push: {}
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install Tools
+        run: |
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            gputils
+
+      - name: Check Out
+        uses: actions/checkout@v4
+        with:
+          path: at860d
+
+      - name: Build
+        working-directory: at860d
+        run: |
+          make -j
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          path: |
+            at860d/at860d.cod
+            at860d/at860d.hex
+            at860d/at860d.lst
+            at860d/at860d.map

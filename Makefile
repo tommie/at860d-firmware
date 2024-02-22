@@ -4,8 +4,8 @@ AS = gpasm --mpasm-compatible
 LD = gplink
 GPVC = gpvc
 
-ASFLAGS = -p p16f887 -r dec
-LDFLAGS = -m
+asflags = -p p16f887 -r dec
+ldflags = -m
 
 # These optimizations are only available since gputils 1.5.0.
 ldflags_gplink1_5 = -b 1 -p 1
@@ -23,12 +23,12 @@ at860d.hex: at860d.o
 %.cod: %.hex
 %.lst: %.hex
 %.hex: %.o
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(ldflags) $(LDFLAGS) -o $@ $^
 	@$(GPVC) $(basename $@).cod | awk -Wnon-decimal-data '/using ROM 0021.. / { print "EEDATA:", 1+("0x" $$5)-("0x" $$3); } /using ROM 002/ { next; } /using ROM 0/ { prog += 1+("0x" $$5)-("0x" $$3); } END { print "Program:", prog; }'
 
 %.o: %.asm *.inc
-	@echo $(AS) $(ASFLAGS) -c -o $@ $<
-	@$(AS) $(ASFLAGS) -c -o $@ $< >"$(dir $@)/.$(notdir $@).log" ;\
+	@echo $(AS) $(asflags) $(ASFLAGS) -c -o $@ $<
+	@$(AS) $(asflags) $(ASFLAGS) -c -o $@ $< >"$(dir $@)/.$(notdir $@).log" ;\
 		status=$$? ;\
 		grep -Fv 'Symbol index not assigned a value.' "$(dir $@)/.$(notdir $@).log" || : ;\
 		rm "$(dir $@)/.$(notdir $@).log" ;\
