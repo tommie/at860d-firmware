@@ -139,3 +139,75 @@ If a failure occurs, "TSTF" is displayed.
 
 The air display shows the tests that have passed as a decimal number.
 See the bit definitions in selftest.inc.
+
+## Code Structure
+
+The `at860d.asm` file separates the program into sections:
+
+* udata
+* udata_shr
+* eedata
+* code
+* irq
+* init
+* idle
+
+The `init` and `idle` sections are what Arduino call `setup` and `loop`.
+For each section, the `modules.inc` file is included with the appropriate `section_*` flag defined.
+The modules are listed in dependency order, and contain `ifdef/endif` blocks for the sections they care about.
+See [tommie/dios](https://github.com/tommie/dios) for an extension to this idea of modular PIC assembly.
+
+The best place to start discovering is probably `modules.inc`, since it shows if a module is part of the HAL, an algorithm or high-level function.
+Most code is implemented inside macros to allow using local labels.
+
+## Hardware
+
+### Connectors
+
+* CN1 - Mains In
+* CN2 - Mains Switch
+* CN3 - Mains 7.5V-Transformer primary
+* CN4 - Mains Heater
+* CN5 - Mains Airpump
+* CN6 - 7.5V Transformer secondary
+* CN8 - Handle
+* CN9 - ICSP/Programming
+
+### CN8 - Handle
+
+Pin 1 is at the bottom:
+
+```
+8. Temp (Gnd)
+7. Temp
+6. Standby (Gnd)
+5. Standby
+4. Up
+3. Down
+2. Heat
+1. Button common
+```
+
+## MCU
+
+1.  AN0 - Temp
+2.  RA1 - N/C
+3.  RA2 - Photodiode Set
+4.  AN3 - Knob
+5.  RA4 - Switch Standby in handle
+6.  RA5 - Power switch
+7.  RB0 - Zero cross detect
+8.  RB1 - Photodiode Calibration
+9.  RB2 - Button scan in (handle, up; K1, up; K4, preset 1)
+10. RB3 - Button scan in (handle, down; K2, down; K5, preset 2)
+11. RB4 - Button scan in (handle, heat; K3, heat; K6, preset 3)
+12. RB5 - Button scan out (K3, heat)
+13. RB6 - Button scan out (K4, preset 1; K5, preset 2; K6, preset 3) (ICSPCLK)
+14. RB7 - Button scan out (handle; K1, up; K2, down) (ICSPDAT)
+15. RC0 - Buzzer
+16. RC1-7 - LED digit, CA
+17. RD0-7 - LED segment
+18. RE0 - Power optocoupler (MOC3083, zero-cross detection)
+19. RE1 - Air optocoupler (MOC3023, no zero-cross detection)
+20. RE2 - Heater optocoupler and LED (MOC3083, zero-cross detection)
+21. RE3 - MCLR
