@@ -63,6 +63,11 @@ fp_idle_preset  macro   btn, index
 
     ;; Write
     buttonpress_reset_held  btn
+
+    ;; if (!swset_get()) goto not_held
+    swset_skip_if_set
+    goto                    not_held
+
     uc_store                index
     selbank                 fp_state
     movlw                   (1 << FP_PRESET_SET) | (1 << FP_ARM_TMR)
@@ -139,7 +144,11 @@ up_done:
     bsf     fp_state, FP_TEMP_SET
 down_done:
 
+    ;; if (!swset_get()) goto air_done
     pagesel air_done
+    swset_skip_if_set
+    goto    air_done
+
     buttonpress_skip_if_clicked BTN_HEAT_HNDL
     goto    air_done
 
@@ -198,6 +207,9 @@ air_done:
     btfsc   fp_state, FP_BTN_AIR
     goto    temp_cursor_done
 
+    swset_skip_if_set
+    goto    temp_cursor_done
+
     knob_select         FP_KNOB_TEMP
     display_set_cursor  3
 temp_cursor_done:
@@ -228,6 +240,9 @@ arm_done:
     pagesel clear_cursor_done
     selbank fp_state
     btfsc   fp_state, FP_BTN_AIR
+    goto    clear_cursor_done
+
+    swset_skip_if_set
     goto    clear_cursor_done
 
     knob_select FP_KNOB_TEMP
@@ -588,12 +603,33 @@ fp_idle_standby macro   endlabel
     endif
 mend:
     endm
-    endif
+
+fp_init macro
+    local               normal_mode
+    local               mode_done
+
+    selbank             fp_state
+    clrf                fp_state
+
+    ;; if (!swset_get()) goto normal_mode
+    pagesel             normal_mode
+    swset_skip_if_set
+    goto                normal_mode
+
+    knob_select         FP_KNOB_TEMP
+
+    pagesel             mode_done
+    goto                mode_done
+
+normal_mode:
+    knob_select         FP_KNOB_AIR
+    display_set_cursor  0
+mode_done:
+    endm
+    endif ; section_code
 
     ifdef section_init
-    selbank         fp_state
-    clrf            fp_state
-    knob_select     FP_KNOB_TEMP
+    fp_init
     endif
 
     ifdef section_idle

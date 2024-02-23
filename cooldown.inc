@@ -62,10 +62,12 @@ cooldown_idle       macro
     power_set       cooldown_state, 4
 
     ;; cooldown_state_5 = !swpower_get()
-    swpower_get     cooldown_state, 5
     movlw           1 << 5
+    swpower_skip_if_clear
+    clrw
     selbank         cooldown_state
-    xorwf           cooldown_state, F
+    bcf             cooldown_state, 5
+    iorwf           cooldown_state, F
 
     ;; cooldown_state_4 = (cooldown_state_4 && cooldown_state_5) || cooldown_state_0
     btfss           cooldown_state, 5

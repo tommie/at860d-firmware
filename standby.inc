@@ -61,8 +61,7 @@ standby_idle    macro   timer_value
     endif
 
     pagesel         handle_in_cradle
-    swstandby_get   STATUS, C
-    btfsc           STATUS, C
+    swstandby_skip_if_clear
     goto            handle_in_cradle
 
     ;; Not in cradle.

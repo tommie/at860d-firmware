@@ -412,11 +412,12 @@ cal_display_update_mode_func:
 cal_init    macro
     local           not_active
 
+    clrw
+    swcal_skip_if_clear
+    movlw           1 << CAL_ACTIVE
     selbank         cal_state
-    clrf            cal_state
-    swcal_get       cal_state, CAL_ACTIVE
+    movwf           cal_state
     pagesel         not_active
-    selbank         cal_state
     btfss           cal_state, CAL_ACTIVE
     goto            not_active
 

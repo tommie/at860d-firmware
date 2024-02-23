@@ -73,16 +73,20 @@ SELFTEST_AIRPUMP_AIRFLOW    equ AIRPUMP_MAX_RATIO
 
     ifdef section_code
 selftest_t_power    macro   timer_value
-    local       t_end
+    local   t_end
 
-    pagesel     t_end
-    selbank     selftest_state + SELFTEST_S_POWER / 8
-    btfsc       selftest_state + SELFTEST_S_POWER / 8, SELFTEST_S_POWER % 8
-    goto        t_end
+    pagesel t_end
+    selbank selftest_state + SELFTEST_S_POWER / 8
+    btfsc   selftest_state + SELFTEST_S_POWER / 8, SELFTEST_S_POWER % 8
+    goto    t_end
 
-    swpower_get selftest_state + SELFTEST_S_POWER / 8, SELFTEST_S_POWER % 8
+    clrw
+    swpower_skip_if_clear
+    movlw   1 << (SELFTEST_S_POWER % 8)
+    selbank selftest_state + SELFTEST_S_POWER / 8
+    iorwf   selftest_state + SELFTEST_S_POWER / 8, F
 
-    mov16ff     timer_value, selftest_start_time
+    mov16ff timer_value, selftest_start_time
 t_end:
     endm
 
@@ -152,14 +156,18 @@ t_end:
     endm
 
 selftest_get_switches   macro   file, first_bit
-    selbank         file
-    clrf            file
-    swcal_get       file, first_bit + 0
-    swset_get       file, first_bit + 1
-    swstandby_get   file, first_bit + 2
-    swpower_get     file, first_bit + 3
+    clrw
+    swcal_skip_if_clear
+    iorlw   1 << (first_bit + 0)
+    swset_skip_if_clear
+    iorlw   1 << (first_bit + 1)
+    swstandby_skip_if_clear
+    iorlw   1 << (first_bit + 2)
+    swpower_skip_if_clear
+    iorlw   1 << (first_bit + 3)
+    selbank file
+    movwf   file
     endm
-
 
 selftest_t_switches macro   timer_value
     local           t_ok

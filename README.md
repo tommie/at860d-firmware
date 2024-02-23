@@ -51,7 +51,8 @@ Most of the day-to-day is the same.
 
 * Three presets.
 * Closed-loop temperature control.
-* Simpler calibration mode.
+* Keyed setup mode that allows changing temperature and presets.
+* Keyed calibration mode for adjusting temperature readings.
 * Standby mode.
 * Cooldown mode.
 * Self-test on start-up.
@@ -59,7 +60,6 @@ Most of the day-to-day is the same.
 ### Missing Features
 
 * Fahrenheit display
-* The "set" mode is not implemented.
 
 ## Usage
 
@@ -68,19 +68,16 @@ Most of the day-to-day is the same.
 When the cal/set card is not inserted.
 
 * The current temperature and the set airflow is normally displayed.
-* By default, the up/down buttons and knob sets the temperature.
-  * Holding the up/down buttons allows moving fast.
-* Pressing the heat button switches to setting the airflow (range 0-125.)
+* The up/down buttons and knob set the airflow.
   * A blinking dot indicates the currently selected value.
+  * Holding the up/down buttons allows moving fast.
 * Pressing one of the three preset buttons loads that preset.
-* Holding one of the three preset buttons overwrites that preset.
-  * The temp unit display shows a "P" as confirmation.
 
 ## The Knob
 
 Turning the knob does nothing until the current value is passed.
-(This is to avoid values jumping when you start turning:
-why they chose a potentiometer for this interface is unknown.)
+This is to avoid values jumping when you start turning.
+Thus, you may have to rock it back and forth to make it pick up.
 
 ## Standby
 
@@ -104,6 +101,18 @@ This indicates a program (or programming) bug:
 
 * If the microprocessor fails to do its thing, a watchdog timer will expire, displaying a "t".
 
+## Set Mode
+
+When the cal/set card is inserted with "SET" up.
+
+This mode works like the normal mode, with these differences:
+
+* By default, the up/down buttons and knob set the temperature.
+* Pressing the heat button switches to setting the airflow (range 0-125.)
+  * A blinking dot indicates the currently selected value.
+* Holding one of the three preset buttons overwrites that preset.
+  * The temp unit display shows a "P" for a few seconds as confirmation.
+
 ## Calibration Mode
 
 When the cal/set card is inserted with "CAL" up.
@@ -119,7 +128,7 @@ When the cal/set card is inserted with "CAL" up.
   * The up/down buttons changes the temperature value offset.
 * Pressing the heat button returns to the "CAL" mode.
 * Holding the heat button saves the new calibration values into persistent memory.
-  * The air display shows "SET" for a few seconds.
+  * The air display shows "SET" for a few seconds as confirmation.
 
 ## Self-Test
 
