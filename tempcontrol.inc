@@ -152,12 +152,13 @@ mend:
     endm
 
 tempc_set_active    macro   b
-    selbank tempc_state
+    selbank         tempc_state
     if b
-    bsf     tempc_state, TEMPC_ACTIVE
+    bsf             tempc_state, TEMPC_ACTIVE
     else
-    bcf     tempc_state, TEMPC_ACTIVE
-    endif
+    bcf             tempc_state, TEMPC_ACTIVE
+    pid_lit_reset   0
+    endif ; b
     endm
 
     ifndef  TEMPCONTROL_MAX_TEMP
