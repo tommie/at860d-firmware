@@ -497,6 +497,7 @@ fp_idle_cooldown macro   endlabel
     movlw       LSD & LSE & LSF                     ; "L"
     selbank     display_buf + 0
     movwf       display_buf + 0
+    display_cur_update
 
     pagesel     endlabel
     goto        endlabel
@@ -597,6 +598,7 @@ fp_idle_standby macro   endlabel
     movlw       LSA & LSB & LSE & LSF & LSG ; "P"
     selbank     display_buf + 0
     movwf       display_buf + 0
+    display_cur_update
 
     pagesel     endlabel
     goto        endlabel
