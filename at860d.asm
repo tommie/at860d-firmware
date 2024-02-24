@@ -62,8 +62,8 @@ BTN_HEAT_PANEL  equ 8
 #define TRIACZCC_NUM_FRAC_BITS 5
 #define TRIACZCC_NUM_EXTRA_BITS 3
     ifndef TEMPC_DIRECT_CONTROL
-#define TEMPCONTROL_MIN_TEMP (35 << 1)  ;; 9.1 fixed point.
-#define TEMPCONTROL_MAX_TEMP (500 << 1) ;; 9.1 fixed point.
+#define TEMPCONTROL_MIN_TEMP FRONTPANEL_MIN_TEMP  ;; 9.1 fixed point.
+#define TEMPCONTROL_MAX_TEMP (500 << 1)           ;; 9.1 fixed point.
     else
 #define TEMPCONTROL_MIN_TEMP 0
 #define TEMPCONTROL_MAX_TEMP ((1 << (TRIACZCC_NUM_FRAC_BITS + TRIACZCC_NUM_EXTRA_BITS)) - 1) << 1
