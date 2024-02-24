@@ -13,9 +13,46 @@ And I wanted to keep the firmware open, so the proprietary C compilers out there
 Assembler it is...
 And here we are, a few years later.
 
-## Building
+## Features
+
+The firmware is not doing exactly what the original does, esp. not the calibration mode.
+Most of the day-to-day is the same.
+
+* Three presets.
+* Closed-loop temperature control.
+* Keyed set-up mode that allows changing temperature and presets.
+* Keyed calibration mode for adjusting temperature readings.
+* Standby mode.
+* Cooldown mode.
+* Self-test on start-up.
+
+### Compared to the Original
+
+* Smoother temperature control (my desk light isn't flickering anymore!)
+* More obvious differences between set-up and calibration modes.
+* Cooling down to 70 °C instead of 150 °C, for household safety.
+* The knob does not cause values to jump as soon as you touch it.
+* The lowest possible temperature is 50 °C (instead of 150 °C.)
+  * Though note that the temperature reading is not very accurate below 150 °C.
+* The airpump scale goes up to 125.
+* Start-up self-test.
+* Since it's open-source, you can change constants.
+
+### Missing Features
+
+* The calibration mode changes coefficient and offset separately, which isn't very user-friendly.
+* Fahrenheit display.
+
+### Status
+
+The firmware is expected to be working well, but is only running on my device.
+I'm curious to hear if it's working, or not, for you.
+
+## Building and Uploading
 
 Requires gputils 1.4.0.
+The output is very close to the size limit of 8,192 instructions, so it's possible we will start to require gputils 1.5.0, which adds banksel and pagesel optimizations.
+Those optimizations can save 30% of space.
 
 ```console
 $ git clone ...
@@ -39,33 +76,19 @@ It's called *CN9* and has the following pinout (from the top):
 
 You need a PIC programmer capable of "high voltage" programming to program the device, because the PGC/PGD pins are used as normal I/O.
 
-Note that while the display may turn on via the programming header (and drawing 70 mA,) the amplifier for the temperature sensor will not work, and the temperature is reported as very high (>600 *C.)
+Note that while the display may turn on via the programming header (and drawing 70 mA,) the amplifier for the temperature sensor will not work, and the temperature is reported as very high (>600 °C.)
 It requires a dual-supply 5 V.
 If you want to experiment without mains voltage on the PCB, the easiest way is to feed the 7.5 V transformer directly (normally attached to CN3.)
 This will also make the zero-cross detector work.
-
-## Features
-
-The firmware is not doing exactly what the original does, esp. not the calibration mode.
-Most of the day-to-day is the same.
-
-* Three presets.
-* Closed-loop temperature control.
-* Keyed setup mode that allows changing temperature and presets.
-* Keyed calibration mode for adjusting temperature readings.
-* Standby mode.
-* Cooldown mode.
-* Self-test on start-up.
-
-### Missing Features
-
-* Fahrenheit display
 
 ## Usage
 
 ## Normal Mode
 
 When the cal/set card is not inserted.
+
+**Note** that normal mode is meant for professional production environments.
+If you don't have a supervisor, you probably always want to run in *set-up mode*.
 
 * The current temperature and the set airflow is normally displayed.
 * The up/down buttons and knob set the airflow.
@@ -101,7 +124,7 @@ This indicates a program (or programming) bug:
 
 * If the microprocessor fails to do its thing, a watchdog timer will expire, displaying a "t".
 
-## Set Mode
+## Set-Up Mode
 
 When the cal/set card is inserted with "SET" up.
 
