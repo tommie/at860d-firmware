@@ -1,5 +1,7 @@
 # An Unofficial Firmware for the Atten AT860D
 
+[![Build](https://github.com/tommie/at860d-firmware/actions/workflows/build.yaml/badge.svg)](https://github.com/tommie/at860d-firmware/actions/workflows/build.yaml)
+
 AT860D is a hot air soldering station.
 Mine ended up killing its own microcontroller somehow:
 the flash ROM program memory turned itself into RAM, and was wiped.
@@ -37,6 +39,7 @@ Most of the day-to-day is the same.
 * The airpump scale goes up to 125.
 * Start-up self-test.
 * Since it's open-source, you can change constants.
+* The buzzer is never used.
 
 ### Missing Features
 
@@ -51,8 +54,6 @@ I'm curious to hear if it's working, or not, for you.
 ## Building and Uploading
 
 Requires gputils 1.4.0.
-The output is very close to the size limit of 8,192 instructions, so it's possible we will start to require gputils 1.5.0, which adds banksel and pagesel optimizations.
-Those optimizations can save 30% of space.
 
 ```console
 $ git clone ...
@@ -80,6 +81,18 @@ Note that while the display may turn on via the programming header (and drawing 
 It requires a dual-supply 5 V.
 If you want to experiment without mains voltage on the PCB, the easiest way is to feed the 7.5 V transformer directly (normally attached to CN3.)
 This will also make the zero-cross detector work.
+
+### Issues with gputils 1.5.0
+
+It won't build with 1.5.0, which is sad because it has banksel/pagesel optimizations that would be useful.
+Those optimizations can save 30% of space.
+There is something wrong about the use of org/code that causes gpasm to complain about overwriting previous address contents: 0x0004.
+This is likely about our mixed used of code and org.
+Splitting `section_code` into macros and moving all functions to after the idle loop isn't enough:
+it just moves the error to 0x000E.
+At other times, it complains about non-contiguous `code` sections.
+In the end, I had no incentive to spend more time on it.
+1.4.0 is what is in Ubuntu.
 
 ## Usage
 
